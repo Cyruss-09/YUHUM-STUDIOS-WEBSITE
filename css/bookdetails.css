@@ -1,0 +1,402 @@
+body {
+  background: #f4f4f4;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.Kadlaw-info,
+.Gugma-info,
+.Addons-info,
+.Reminders-info,
+.Payments-info {
+  text-align: left;
+  line-height: 1.6;
+  margin-top: 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 18px;
+}
+
+.right-container {
+  flex: 0 0 60%;
+  max-width: 65%;
+  padding: 30px;
+}
+.booking-container {
+  display: flex;
+  max-width: 1100px;
+  margin: 100px auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  height: 1800px;
+}
+
+.booking-info {
+  flex: 0 0 30%;
+  max-width: 70%;
+  padding: 40px;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.booking-info .logo {
+  width: 120px;
+  margin-bottom: 20px;
+}
+
+.booking-info h2 {
+  margin: 10px 0;
+}
+
+.booking-info h3 {
+  margin: 5px 0 15px 0;
+  font-weight: normal;
+}
+
+.details-text h2 {
+  margin-bottom: 20px;
+  font-size: 40px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.package-info-right {
+  flex: 0 0 30%;
+  max-width: 70%;
+  padding: 40px;
+  overflow-y: auto;
+}
+.package-info {
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.package-info label {
+  display: block;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.package-info input[type="radio"] {
+  margin-right: 10px;
+}
+
+.package-option label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+input[type="radio"] {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+.package-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #b0481c;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  transition: 0.25s ease;
+}
+
+.package-option input[type="radio"]:checked {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+
+.pet-info {
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.backdrop h4 {
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: normal;
+  font-family: "Times New Roman", Times, serif;
+}
+
+input[type="radio"] {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+.backdrop input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #b0481c;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  transition: 0.25s ease;
+}
+
+.backdrop input[type="radio"]:checked {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+
+input[type="radio"] {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+.hmua-service input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #b0481c;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  transition: 0.25s ease;
+}
+
+.hmua-service input[type="radio"]:checked {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+
+.name-group,
+.email-group,
+.mobile-group,
+.voucher-group,
+.group-size,
+.pet-info,
+.spotify-playlist,
+.discovered-via {
+  margin-bottom: 40px;
+  margin-top: 20px;
+  font-size: 20px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.name-group input,
+.email-group input,
+.spotify-playlist input,
+.discovered-via input {
+  margin-top: 10px;
+  width: 70%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+.mobile-group input {
+  margin-top: 10px;
+  width: 40%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.group-size input {
+  margin-top: 10px;
+  width: 20%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.pet-info input {
+  margin-top: 20px;
+  width: 50%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+.voucher-group input {
+  margin-top: 10px;
+  width: 30%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+input[type="radio"] {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+.social-media-consent input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #b0481c;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  transition: 0.25s ease;
+}
+
+.social-media-consent input[type="radio"]:checked {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+
+input::placeholder {
+  color: gray;
+  transition: color 0.3s;
+}
+
+input:focus::placeholder {
+  color: transparent;
+}
+
+input:hover {
+  border-color: #b0481c;
+  box-shadow: 0 0 5px rgba(118, 31, 3, 0.3);
+}
+
+input:focus {
+  border-color: #b0481c;
+  outline: none;
+  box-shadow: 0 0 8px rgba(59, 19, 1, 0.5);
+}
+
+.btn-container {
+  text-align: left;
+  margin-top: 40px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #b0481c;
+  color: #fff;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 6px 18px rgba(43, 8, 1, 0.25);
+  transition: 0.3s ease;
+}
+
+.btn:hover {
+  background: #f0692b;
+}
+
+@media (max-width: 992px) {
+  .booking-container {
+    flex-direction: column;
+    height: auto;
+    margin: 50px 20px;
+  }
+
+  .booking-info,
+  .right-container,
+  .package-info-right {
+    flex: 1 1 100%;
+    max-width: 100%;
+    padding: 20px;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .name-group input,
+  .email-group input,
+  .mobile-group input,
+  .voucher-group input,
+  .group-size input,
+  .pet-info input,
+  .spotify-playlist input,
+  .discovered-via input {
+    width: 90%;
+  }
+
+  .package-option input[type="radio"],
+  .backdrop input[type="radio"],
+  .hmua-service input[type="radio"],
+  .social-media-consent input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 20px 10px;
+  }
+
+  .booking-container {
+    padding: 10px;
+    gap: 20px;
+  }
+
+  .booking-info,
+  .right-container,
+  .package-info-right {
+    padding: 15px;
+  }
+
+  .name-group input,
+  .email-group input,
+  .pet-info input,
+  .spotify-playlist input,
+  .discovered-via input {
+    width: 100%;
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .mobile-group input,
+  .voucher-group input {
+    width: 50%;
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .group-size input {
+    width: 20%;
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .package-option input[type="radio"],
+  .backdrop input[type="radio"],
+  .hmua-service input[type="radio"],
+  .social-media-consent input[type="radio"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .btn-container {
+    text-align: center;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px 0;
+    font-size: 14px;
+  }
+
+  .Kadlaw-info,
+  .Gugma-info,
+  .Addons-info,
+  .Reminders-info,
+  .Payments-info {
+    font-size: 16px;
+  }
+}

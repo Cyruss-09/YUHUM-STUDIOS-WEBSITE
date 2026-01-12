@@ -1,0 +1,161 @@
+:root {
+  --cream: #faf7f3;
+  --brown: #7d3a1e;
+  --terracotta: #b65a2e;
+  --muted: #cfa897;
+  --accent: #d86b55;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--muted);
+  color: var(--brown);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 85%;
+}
+
+/* HERO SECTION */
+header.hero {
+  background: #fffaf7;
+  padding: 56px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+header .logo {
+  width: 200px;
+  border-radius: 16px;
+  margin-bottom: 15px;
+}
+
+header .title {
+  font-family: "Playfair Display", serif;
+  font-size: 50px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--brown);
+}
+
+header .lead {
+  max-width: 650px;
+  margin: 0 auto;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--brown);
+}
+
+/* BUTTON */
+.btn-container {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 45px;
+  background: #d84e41;
+  color: white;
+  border-radius: 40px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 6px 18px rgba(216, 107, 85, 0.2);
+  transition: 0.3s ease;
+}
+
+.img-btn {
+  width: 28px;
+  height: auto;
+}
+
+.btn:hover {
+  background: #c94638;
+}
+
+/* TABLET */
+@media (max-width: 768px) {
+  .container {
+    width: 92%;
+    padding: 15px;
+  }
+
+  header.hero {
+    padding: 40px 30px;
+  }
+
+  header .logo {
+    width: 170px;
+  }
+
+  header .title {
+    font-size: 38px;
+  }
+
+  header .lead {
+    font-size: 18px;
+  }
+
+  .btn {
+    padding: 13px 40px;
+    font-size: 16px;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 480px) {
+  .container {
+    width: 95%;
+  }
+
+  header.hero {
+    padding: 30px 22px;
+  }
+
+  header .logo {
+    width: 140px;
+  }
+
+  header .title {
+    font-size: 30px;
+    line-height: 1.2;
+  }
+
+  header .lead {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px 0;
+    font-size: 16px;
+  }
+}
+
+/* EXTRA SMALL (iPhone SE, small Android) */
+@media (max-width: 360px) {
+  header .title {
+    font-size: 26px;
+  }
+
+  header .lead {
+    font-size: 15px;
+  }
+
+  .btn {
+    font-size: 15px;
+    padding: 12px 0;
+  }
+}

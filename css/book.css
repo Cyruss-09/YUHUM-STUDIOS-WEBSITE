@@ -1,0 +1,243 @@
+body {
+  margin: 0;
+  padding: 80px 0 0 0;
+  box-sizing: border-box;
+  background-color: #f8f7f5;
+}
+
+.Kadlaw-info,
+.Gugma-info,
+.Addons-info,
+.Reminders-info,
+.Payments-info {
+  text-align: left;
+  line-height: 1.6;
+  margin-top: 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 18px;
+}
+
+.booking-container {
+  display: flex;
+  max-width: 1200px;
+  margin: 30px auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  height: 600px;
+}
+
+.booking-info {
+  flex: 1;
+  padding: 30px;
+  border-right: 1px solid #ddd;
+  text-align: left;
+  overflow-y: auto;
+  text-align: left;
+  font-size: 18px;
+}
+
+.booking-info .logo {
+  width: 120px;
+  margin-bottom: 20px;
+  border-radius: 50px;
+}
+
+.booking-info h2 {
+  margin: 10px 0;
+  color: #523e26;
+}
+
+.booking-info h3 {
+  margin: 5px 0 15px 0;
+  font-weight: normal;
+}
+
+.booking-calendar {
+  flex: 2;
+  padding: 30px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 40px;
+  color: #523e26;
+}
+
+.weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 25px;
+  text-align: center;
+  color: #523e26;
+}
+
+.weekday-name {
+  padding: 5px 0;
+  background-color: none;
+  border-radius: 3px;
+}
+
+.dates-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.date {
+  padding: 10px;
+  text-align: center;
+  font-size: 20px;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  color: #808080;
+  cursor: pointer;
+}
+
+.date.active {
+  background-color: #b0481c;
+  color: #fff;
+}
+
+.date:hover {
+  background-color: #b0481c;
+  color: #fff;
+}
+
+.time-slots {
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid #ddd;
+  padding-top: 20px;
+  background-color: #b0481c;
+}
+
+.time-slots button {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  margin-bottom: 10px;
+  border: 1px solid #fff;
+  background: none;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.time-slots button:hover {
+  background: #b85d35;
+  color: #fff;
+}
+
+
+@media (max-width: 992px) {
+  .nav-items {
+    gap: 20px;
+  }
+
+  .nav-items a {
+    font-size: 18px;
+  }
+
+  .yuhum-logo {
+    width: 100px;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-links {
+    flex-direction: column;
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .nav-items {
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+  }
+
+  .nav-items a {
+    font-size: 16px;
+  }
+
+  body {
+    padding-top: 140px;
+  }
+}
+
+@media (max-width: 992px) {
+  .booking-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .booking-info {
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+  }
+
+  .booking-calendar {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .booking-container {
+    margin: 50px 10px;
+  }
+
+  .booking-info,
+  .booking-calendar {
+    padding: 15px;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    text-align: center;
+    font-size: 50px;
+    gap: 10px;
+  }
+
+  .weekdays-grid,
+  .dates-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .date,
+  .time-slots button {
+    font-size: 14px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-header {
+    font-size: 20px;
+  }
+
+  .weekday-name {
+    font-size: 25px;
+  }
+
+  .date {
+    font-size: 20px;
+    padding: 8px;
+  }
+
+  .time-slots button {
+    padding: 14px;
+    font-size: 13px;
+  }
+}
