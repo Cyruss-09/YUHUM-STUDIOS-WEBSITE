@@ -54,7 +54,21 @@ body {
   text-align: center;
   margin: 0 20px;
   text-decoration: underline;
+  opacity: 0;
+  animation: titleFadeUp 0.8s ease-out forwards;
 }
+
+@keyframes titleFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 
 video {
   display: block;
@@ -80,8 +94,9 @@ video {
 
 .yuhum-photos img:hover {
   transform: scale(1.05);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 15px 20px rgba(0, 0, 0, 0.25);
   filter: brightness(0.9);
+  transition: 1s;
 }
 
 .location-area {
@@ -111,6 +126,7 @@ video {
   transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
   filter: brightness(0.9);
+  transition: 1s;
 }
 
 .location-wrapper {

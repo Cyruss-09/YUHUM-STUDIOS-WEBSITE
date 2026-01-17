@@ -70,6 +70,7 @@ body {
   border-radius: 8px;
   border: 1px solid #ccc;
   outline: none;
+  resize: none;
   box-sizing: border-box;
 }
 
@@ -89,5 +90,6 @@ body {
 }
 
 #feedback-form button:hover {
-  background: #a86436;
+  background: hsl(24, 88%, 63%);
+  transition: 1s;
 }

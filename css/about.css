@@ -54,7 +54,6 @@ header .lead {
   color: var(--brown);
 }
 
-/* BUTTON */
 .btn-container {
   text-align: center;
   margin-top: 40px;
@@ -81,7 +80,8 @@ header .lead {
 }
 
 .btn:hover {
-  background: #c94638;
+  background-color: hsl(5, 100%, 81%);
+  transition: 0.5s;
 }
 
 /* TABLET */

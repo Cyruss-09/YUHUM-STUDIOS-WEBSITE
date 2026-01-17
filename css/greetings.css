@@ -58,6 +58,7 @@ button {
 
 button:hover {
   background: #f0692b;
+  transition: 0.5s;
 }
 
 @media (max-width: 480px) {

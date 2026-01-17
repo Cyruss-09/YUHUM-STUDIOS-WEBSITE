@@ -132,7 +132,8 @@ body {
 }
 
 .btn:hover {
-  background-color: #d84e41;
+  background-color: hsl(5, 100%, 81%);
+  transition: 0.5s;
 }
 
 /* MOBILE RESPONSIVE FIX */

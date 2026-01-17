@@ -82,6 +82,11 @@
   transition: background 0.3s ease;
 }
 
+.btn:hover {
+  background-color: hsl(5, 100%, 81%);
+  transition: 0.5s;
+}
+
 .img-btn {
   width: 30px;
   height: auto;
