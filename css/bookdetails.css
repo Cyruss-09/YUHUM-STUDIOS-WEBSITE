@@ -30,7 +30,7 @@ body {
   border-radius: 10px;
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  height: 1800px;
+  height: 1900px;
 }
 
 .booking-info {
@@ -81,6 +81,7 @@ body {
 
 .package-info input[type="radio"] {
   margin-right: 10px;
+  margin-top: 5px;
 }
 
 .package-option label {
@@ -111,16 +112,18 @@ input[type="radio"] {
   border-color: #b0481c;
 }
 
-.pet-info {
+.pet-info label{
   margin-bottom: 30px;
   font-size: 20px;
   font-family: "Times New Roman", Times, serif;
+  font-weight: 700;
 }
+
 
 .backdrop h4 {
   margin-bottom: 20px;
   font-size: 18px;
-  font-weight: normal;
+  font-weight: 700;
   font-family: "Times New Roman", Times, serif;
 }
 
@@ -149,6 +152,7 @@ input[type="radio"] {
   background-color: #b0481c;
   border-color: #b0481c;
 }
+
 .hmua-service input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
@@ -171,13 +175,18 @@ input[type="radio"] {
 .mobile-group,
 .voucher-group,
 .group-size,
+.package-label,
 .pet-info,
+.hmua-info,
 .spotify-playlist,
+.social-media-info,
 .discovered-via {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
   margin-top: 20px;
   font-size: 20px;
+  font-weight: 700;
   font-family: "Times New Roman", Times, serif;
+  color: #333;
 }
 
 .name-group input,
@@ -190,7 +199,9 @@ input[type="radio"] {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   cursor: pointer;
 }
 .mobile-group input {
@@ -200,7 +211,9 @@ input[type="radio"] {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   cursor: pointer;
 }
 
@@ -211,7 +224,9 @@ input[type="radio"] {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   cursor: pointer;
 }
 
@@ -222,9 +237,12 @@ input[type="radio"] {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   cursor: pointer;
 }
+
 .voucher-group input {
   margin-top: 10px;
   width: 30%;
@@ -232,7 +250,9 @@ input[type="radio"] {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   cursor: pointer;
 }
 input[type="radio"] {
