@@ -24,14 +24,23 @@ body {
 }
 
 .nav-links h2 {
-  font-size: clamp(20px, 2.5vw, 34px);
+  font-size: clamp(18px, 3vw, 34px);
   color: #523e26;
   overflow: hidden;
   white-space: nowrap;
-  width: 0;
+  width: auto;
   animation: typing 2.5s steps(14, end) forwards;
   position: relative;
   left: -200px;
+}
+
+.nav-items img {
+  width: 70px;
+}
+
+.nav-items {
+  gap: 5px;
+  font-size: 14px;
 }
 
 @keyframes typing {
@@ -69,6 +78,8 @@ video {
   display: flex;
   margin: 30px auto;
   margin-top: 150px;
+  width: 90%;
+  max-width: 900px;
 }
 
 .yuhum-photos {
@@ -242,5 +253,30 @@ video {
   .location-container input {
     font-size: 14px;
     padding: 16px 40px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .yuhum-photos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .location-area img {
+    max-width: 380px;
+  }
+}
+
+@media (min-width: 901px) {
+  .nav-links {
+    padding: 18px 40px;
+  }
+
+  .yuhum-photos {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 40px;
+  }
+
+  .location-area img {
+    max-width: 600px;
   }
 }

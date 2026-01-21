@@ -17,6 +17,7 @@ body {
   font-size: 18px;
 }
 
+
 .right-container {
   flex: 0 0 60%;
   max-width: 65%;
@@ -30,7 +31,7 @@ body {
   border-radius: 10px;
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  height: 1900px;
+  height: 2150px;
 }
 
 .booking-info {
@@ -56,9 +57,9 @@ body {
 }
 
 .details-text h2 {
-  margin-bottom: 20px;
-  font-size: 40px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin-bottom: 40px;
+  font-size: 30px;
+  font-family: "Zalando Sans Expanded", sans-serif;
 }
 
 .package-info-right {
@@ -91,10 +92,6 @@ body {
   cursor: pointer;
 }
 
-input[type="radio"] {
-  background-color: #b0481c;
-  border-color: #b0481c;
-}
 .package-option input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
@@ -112,13 +109,12 @@ input[type="radio"] {
   border-color: #b0481c;
 }
 
-.pet-info label{
+.pet-info label {
   margin-bottom: 30px;
   font-size: 20px;
   font-family: "Times New Roman", Times, serif;
   font-weight: 700;
 }
-
 
 .backdrop h4 {
   margin-bottom: 20px;
@@ -127,11 +123,9 @@ input[type="radio"] {
   font-family: "Times New Roman", Times, serif;
 }
 
-input[type="radio"] {
-  background-color: #b0481c;
-  border-color: #b0481c;
-}
+
 .backdrop input[type="radio"] {
+  margin-top: 20px;
   appearance: none;
   -webkit-appearance: none;
   width: 15px;
@@ -154,6 +148,7 @@ input[type="radio"] {
 }
 
 .hmua-service input[type="radio"] {
+  margin-top: 20px;
   appearance: none;
   -webkit-appearance: none;
   width: 15px;
@@ -180,7 +175,7 @@ input[type="radio"] {
 .hmua-info,
 .spotify-playlist,
 .social-media-info,
-.discovered-via {
+.Discovered-label {
   margin-bottom: 50px;
   margin-top: 20px;
   font-size: 20px;
@@ -193,7 +188,7 @@ input[type="radio"] {
 .email-group input,
 .spotify-playlist input,
 .discovered-via input {
-  margin-top: 10px;
+  margin-top: 20px;
   width: 70%;
   padding: 10px;
   font-size: 16px;
@@ -255,11 +250,10 @@ input[type="radio"] {
     box-shadow 0.3s;
   cursor: pointer;
 }
-input[type="radio"] {
-  background-color: #b0481c;
-  border-color: #b0481c;
-}
+
+
 .social-media-consent input[type="radio"] {
+  margin-top: 20px;
   appearance: none;
   -webkit-appearance: none;
   width: 15px;
@@ -272,6 +266,49 @@ input[type="radio"] {
 }
 
 .social-media-consent input[type="radio"]:checked {
+  background-color: #b0481c;
+  border-color: #b0481c;
+}
+
+.Discovered-via-right {
+  flex: 0 0 30%;
+  max-width: 70%;
+  padding: 40px;
+  overflow-y: auto;
+}
+.Discovered-via {
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.Discovered-via label {
+  display: block;
+  margin-bottom: 15px;
+  text-align: left;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.Discovered-option input[type="radio"] {
+  margin-right: 10px;
+  margin-top: 5px;
+}
+
+.Discovered-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #b0481c;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  transition: 0.25s ease;
+}
+
+
+.Discovered-option input[type="radio"]:checked {
   background-color: #b0481c;
   border-color: #b0481c;
 }
@@ -296,13 +333,10 @@ input:focus {
   box-shadow: 0 0 8px rgba(59, 19, 1, 0.5);
 }
 
-.btn-container {
-  text-align: left;
-  margin-top: 40px;
-}
 
 .btn {
   display: inline-block;
+  margin-top: 30px;
   padding: 10px 20px;
   background: #b0481c;
   color: #fff;

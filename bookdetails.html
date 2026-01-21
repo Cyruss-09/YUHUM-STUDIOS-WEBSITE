@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="images/yuhum.studios home pic.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/bookdetails.css" />
     <title>Booking Details</title>
   </head>
@@ -129,7 +132,7 @@
       <div class="right-container">
         <div class="details-text">
           <div class="form-group">
-            <h2>Enter Details</h2>
+            <h2>Enter Details:</h2>
           </div>
 
 
@@ -251,19 +254,34 @@
   
           <div class="social-media-consent">
             <label class="social-media-info">Do you allow us to post your photos?</label><br />
-
             <label><input type="radio" name="allow-post" required /> Yes</label
             ><br />
             <label><input type="radio" name="allow-post" required /> No</label
             ><br /><br />
           </div>
 
+          
+          <div class="Discovered-via">
+            <label class="Discovered-label">How did you find about us?</label>
 
-          <div class="discovered-via">
-            <label>How did you find about us?</label><br />
-            <input type="text" placeholder="Enter details here" required />
+            <div class="Discovered-option">
+              <label>
+                <input type="radio" name="package"  required />
+                Tiktok </label>
+
+              <label>
+                <input type="radio" name="package" required />
+                Instagram
+              </label>
+
+              <label>
+                <input type="radio" name="package" required />
+                Facebook
+              </label>
+            </div>
           </div>
 
+          </div>
 
             <button type="submit" class="btn">Schedule Event</button>
           </div>
