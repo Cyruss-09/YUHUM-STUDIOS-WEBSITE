@@ -114,6 +114,7 @@ video {
 }
 
 .location-area h4 {
+  text-decoration: solid underline;
   font-size: 14px;
   font-family: "Times New Roman", Times, serif;
   color: #545659;
@@ -122,7 +123,7 @@ video {
 
 .location-area img {
   width: 100%;
-  max-width: 420px;
+  max-width: 320px;
   margin-top: 30px;
   border-radius: 20px;
   border: 1px solid #545659;
@@ -256,15 +257,56 @@ video {
   }
 }
 
-@media (min-width: 601px) and (max-width: 900px) {
+/* this is mobile device*/
+
+@media (min-width: 201px) and (max-width: 400px) {
   .yuhum-photos {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .nav-items a {
+    font-size: 12px;
+  }
+
+  .nav-links {
+    justify-content: center;
+  }
+
+  .nav-links h2 {
+    font-size: 25px;
+    text-align: center;
+    position: static;
+    left: auto;
+    transform: none;
+    margin: 0;
+    width: auto;
+  }
+
+  video {
+    width: 90%;
+    margin-top: 250px;
+  }
+
   .location-area img {
-    max-width: 380px;
+    max-width: 240px;
+  }
+
+  .location-container input[type="text"] {
+    padding: 20px 15px;
+    font-size: 9px;
+  }
+
+  .location-container .input-arrow {
+    width: 14px;
+    height: 14px;
+  }
+
+  .main-footer {
+    padding: 10px 15px;
   }
 }
+
+/* This is for tablet device*/
 
 @media (min-width: 901px) {
   .nav-links {
@@ -277,6 +319,6 @@ video {
   }
 
   .location-area img {
-    max-width: 600px;
+    max-width: 700px;
   }
 }
