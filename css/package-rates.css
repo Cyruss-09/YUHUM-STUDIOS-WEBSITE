@@ -45,8 +45,8 @@ body {
 }
 
 .package-box {
-  background: #fff;
-  margin: 30px 0;
+  background: #ffffff;
+  margin: 20px 0;
   padding: 30px;
   border-radius: 20px;
   display: flex;
@@ -128,26 +128,33 @@ body {
 /* MOBILE RESPONSIVE FIX */
 @media (max-width: 480px) {
   .rates-container {
-    max-width: 100%;
+    max-width: 90%;
     padding: 40px 20px;
   }
 
   .logo {
-    width: 120px;
+    width: 150px;
     border-width: 6px;
   }
 
   .header h1 {
-    font-size: 32px;
+    font-size: 35px;
   }
 
   .diamonds {
-    font-size: 16px;
+    font-size: 12px;
     letter-spacing: 5px;
   }
 
   .package-box {
     padding: 20px;
+    height: auto;
+  }
+
+  .package-box img {
+    width: 80%;
+    margin: 20px auto 0 auto;
+    display: block;
   }
 
   .pkg-title {
@@ -155,25 +162,25 @@ body {
   }
 
   .price {
-    font-size: 28px;
+    font-size: 30px;
     padding-right: 20px;
   }
 
   .pkg-list {
-    font-size: 16px;
+    font-size: 20px;
     padding-left: 18px;
   }
 
   .pkg-list li {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .btn {
-    padding: 12px 30px;
+    padding: 15px 40px;
   }
 
   .img-btn {
-    width: 22px;
+    width: 30px;
   }
 }
 

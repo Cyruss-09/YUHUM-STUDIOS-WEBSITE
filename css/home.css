@@ -17,7 +17,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f8f7f5;
+  background-color: #7e1702;
   padding: 12px 20px;
   z-index: 1000;
   border-bottom: 1px solid #ccc;
@@ -25,7 +25,7 @@ body {
 
 .nav-links h2 {
   font-size: clamp(18px, 3vw, 34px);
-  color: #523e26;
+  color: #e9a24d;
   overflow: hidden;
   white-space: nowrap;
   width: auto;
@@ -66,7 +66,7 @@ body {
 
 .nav-items a {
   text-decoration: none;
-  color: #523e26;
+  color: #ffffff;
   font-size: clamp(15px, 2vw, 15px);
   letter-spacing: 1px;
 }
@@ -93,7 +93,7 @@ video {
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
-  border: 5px solid lightgray;
+  border: 5px solid #e9a24d;
   border-radius: 10px;
   transition: transform 0.4s ease;
   cursor: pointer;
@@ -107,6 +107,7 @@ video {
 }
 
 .location-area {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -122,8 +123,9 @@ video {
 }
 
 .location-area img {
-  width: 100%;
-  max-width: 320px;
+  width: 600px;
+  max-width: 280px;
+  height: auto;
   margin-top: 30px;
   border-radius: 20px;
   border: 1px solid #545659;
@@ -207,8 +209,8 @@ video {
 }
 
 .main-footer {
-  background-color: #801905;
-  padding: 25px 15px;
+  background-color: #7e1702fb;
+  padding: 10px 5px;
   margin-top: 30px;
   text-align: center;
 }
@@ -241,6 +243,7 @@ video {
   filter: brightness(0.8);
 }
 
+/* This is for small screens*/
 @media (max-width: 600px) {
   .nav-links {
     flex-direction: column;
@@ -283,7 +286,7 @@ video {
   }
 
   video {
-    width: 90%;
+    width: 80%;
     margin-top: 250px;
   }
 
@@ -293,7 +296,7 @@ video {
 
   .location-container input[type="text"] {
     padding: 20px 15px;
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .location-container .input-arrow {
@@ -302,11 +305,12 @@ video {
   }
 
   .main-footer {
-    padding: 10px 15px;
+    padding: 8px 10px;
+    font-size: 16px;
   }
 }
 
-/* This is for tablet device*/
+/* This is for desktop device*/
 
 @media (min-width: 901px) {
   .nav-links {
@@ -316,9 +320,10 @@ video {
   .yuhum-photos {
     grid-template-columns: repeat(3, 1fr);
     padding: 40px;
+    min-width: 90%;
   }
 
   .location-area img {
-    max-width: 700px;
+    max-width: 500px;
   }
 }

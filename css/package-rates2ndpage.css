@@ -144,16 +144,16 @@ body {
   }
 
   .logo {
-    width: 120px;
+    width: 150px;
     border-width: 6px;
   }
 
   .header h1 {
-    font-size: 38px;
+    font-size: 40px;
   }
 
   .diamonds {
-    font-size: 16px;
+    font-size: 12px;
     letter-spacing: 5px;
   }
 
@@ -162,7 +162,7 @@ body {
   }
 
   .pkg-list {
-    font-size: 22px;
+    font-size: 25px;
     padding-left: 10px;
   }
 
@@ -180,7 +180,7 @@ body {
   }
 
   .price {
-    font-size: 20px;
+    font-size: 25px;
     margin-left: 15px;
   }
 
@@ -195,12 +195,12 @@ body {
   }
 
   .btn {
-    padding: 12px 30px;
+    padding: 15px 40px;
     font-size: 14px;
   }
 
   .img-btn {
-    width: 22px;
+    width: 30px;
   }
 }
 
@@ -219,7 +219,7 @@ body {
   }
 
   .price {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .package-box {

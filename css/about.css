@@ -115,8 +115,17 @@ header .lead {
 
 /* MOBILE */
 @media (max-width: 480px) {
+  body {
+    line-height: 1.4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
   .container {
-    width: 95%;
+    width: 90%;
+    margin-top: 50px;
+    margin: 0 auto;
   }
 
   header.hero {
@@ -138,7 +147,7 @@ header .lead {
   }
 
   .btn {
-    width: 100%;
+    width: 35%;
     padding: 14px 0;
     font-size: 16px;
   }
