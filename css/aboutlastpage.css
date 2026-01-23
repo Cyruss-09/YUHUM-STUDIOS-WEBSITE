@@ -93,20 +93,56 @@
   display: block;
 }
 
-@media screen and (max-width: 600px) {
-  .last-page-container {
-    flex-direction: column;
-    gap: 20px;
+@media (max-width: 600px) {
+  .last-page {
+    padding: 40px 20px;
+    margin: 20px;
   }
 
-  .image-note-wrapper img {
-    width: 90%;
-    max-width: 200px;
+  .last-page-container {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .last-text {
+    font-size: 18px;
+    max-width: 100%;
+  }
+
+  .last-text h2 {
+    font-size: 36px;
+  }
+
+  .small-text {
+    font-size: 18px;
+  }
+
+  .last-image-section {
+    position: relative;
+  }
+
+  .last-image-section img {
+    width: 220px;
+    border: 12px solid white;
+    transform: rotate(-5deg);
   }
 
   .handwritten-note {
-    right: 5%;
-    bottom: 2%;
-    font-size: 20px;
+    position: absolute;
+    font-size: 22px;
+    right: 10px;
+    top: -25px;
+    transform: none;
+    text-align: center;
+    transform: rotate(-10deg);
+  }
+
+  .btn {
+    padding: 14px 36px;
+    font-size: 14px;
+  }
+
+  .img-btn {
+    width: 24px;
   }
 }

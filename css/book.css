@@ -139,105 +139,95 @@ body {
   color: #fff;
 }
 
-
-@media (max-width: 992px) {
-  .nav-items {
-    gap: 20px;
-  }
-
-  .nav-items a {
-    font-size: 18px;
-  }
-
-  .yuhum-logo {
-    width: 100px;
-  }
-}
-
-@media (max-width: 600px) {
-  .nav-links {
-    flex-direction: column;
-    padding: 15px;
-    gap: 10px;
-  }
-
-  .nav-items {
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-  }
-
-  .nav-items a {
-    font-size: 16px;
-  }
-
+/* this is for mobile devices */
+@media (max-width: 768px) {
   body {
-    padding-top: 140px;
+    padding: 20px 0 0 0;
   }
-}
 
-@media (max-width: 992px) {
   .booking-container {
     flex-direction: column;
     height: auto;
+    margin: 20px 10px;
   }
 
   .booking-info {
     border-right: none;
     border-bottom: 1px solid #ddd;
     padding: 20px;
+    overflow-y: visible;
+    font-size: 16px;
+  }
+
+  .booking-info .logo {
+    width: 90px;
+  }
+
+  .booking-info h2 {
+    font-size: 22px;
+  }
+
+  .booking-info h3 {
+    font-size: 16px;
+  }
+
+  .Kadlaw-info,
+  .Gugma-info,
+  .Addons-info,
+  .Reminders-info,
+  .Payments-info {
+    font-size: 14px;
   }
 
   .booking-calendar {
     padding: 20px;
-  }
-}
-
-@media (max-width: 600px) {
-  .booking-container {
-    margin: 50px 10px;
-  }
-
-  .booking-info,
-  .booking-calendar {
-    padding: 15px;
+    overflow: visible;
   }
 
   .calendar-header {
     flex-direction: column;
+    align-items: center;
     text-align: center;
-    font-size: 50px;
-    gap: 10px;
+    font-size: 20px;
+    gap: 5px;
   }
 
-  .weekdays-grid,
+  .weekdays-grid {
+    font-size: 13px;
+  }
+
   .dates-grid {
-    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
   }
 
-  .date,
-  .time-slots button {
+  .date {
     font-size: 14px;
+    padding: 8px;
+  }
+
+  .time-slots {
+    max-height: none;
+    padding-top: 15px;
+  }
+
+  .time-slots button {
     padding: 12px;
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
-  .calendar-header {
-    font-size: 20px;
-  }
-
   .weekday-name {
-    font-size: 25px;
+    font-size: 12px;
   }
 
   .date {
-    font-size: 20px;
-    padding: 8px;
+    padding: 6px;
+    font-size: 13px;
   }
 
   .time-slots button {
-    padding: 14px;
     font-size: 13px;
+    padding: 10px;
   }
 }

@@ -17,7 +17,6 @@ body {
   font-size: 18px;
 }
 
-
 .right-container {
   flex: 0 0 60%;
   max-width: 65%;
@@ -122,7 +121,6 @@ body {
   font-weight: 700;
   font-family: "Times New Roman", Times, serif;
 }
-
 
 .backdrop input[type="radio"] {
   margin-top: 20px;
@@ -251,7 +249,6 @@ input[type="radio"] {
   cursor: pointer;
 }
 
-
 .social-media-consent input[type="radio"] {
   margin-top: 20px;
   appearance: none;
@@ -307,7 +304,6 @@ input[type="radio"] {
   transition: 0.25s ease;
 }
 
-
 .Discovered-option input[type="radio"]:checked {
   background-color: #b0481c;
   border-color: #b0481c;
@@ -332,7 +328,6 @@ input:focus {
   outline: none;
   box-shadow: 0 0 8px rgba(59, 19, 1, 0.5);
 }
-
 
 .btn {
   display: inline-block;
@@ -390,61 +385,41 @@ input:focus {
   }
 }
 
-@media (max-width: 600px) {
+/* This is for mobile devices */
+@media (max-width: 768px) {
   body {
-    padding: 20px 10px;
+    padding: 10px;
   }
 
   .booking-container {
-    padding: 10px;
-    gap: 20px;
+    flex-direction: column;
+    margin: 20px auto;
+    height: auto;
   }
 
-  .booking-info,
-  .right-container,
-  .package-info-right {
-    padding: 15px;
+  .booking-info {
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+    overflow: visible;
   }
 
-  .name-group input,
-  .email-group input,
-  .pet-info input,
-  .spotify-playlist input,
-  .discovered-via input {
-    width: 100%;
-    font-size: 14px;
-    padding: 8px;
+  .right-container {
+    max-width: 100%;
+    padding: 20px;
   }
 
-  .mobile-group input,
-  .voucher-group input {
-    width: 50%;
-    font-size: 14px;
-    padding: 8px;
+  .booking-info .logo {
+    width: 90px;
   }
 
-  .group-size input {
-    width: 20%;
-    font-size: 14px;
-    padding: 8px;
+  .booking-info h2 {
+    font-size: 26px;
   }
 
-  .package-option input[type="radio"],
-  .backdrop input[type="radio"],
-  .hmua-service input[type="radio"],
-  .social-media-consent input[type="radio"] {
-    width: 18px;
-    height: 18px;
-  }
-
-  .btn-container {
-    text-align: center;
-  }
-
-  .btn {
-    width: 100%;
-    padding: 12px 0;
-    font-size: 14px;
+  .booking-info h3 {
+    font-size: 16px;
   }
 
   .Kadlaw-info,
@@ -452,6 +427,53 @@ input:focus {
   .Addons-info,
   .Reminders-info,
   .Payments-info {
+    font-size: 15px;
+  }
+
+  .details-text h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .name-group,
+  .email-group,
+  .mobile-group,
+  .voucher-group,
+  .group-size,
+  .package-label,
+  .pet-info,
+  .hmua-info,
+  .spotify-playlist,
+  .social-media-info,
+  .Discovered-label {
     font-size: 16px;
+    margin-bottom: 25px;
+  }
+
+  .name-group input,
+  .email-group input,
+  .pet-info input,
+  .spotify-playlist input {
+    width: 90%;
+    font-size: 15px;
+  }
+
+  .mobile-group input,
+  .voucher-group input,
+  .group-size input {
+    width: 50%;
+    font-size: 15px;
+  }
+
+  .package-option label,
+  .Discovered-via label {
+    font-size: 15px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    margin-top: 40px;
   }
 }
