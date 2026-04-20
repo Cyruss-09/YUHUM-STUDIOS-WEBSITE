@@ -20,8 +20,9 @@
         <span class="star" data-value="5">&#9733;</span>
       </div>
     
-      <form id="feedback-form" action="greetings.html">
-         <textarea class="feedback-input" placeholder="Write your message here..." required></textarea>
+      <form id="feedback-form" action="send.php" method="POST">
+         <input type="hidden" name="rating" id="rating" value="0">
+         <textarea class="feedback-input" placeholder="Write your message here..." name="message" required></textarea>
         <button type="submit">Submit Feedback</button>
       </form>
     <script src="javascript/rateus.js"></script>
