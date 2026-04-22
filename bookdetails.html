@@ -127,7 +127,7 @@
         </p>
       </div>
 
-      <form action="successful-schedule.html" class="details-text">
+      <form action="/db/book.php" method="POST" class="details-text">
 
       <div class="right-container">
         <div class="details-text">
@@ -138,13 +138,13 @@
 
           <div class="name-group">
             <label>Name:</label><br />
-            <input type="text" placeholder="Enter name" required />
+            <input type="text" name="name" placeholder="Enter name" required />
           </div>
 
 
           <div class="email-group">
             <label>Email:</label><br />
-            <input type="email" placeholder="Enter email" required />
+            <input type="email" name="email" placeholder="Enter email" required />
           </div>
 
 
@@ -153,6 +153,7 @@
             <div class="phone-field">
               <input
                 type="number"
+                name="mobile_number"
                 placeholder="09123456789"
                 maxlength="11"
                 minlength="10"
@@ -163,7 +164,7 @@
 
           <div class="voucher-group">
             <label>Do you have a voucher code?</label><br />
-            <input type="text" placeholder="Enter code" required />
+            <input type="text" name="voucher_code" placeholder="Enter code" required />
           </div>
 
 
@@ -172,7 +173,7 @@
               >How many are you in the group? Additional head is P250
               each.</label
             ><br />
-            <input type="number" placeholder="0" required />
+            <input type="number" name="group_size"  placeholder="0" required />
           </div>
 
 
@@ -199,7 +200,7 @@
           <div class="pet-info">
             <label>Will you bring your pet/s? If YES, specify details.</label
             ><br />
-            <input type="text" required />
+            <input type="text" name="pet_details" required />
           </div>
 
 
@@ -207,29 +208,29 @@
             <h4>Please choose a backdrop color (Half Body Only)</h4>
 
             <label>
-              <input type="radio" name="backdrop-color" required /> Wheat 🧡
+              <input type="radio" name="backdrop" required /> Wheat 🧡
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop-color" required /> Scarlet Red
+              <input type="radio" name="backdrop" required /> Scarlet Red
               ❤️
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop-color" required /> Marine Blue
+              <input type="radio" name="backdrop" required /> Marine Blue
               💙
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop-color" required /> Blush Pink 🩷
+              <input type="radio" name="backdrop" required /> Blush Pink 🩷
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop-color" required /> White 🤍
+              <input type="radio" name="backdrop" required /> White 🤍
             </label>
             <br />
             <br />
@@ -240,23 +241,23 @@
             <label class="hmua-info">Will you avail Hair and Makeup Service? (P4,000)</label>
             <br />
 
-            <label><input type="radio" name="hmua" required /> Yes</label><br />
-            <label><input type="radio" name="hmua" required /> No</label
+            <label><input type="radio" name="hair_makeup" required /> Yes</label><br />
+            <label><input type="radio" name="hair_makeup" required /> No</label
             ><br /><br />
           </div>
 
 
           <div class="spotify-playlist">
             <label>Do you have a Spotify playlist?</label><br />
-            <input type="text" placeholder="Paste link here" required />
+            <input type="text" name="spotify_link" placeholder="Paste link here" required />
           </div>
 
   
           <div class="social-media-consent">
             <label class="social-media-info">Do you allow us to post your photos?</label><br />
-            <label><input type="radio" name="allow-post" required /> Yes</label
+            <label><input type="radio" name="allow_posting" required /> Yes</label
             ><br />
-            <label><input type="radio" name="allow-post" required /> No</label
+            <label><input type="radio" name="allow_posting" required /> No</label
             ><br /><br />
           </div>
 
@@ -266,16 +267,16 @@
 
             <div class="Discovered-option">
               <label>
-                <input type="radio" name="package"  required />
+                <input type="radio" name="referral_source"  required />
                 Tiktok </label>
 
               <label>
-                <input type="radio" name="package" required />
+                <input type="radio" name="referral_source" required />
                 Instagram
               </label>
 
               <label>
-                <input type="radio" name="package" required />
+                <input type="radio" name="referral_source" required />
                 Facebook
               </label>
             </div>
@@ -283,7 +284,7 @@
 
           </div>
 
-            <button type="submit" class="btn">Schedule Event</button>
+            <button type="submit" name="submit"class="btn">Schedule Event</button>
           </div>
         </div>
       </div>
