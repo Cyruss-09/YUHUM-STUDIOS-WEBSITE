@@ -9,7 +9,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("si", $message, $rating);
 
     if($stmt->execute()) {
-        header("Location: greetings.html");
+        header("Location: /greetings.html");
         exit();
     } else {
         echo "Error: " . $stmt->error;

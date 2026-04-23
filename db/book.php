@@ -26,7 +26,7 @@ if (isset($_POST['submit'])) {
     ('$name', '$email', '$mobile', '$voucher', '$group_size', '$package', '$pet', '$backdrop', '$hair_makeup', '$spotify', '$allow_posting', '$source', '$booking_date', '$booking_time')";
 
     if ($conn->query($sql) === TRUE) {
-       header("Location: successful-schedule.html");
+       header("Location: /greetings.html");
        exit();
     } else {
         echo "❌ Error: " . $conn->error;
