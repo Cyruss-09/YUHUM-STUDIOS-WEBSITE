@@ -1,94 +1,88 @@
-// ===== MAIN BOOKING SCRIPT =====
-window.onload = function () {
+document.addEventListener("DOMContentLoaded", function () {
   const dates = document.querySelectorAll(".date");
   const timeButtons = document.querySelectorAll(".time");
   const nextBtn = document.getElementById("nextBtn");
+  const currentDayDiv = document.querySelector(".current-day");
   const monthSpan = document.querySelector(".month");
   const yearSpan = document.querySelector(".year");
-  const currentDayDiv = document.querySelector(".current-day");
+  const form = document.querySelector("form");
 
   let selectedDate = "";
   let selectedTime = "";
 
-  // ===== UPDATE RIGHT SIDE DATE =====
-  function updateCurrentDay(dayNumber) {
+  // GET DEFAULT ACTIVE DATE
+  const defaultActive = document.querySelector(".date.active");
+  if (defaultActive) {
+    selectedDate = defaultActive.dataset.date;
+    document.getElementById("booking_date").value = selectedDate;
+  }
+
+  // UPDATE RIGHT SIDE DATE
+  function updateCurrentDay(dateString) {
+    if (!dateString) return;
+
+    const dateObj = new Date(dateString);
+    if (isNaN(dateObj.getTime())) return;
+
+    const weekday = dateObj.toLocaleDateString("en-US", { weekday: "long" });
     const month = monthSpan.textContent;
     const year = yearSpan.textContent;
 
-    const dateObj = new Date(`${month} ${dayNumber}, ${year}`);
-
-    // ✅ FIX: handle invalid date
-    if (isNaN(dateObj)) return;
-
-    const weekday = dateObj.toLocaleDateString("en-US", { weekday: "long" });
-    currentDayDiv.textContent = `${weekday}, ${month} ${dayNumber}`;
+    currentDayDiv.textContent = `${weekday}, ${month} ${dateObj.getDate()}`;
   }
 
-  // ===== DATE CLICK =====
+  // DATE CLICK
   dates.forEach((date) => {
     date.addEventListener("click", () => {
-      // remove active
       dates.forEach((d) => d.classList.remove("active"));
       date.classList.add("active");
 
-      updateCurrentDay(date.textContent.trim());
+      selectedDate = date.dataset.date;
 
-      // ✅ FIX: fallback if no data-date
-      selectedDate = date.dataset.date || "";
+      document.getElementById("booking_date").value = selectedDate;
 
-      const dateInput = document.getElementById("booking_date");
-      if (dateInput) {
-        dateInput.value = selectedDate;
-      }
-
+      updateCurrentDay(selectedDate);
       checkReady();
     });
   });
 
-  // ===== TIME CLICK =====
+  // TIME CLICK
   timeButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       timeButtons.forEach((t) => t.classList.remove("active"));
       btn.classList.add("active");
 
-      // ✅ FIX: fallback if no data-time
-      selectedTime = btn.dataset.time || "";
+      selectedTime = btn.dataset.time;
 
-      const timeInput = document.getElementById("booking_time");
-      if (timeInput) {
-        timeInput.value = selectedTime;
-      }
+      document.getElementById("booking_time").value = selectedTime;
 
       checkReady();
     });
   });
 
-  // ===== SHOW BUTTON ONLY IF READY =====
+  // ENABLE BUTTON ONLY IF READY
   function checkReady() {
     if (selectedDate && selectedTime) {
       nextBtn.style.display = "block";
+      nextBtn.disabled = false;
     } else {
       nextBtn.style.display = "none";
     }
   }
 
-  // ===== NEXT BUTTON =====
-  nextBtn.addEventListener("click", (e) => {
-    e.preventDefault(); // ✅ FIX: stop accidental reload
+  checkReady();
 
+  nextBtn.addEventListener("click", () => {
     if (!selectedDate || !selectedTime) {
       alert("Please select date and time!");
       return;
     }
 
-    const form = document.querySelector("form");
+    // store temporary data
+    sessionStorage.setItem("booking_date", selectedDate);
+    sessionStorage.setItem("booking_time", selectedTime);
 
-    // ✅ FIX: check if form exists
-    if (!form) {
-      console.error("Form not found!");
-      return;
-    }
-
-    form.submit();
+    // go to next page
+    window.location.href = "bookdetails.html";
   });
-};
+});

@@ -127,8 +127,10 @@
         </p>
       </div>
 
-      <form action="/db/book.php" method="POST" class="details-text">
-
+      <form action="/php/book.php" method="POST" class="details-text">
+        <input type="hidden" name="booking_date" id="booking_date">
+        <input type="hidden" name="booking_time" id="booking_time">
+        
       <div class="right-container">
         <div class="details-text">
           <div class="form-group">
@@ -182,13 +184,13 @@
 
             <div class="package-option">
               <label>
-                <input type="radio" name="package" required />
+                <input type="radio" name="package" value="P649-Kadlaw Package" required />
                 P649 - Kadlaw Package: For 2 Pax | 15 min self-shoot | 10 min
                 photo selection | 1 backdrop of choice (of 3) | 2 4R/6x4 and<br />
-                2x Photo Grid Strip | Soft copies of Selected Photos (5) </label><br />
+                2x Photo Grid Strip | Soft copies of Selected Photos (5) </label>
 
               <label>
-                <input type="radio" name="package" required />
+                <input type="radio" name="package" value="P1499-Gugma Package" required />
                 P1499 - Gugma Package: For 5 Pax | 20 min self-shoot | 15 <br />
                 min photo selection | 1 backdrop of choice (of 3) | 5 4R/6x4<br />
                 and 6x Photo Grid Strips | Soft copies of Selected Photos (15)
@@ -197,40 +199,48 @@
           </div>
 
 
-          <div class="pet-info">
-            <label>Will you bring your pet/s? If YES, specify details.</label
-            ><br />
-            <input type="text" name="pet_details" required />
-          </div>
+         <div class="pet-info">
+              <label class="pet-question">
+                Will you bring your pet/s? If YES, specify details.
+              </label>
+
+              <label class="pet_info_label">
+                <input type="radio" name="pet_details" value="Yes" required /> Yes
+              </label><br>
+
+              <label class="pet_info_label">
+                <input type="radio" name="pet_details" value="No" required /> No
+              </label>
+        </div>
 
 
           <div class="backdrop">
             <h4>Please choose a backdrop color (Half Body Only)</h4>
 
             <label>
-              <input type="radio" name="backdrop" required /> Wheat 🧡
+              <input type="radio" name="backdrops" value="Wheat" required /> Wheat 🧡
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop" required /> Scarlet Red
+              <input type="radio" name="backdrops" value="Scarlet Red" required /> Scarlet Red
               ❤️
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop" required /> Marine Blue
+              <input type="radio" name="backdrops" value="Marine Blue" required /> Marine Blue
               💙
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop" required /> Blush Pink 🩷
+              <input type="radio" name="backdrops" value="Blush Pink" required /> Blush Pink 🩷
             </label>
             <br />
 
             <label>
-              <input type="radio" name="backdrop" required /> White 🤍
+              <input type="radio" name="backdrops" value="White" required /> White 🤍
             </label>
             <br />
             <br />
@@ -238,12 +248,18 @@
 
 
           <div class="hmua-service">
-            <label class="hmua-info">Will you avail Hair and Makeup Service? (P4,000)</label>
+            <label class="hmua-info">
+              Will you avail Hair and Makeup Service? (P4,000)
+            </label>
             <br />
 
-            <label><input type="radio" name="hair_makeup" required /> Yes</label><br />
-            <label><input type="radio" name="hair_makeup" required /> No</label
-            ><br /><br />
+            <label class="hair_makeup">
+              <input type="radio" name="hair_makeup" value="Yes" required /> Yes
+            </label><br/>
+
+            <label class="hair_makeup">
+              <input type="radio" name="hair_makeup" value="No" required /> No
+              </label><br/> <br/>
           </div>
 
 
@@ -254,29 +270,38 @@
 
   
           <div class="social-media-consent">
-            <label class="social-media-info">Do you allow us to post your photos?</label><br />
-            <label><input type="radio" name="allow_posting" required /> Yes</label
-            ><br />
-            <label><input type="radio" name="allow_posting" required /> No</label
-            ><br /><br />
+            <label class="social-media-info">
+              Do you allow us to post your photos?
+            </label><br />
+
+            <label>
+              <input type="radio" name="allow_posting" value="Yes" required /> Yes
+            </label><br />
+
+            <label>
+              <input type="radio" name="allow_posting" value="No" required /> No
+            </label><br /><br />
           </div>
 
           
           <div class="Discovered-via">
-            <label class="Discovered-label">How did you find about us?</label>
+            <label class="Discovered-label">
+              How did you find about us?
+            </label>
 
             <div class="Discovered-option">
               <label>
-                <input type="radio" name="referral_source"  required />
-                Tiktok </label>
+                <input type="radio" name="referral_source" value="Tiktok"  required />
+                Tiktok 
+              </label>
 
               <label>
-                <input type="radio" name="referral_source" required />
+                <input type="radio" name="referral_source" value="Instagram" required />
                 Instagram
               </label>
 
               <label>
-                <input type="radio" name="referral_source" required />
+                <input type="radio" name="referral_source" value="Facebook" required />
                 Facebook
               </label>
             </div>
