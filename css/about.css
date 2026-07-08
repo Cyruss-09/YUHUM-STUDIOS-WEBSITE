@@ -84,6 +84,7 @@ header .lead {
   transition: 0.5s;
 }
 
+
 /* TABLET */
 @media (max-width: 768px) {
   .container {
