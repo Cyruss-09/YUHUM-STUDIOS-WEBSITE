@@ -184,7 +184,7 @@ export const Home = () => {
           </div>
 
           <p className="text-stone-400 font-sans text-[11px] tracking-wide">
-            &copy; {new Date().getFullYear()} YUHUM STUDIO. All rights reserved.
+            &copy; {new Date().getFullYear()} YUHUM STUDIOS. All rights reserved.
           </p>
         </div>
       </footer>
