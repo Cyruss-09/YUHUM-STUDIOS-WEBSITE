@@ -23,8 +23,8 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
       {/* Brand Logo */}
       <div className="md:mb-12 text-center">
         <h1 className="font-serif text-[2.4rem] md:text-[2.6rem] font-normal leading-[0.9] md:leading-[0.85] tracking-wider text-white text-shadow-amber-800 m-0 uppercase">
-          YUHUM &nbsp; &nbsp; &nbsp;
-          <br /> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          YUHUM &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          <br /> &nbsp; &nbsp; &nbsp;
           .STUDIOS
         </h1>
       </div>

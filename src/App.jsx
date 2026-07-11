@@ -1,22 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Home } from "./components/sections/Home";
 import { Book } from "./components/sections/Book";
 
 export default function App() {
-  const [activeLink, setActiveLink] = useState("home");
+  // Initialize state based on the current URL hash, e.g., "#book" -> "book"
+  const [activeLink, setActiveLink] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    return hash || "home";
+  });
+
+  // Listen for manual URL changes or back/forward button clicks
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      setActiveLink(hash || "home");
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  // Custom setter that updates the URL hash automatically
+  const handlePageChange = (newPage) => {
+    window.location.hash = newPage === "home" ? "" : newPage;
+    setActiveLink(newPage);
+  };
 
   return (
     <div className="min-h-screen bg-[#fdfbf7]">
-      <Navbar activeLink={activeLink} setActiveLink={setActiveLink} />
-      
+      <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
+
       <main className="w-full">
         {activeLink === "home" && <Home />}
-        {/* Pass setActiveLink here so Book can change pages if needed */}
-        {activeLink === "book" && <Book setActiveLink={setActiveLink} />}
-        
-        {activeLink === "story" && <div className="p-10 text-center">Our Story Section</div>}
-        {activeLink === "faqs" && <div className="p-10 text-center">Rate Us Section</div>}
+        {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
+        {/* ... rest of your code */}
       </main>
     </div>
   );
