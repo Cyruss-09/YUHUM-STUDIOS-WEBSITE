@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
-import { Home } from "./components/sections/Home";
-import { Book } from "./components/sections/Book";
+import { Home } from "./components/pages/Home";
+import { Book } from "./components/pages/Book";
 
 export default function App() {
   // Initialize state based on the current URL hash, e.g., "#book" -> "book"
