@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Home } from "./components/pages/Home";
 import { Book } from "./components/pages/Book";
+import {OurStory} from "./components/pages/OurStory";
 
 export default function App() {
   // Initialize state based on the current URL hash, e.g., "#book" -> "book"
@@ -34,6 +35,7 @@ export default function App() {
       <main className="w-full">
         {activeLink === "home" && <Home />}
         {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
+        {activeLink === "our story" && <OurStory setActiveLink={handlePageChange}/>}
         {/* ... rest of your code */}
       </main>
     </div>
