@@ -5,17 +5,18 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
   // Track mobile menu open/close state
   const [isOpen, setIsOpen] = useState(false);
 
+  // Fix: Adjusted the IDs to match your hash matching configuration in App.jsx
   const navItems = [
     { id: "home", label: "home", url: "#" },
-    { id: "book", label: "book", url: "#" },
-    { id: "story", label: "our story", url: "#" },
-    { id: "faqs", label: "rate us", url: "#" },
+    { id: "book", label: "book", url: "#book" },
+    { id: "our-story", label: "our story", url: "#our-story" }, // Changed ID to "our-story" & split label text for readability
+    { id: "faqs", label: "rate us", url: "#faqs" },
   ];
 
   const handleLinkClick = (e, id) => {
-    e.preventDefault(); // Prevents web page from refreshing
+    e.preventDefault(); // Prevents standard web page refresh
     setActiveLink(id);
-    setIsOpen(false); // Close mobile menu when a link is clicked
+    setIsOpen(false); // Close mobile menu drawer overlay when a link is clicked
   };
 
   return (
@@ -29,7 +30,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
         </h1>
       </div>
 
-      {/* Hamburger Button for Mobile */}
+      {/* Hamburger Button for Mobile Ports */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="absolute top-1/2 -translate-y-1/2 right-6 md:hidden z-50 text-white focus:outline-none"
@@ -46,7 +47,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
         )}
       </button>
 
-      {/* Desktop Navigation Links */}
+      {/* Desktop Navigation Link Row */}
       <nav className="hidden md:block">
         <ul className="flex items-center gap-8 m-0 p-0 list-none">
           {navItems.map((item) => (
@@ -68,7 +69,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
         </ul>
       </nav>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Drawer Overlay */}
       <div
         className={`fixed inset-0 bg-amber-950 z-40 flex flex-col items-center justify-center transform transition-transform duration-300 ease-in-out md:hidden ${
           isOpen ? "translate-x-0" : "translate-x-full"

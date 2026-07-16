@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Home } from "./components/pages/Home";
 import { Book } from "./components/pages/Book";
-import {OurStory} from "./components/pages/OurStory";
+import { OurStory } from "./components/pages/OurStory";
 
 export default function App() {
-  // Initialize state based on the current URL hash, e.g., "#book" -> "book"
+  // Initialize state based on the current URL hash, e.g., "#our-story" -> "our-story"
   const [activeLink, setActiveLink] = useState(() => {
     const hash = window.location.hash.replace("#", "");
     return hash || "home";
@@ -33,10 +33,12 @@ export default function App() {
       <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
 
       <main className="w-full">
+        {/* Conditional Page Rendering */}
         {activeLink === "home" && <Home />}
         {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
-        {activeLink === "our story" && <OurStory setActiveLink={handlePageChange}/>}
-        {/* ... rest of your code */}
+        
+        {/* Fix: Changed from "our story" to "our-story" to align cleanly with standard URL strings */}
+        {activeLink === "our-story" && <OurStory setActiveLink={handlePageChange} />}
       </main>
     </div>
   );
