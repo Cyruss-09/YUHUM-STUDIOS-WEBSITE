@@ -10,7 +10,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
     { id: "home", label: "home", url: "#" },
     { id: "book", label: "book", url: "#book" },
     { id: "our-story", label: "our story", url: "#our-story" }, // Changed ID to "our-story" & split label text for readability
-    { id: "faqs", label: "rate us", url: "#faqs" },
+    { id: "rate-us", label: "rate us", url: "#rate-us" },
   ];
 
   const handleLinkClick = (e, id) => {

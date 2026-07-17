@@ -13,17 +13,27 @@ const PackageCard = ({
   altText,
   activeBookingId,
   setActiveBookingId,
+  onConfirm, // Added to handle schedule confirmation
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedStudio, setSelectedStudio] = useState(null);
 
   // State for Add-ons checklist
   const [selectedAddons, setSelectedAddons] = useState({});
-  // State for Calendar & Time Selection
-  const [selectedDate, setSelectedDate] = useState(14); // Default to July 14, 2026 as per screenshot
+  // State for Calendar & Time Selection (Default to July 14, 2026)
+  const [selectedDate, setSelectedDate] = useState(14);
   const [selectedTime, setSelectedTime] = useState(null);
 
   const isBookingOpen = activeBookingId === id;
+
+  // Automatically clear sub-selections if this specific card closes
+  useEffect(() => {
+    if (!isBookingOpen) {
+      setSelectedStudio(null);
+      setSelectedTime(null);
+      setSelectedAddons({});
+    }
+  }, [isBookingOpen]);
 
   const handleStudioSelect = (studioName) => {
     setSelectedStudio(studioName);
@@ -34,6 +44,34 @@ const PackageCard = ({
       ...prev,
       [addonKey]: !prev[addonKey],
     }));
+  };
+
+  // Helper function to figure out the exact weekday for July 2026
+  const getWeekdayName = (dayNumber) => {
+    const dateObj = new Date(2026, 6, dayNumber); // July is month index 6
+    return dateObj.toLocaleDateString("en-US", { weekday: "long" });
+  };
+
+  // Compiles all state selections together and passes it up on confirmation
+  const handleConfirmSchedule = () => {
+    const chosenAddOns = Object.keys(selectedAddons).filter(
+      (key) => selectedAddons[key],
+    );
+
+    const bookingSummary = {
+      packageId: id,
+      packageTitle: title,
+      basePrice: price,
+      studio: selectedStudio,
+      date: `July ${selectedDate}, 2026`,
+      dayOfWeek: getWeekdayName(selectedDate),
+      time: selectedTime,
+      addOns: chosenAddOns,
+    };
+
+    if (onConfirm) {
+      onConfirm(bookingSummary);
+    }
   };
 
   const addOns = [
@@ -105,10 +143,6 @@ const PackageCard = ({
               <button
                 onClick={() => {
                   setActiveBookingId(isBookingOpen ? null : id);
-                  if (isBookingOpen) {
-                    setSelectedStudio(null);
-                    setSelectedTime(null);
-                  }
                 }}
                 className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 shrink-0 border ${
                   isBookingOpen
@@ -158,7 +192,7 @@ const PackageCard = ({
 
       {/* --- STUDIO SELECTION PANEL --- */}
       {isBookingOpen && (
-        <div className="w-full mt-4 flex flex-col gap-6 animate-fadeIn">
+        <div className="w-full mt-4 flex flex-col gap-6 dynamic-panel">
           {/* Base Studio Box */}
           <div className="w-full bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-sm">
             <div className="bg-neutral-50 px-6 py-3 border-b border-neutral-200">
@@ -204,9 +238,9 @@ const PackageCard = ({
             </div>
           </div>
 
-          {/* --- NESTED ADD-ONS AND SCHEDULER SECTION (Appears only after selecting a studio) --- */}
+          {/* --- NESTED ADD-ONS AND SCHEDULER SECTION --- */}
           {selectedStudio && (
-            <div className="w-full flex flex-col gap-6 animate-fadeIn">
+            <div className="w-full flex flex-col gap-6 dynamic-panel">
               {/* 1. ADD TO APPOINTMENT BLOCK */}
               <div className="w-full bg-[#FAFAFA] border border-neutral-200 rounded-xl p-6 md:p-8">
                 <h3 className="text-xs font-bold tracking-widest text-gray-900 uppercase mb-6">
@@ -292,12 +326,12 @@ const PackageCard = ({
 
                   {/* Days Matrix Grid */}
                   <div className="grid grid-cols-7 gap-y-2 text-center text-sm font-medium">
-                    {/* Empty paddings to make Day 1 start correctly on Wednesday for July 2026 */}
+                    {/* Empty padding blocks to make July 1st correctly align to Wednesday */}
                     <span className="text-transparent"></span>
                     <span className="text-transparent"></span>
 
                     {daysInJuly.map((day) => {
-                      const isPast = day < 13; // Block past dates relative to screenshot context
+                      const isPast = day < 13;
                       const isSelected = selectedDate === day;
                       return (
                         <button
@@ -305,13 +339,13 @@ const PackageCard = ({
                           disabled={isPast}
                           onClick={() => {
                             setSelectedDate(day);
-                            setSelectedTime(null); // Clear time if day changes
+                            setSelectedTime(null);
                           }}
                           className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full transition-all text-xs font-semibold ${
                             isPast
                               ? "text-neutral-300 cursor-not-allowed"
                               : isSelected
-                                ? "bg-neutral-300 text-black shadow-sm font-bold"
+                                ? "bg-black text-white shadow-sm font-bold"
                                 : "text-neutral-800 hover:bg-neutral-200"
                           }`}
                         >
@@ -322,11 +356,11 @@ const PackageCard = ({
                   </div>
                 </div>
 
-                {/* Right Side: Active Date Info & Time Slots Grid */}
+                {/* Right Side: Dynamic Date Title & Time Slots Grid */}
                 <div className="w-full lg:w-7/12 flex flex-col">
                   <div className="mb-2">
-                    <h4 className="text-base font-semibold text-neutral-900">
-                      Tuesday, July {selectedDate}
+                    <h4 className="text-base font-semibold text-neutral-900 capitalize">
+                      {getWeekdayName(selectedDate)}, July {selectedDate}
                     </h4>
                     <p className="text-[11px] font-bold tracking-wider text-neutral-500 uppercase mt-1">
                       Time Zone:{" "}
@@ -355,9 +389,11 @@ const PackageCard = ({
 
                   {/* Complete Button Trigger */}
                   {selectedTime && (
-                    <button className="w-full mt-6 bg-black text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition shadow-md animate-fadeIn">
-                      Confirm Schedule (
-                      {timeSlots.find((t) => t === selectedTime)})
+                    <button
+                      onClick={handleConfirmSchedule}
+                      className="w-full mt-6 bg-black text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition shadow-md dynamic-panel"
+                    >
+                      Confirm Schedule ({selectedTime})
                     </button>
                   )}
                 </div>
@@ -381,6 +417,32 @@ export const Book = ({ setActiveLink }) => {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [setActiveLink]);
+
+  // Handle data summary package confirmation received from the cards
+  const handleBookingConfirmation = async (summaryData) => {
+    console.log("Sending to server:", summaryData);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(summaryData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`🎉 Saved to PostgreSQL! Booking ID is: ${result.data.id}`);
+      } else {
+        alert("⚠️ Server accepted request but database failed to save.");
+      }
+    } catch (error) {
+      console.error("Network error saving booking:", error);
+      alert("❌ Could not connect to the backend server.");
+    }
+  };
 
   const studioAColors = [
     { name: "Wheat", bg: "bg-[#F5DEB3]", text: "text-[#5c4a3c]" },
@@ -481,6 +543,7 @@ export const Book = ({ setActiveLink }) => {
             description="A timeless studio session portraits with elegant printed keepsakes. Package Inclusions: • Good for 2 people • 1-hour appointment duration, 15-minute unlimited studio shoot • Can be a mix of headshots ..."
             activeBookingId={activeBookingId}
             setActiveBookingId={setActiveBookingId}
+            onConfirm={handleBookingConfirmation}
             inclusions={[
               { text: "• Good for up to 4 persons" },
               { text: "• For 2 pax" },
@@ -509,6 +572,7 @@ export const Book = ({ setActiveLink }) => {
             description="A session designed for families, friends, or medium-sized groups who want timeless studio portraits."
             activeBookingId={activeBookingId}
             setActiveBookingId={setActiveBookingId}
+            onConfirm={handleBookingConfirmation}
             inclusions={[
               { text: "• For 5 pax" },
               { text: "• 20 minute self-shoot" },
@@ -533,7 +597,6 @@ export const Book = ({ setActiveLink }) => {
       {/* --- FOOTER --- */}
       <footer className="w-full bg-amber-950 border-t border-amber-900/40 mt-auto py-12 px-6 md:px-12 text-stone-300 font-sans">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Column 1: Brand details */}
           <div className="md:col-span-1 space-y-4">
             <h3 className="font-serif text-2xl font-bold text-white tracking-wide">
               Yuhum.Studios
@@ -542,12 +605,11 @@ export const Book = ({ setActiveLink }) => {
               Crafting premium experiences with meticulous attention to detail
               and timeless aesthetics.
             </p>
-            {/* Social Icons */}
             <div className="flex space-x-4 pt-2">
-              {/* Instagram */}
               <a
                 href="https://www.instagram.com/yuhum.studios/"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-amber-400 transition-colors duration-200"
                 aria-label="Instagram"
               >
@@ -556,14 +618,13 @@ export const Book = ({ setActiveLink }) => {
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0 3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                 </svg>
               </a>
-
-              {/* Facebook */}
               <a
                 href="https://www.facebook.com/yuhum.studiosph"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-amber-400 transition-colors duration-200"
                 aria-label="Facebook"
               >
@@ -575,11 +636,10 @@ export const Book = ({ setActiveLink }) => {
                   <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
                 </svg>
               </a>
-
-              {/* TikTok */}
               <a
-                href="https://www.tiktok.com/@yuhumstudios?is_from_webapp=1&sender_device=pc"
+                href="https://www.tiktok.com/@yuhumstudios"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-amber-400 transition-colors duration-200"
                 aria-label="TikTok"
               >
@@ -594,48 +654,34 @@ export const Book = ({ setActiveLink }) => {
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">
               Explore
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a
-                  href="#"
-                  className="hover:text-white transition-colors duration-200"
-                >
+                <a href="#" className="hover:text-white transition-colors">
                   About Us
                 </a>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="hover:text-white transition-colors duration-200"
-                >
+                <a href="#" className="hover:text-white transition-colors">
                   Services
                 </a>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="hover:text-white transition-colors duration-200"
-                >
+                <a href="#" className="hover:text-white transition-colors">
                   Our Journal
                 </a>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="hover:text-white transition-colors duration-200"
-                >
+                <a href="#" className="hover:text-white transition-colors">
                   Contact
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Contact/Hours */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">
               Appointments
@@ -647,7 +693,6 @@ export const Book = ({ setActiveLink }) => {
             </ul>
           </div>
 
-          {/* Column 4: Newsletter Sign-up */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider">
               Stay Connected
@@ -666,7 +711,7 @@ export const Book = ({ setActiveLink }) => {
               />
               <button
                 type="submit"
-                className="bg-white hover:bg-stone-100 text-amber-950 font-semibold px-4 py-2 rounded-lg text-sm transition-colors duration-200 shadow-sm"
+                className="bg-white hover:bg-stone-100 text-amber-950 font-semibold px-4 py-2 rounded-lg text-sm transition-colors shadow-sm"
               >
                 Join
               </button>
@@ -674,22 +719,15 @@ export const Book = ({ setActiveLink }) => {
           </div>
         </div>
 
-        {/* Bottom Bar: Copyright & Terms */}
         <div className="max-w-7xl mx-auto border-t border-amber-900/40 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-stone-400 gap-4">
           <p>
             &copy; {new Date().getFullYear()} Yuhum.Studios All rights reserved.
           </p>
           <div className="flex space-x-6">
-            <a
-              href="#"
-              className="hover:text-white transition-colors duration-200"
-            >
+            <a href="#" className="hover:text-white transition-colors">
               Privacy Policy
             </a>
-            <a
-              href="#"
-              className="hover:text-white transition-colors duration-200"
-            >
+            <a href="#" className="hover:text-white transition-colors">
               Terms of Service
             </a>
           </div>

@@ -3,6 +3,8 @@ import { Navbar } from "./components/Navbar";
 import { Home } from "./components/pages/Home";
 import { Book } from "./components/pages/Book";
 import { OurStory } from "./components/pages/OurStory";
+import { Rateus } from "./components/pages/Rateus";
+import NotFound from "./components/pages/NotFound"; // Import the fallback view
 
 export default function App() {
   // Initialize state based on the current URL hash, e.g., "#our-story" -> "our-story"
@@ -28,6 +30,10 @@ export default function App() {
     setActiveLink(newPage);
   };
 
+  // Define your array of valid application pages
+  const validPages = ["home", "book", "our-story", "rate-us"];
+  const isInvalidPage = !validPages.includes(activeLink);
+
   return (
     <div className="min-h-screen bg-[#fdfbf7]">
       <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
@@ -39,6 +45,10 @@ export default function App() {
         
         {/* Fix: Changed from "our story" to "our-story" to align cleanly with standard URL strings */}
         {activeLink === "our-story" && <OurStory setActiveLink={handlePageChange} />}
+        {activeLink === "rate-us" && <Rateus setActiveLink={handlePageChange} />}
+
+        {/* Fallback View: Displays if the hash points to a non-existent page */}
+        {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
       </main>
     </div>
   );
