@@ -410,6 +410,16 @@ const PackageCard = ({
 export const Book = ({ setActiveLink }) => {
   const [activeBookingId, setActiveBookingId] = useState(null);
 
+  // State for Custom Confirmation Modal
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    isSuccess: false,
+  });
+
+  const closeModal = () => setModal((prev) => ({ ...prev, isOpen: false }));
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (setActiveLink) setActiveLink("home");
@@ -431,16 +441,46 @@ export const Book = ({ setActiveLink }) => {
         body: JSON.stringify(summaryData),
       });
 
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        setModal({
+          isOpen: true,
+          title: "Server Error",
+          message: "The server returned an invalid response structure.",
+          isSuccess: false,
+        });
+        return;
+      }
+
       const result = await response.json();
 
-      if (result.success) {
-        alert(`🎉 Saved to PostgreSQL! Booking ID is: ${result.data.id}`);
+      if (response.ok && result.success) {
+        setModal({
+          isOpen: true,
+          title: "Booking Confirmed!",
+          message:
+            "Thank you for confirming your appointment. We look forward to seeing you on the scheduled date and time. If you need to reschedule or have any questions, please don't hesitate to contact us.",
+          isSuccess: true,
+        });
       } else {
-        alert("⚠️ Server accepted request but database failed to save.");
+        setModal({
+          isOpen: true,
+          title: "Database Error",
+          message:
+            result.message ||
+            "Server accepted request but database failed to save.",
+          isSuccess: false,
+        });
       }
     } catch (error) {
       console.error("Network error saving booking:", error);
-      alert("❌ Could not connect to the backend server.");
+      setModal({
+        isOpen: true,
+        title: "Connection Error",
+        message:
+          "Could not connect to the backend server. Please try again later.",
+        isSuccess: false,
+      });
     }
   };
 
@@ -462,7 +502,7 @@ export const Book = ({ setActiveLink }) => {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-[#fdfbf7] flex flex-col font-sans text-gray-600 select-none">
+    <div className="w-full min-h-screen bg-[#fdfbf7] flex flex-col font-sans text-gray-600 select-none relative">
       <div className="w-full max-w-7xl mx-auto p-4 md:p-16 flex flex-col gap-16 flex-grow">
         {/* ================= SECTION 1: STUDIO BACKDROP GUIDE ================= */}
         <div className="w-full flex flex-col md:flex-row items-center justify-between gap-10 pt-12">
@@ -593,6 +633,78 @@ export const Book = ({ setActiveLink }) => {
           />
         </div>
       </div>
+
+      {/* ================= TAILWIND CUSTOM MODAL ================= */}
+      {modal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Body */}
+            <div className="p-6 text-center space-y-4">
+              {/* Status Icon */}
+              <div
+                className={`mx-auto w-14 h-14 flex items-center justify-center rounded-full ${
+                  modal.isSuccess
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-rose-100 text-rose-600"
+                }`}
+              >
+                {modal.isSuccess ? (
+                  <svg
+                    className="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                )}
+              </div>
+
+              {/* Title & Message */}
+              <h3 className="text-lg font-bold font-serif text-neutral-900 tracking-wide">
+                {modal.title}
+              </h3>
+              <p className="text-sm text-stone-600 leading-relaxed font-sans">
+                {modal.message}
+              </p>
+
+              {/* Close Action Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm transition-colors duration-200 shadow-sm ${
+                    modal.isSuccess
+                      ? "bg-black hover:bg-neutral-800 text-white"
+                      : "bg-amber-900 hover:bg-stone-300 text-stone-800"
+                  }`}
+                >
+                  {modal.isSuccess ? "Awesome" : "Dismiss"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
