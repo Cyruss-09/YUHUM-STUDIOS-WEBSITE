@@ -13,14 +13,14 @@ const PackageCard = ({
   altText,
   activeBookingId,
   setActiveBookingId,
-  onConfirm, // Added to handle schedule confirmation
+  onConfirm,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedStudio, setSelectedStudio] = useState(null);
 
   // State for Add-ons checklist
   const [selectedAddons, setSelectedAddons] = useState({});
-  // State for Calendar & Time Selection (Default to July 14, 2026)
+  // State for Calendar & Time Selection
   const [selectedDate, setSelectedDate] = useState(14);
   const [selectedTime, setSelectedTime] = useState(null);
 
@@ -39,23 +39,21 @@ const PackageCard = ({
     setSelectedStudio(studioName);
   };
 
-  const handleAddonChange = (addonKey) => {
+  const handleAddonChange = (addonLabel) => {
     setSelectedAddons((prev) => ({
       ...prev,
-      [addonKey]: !prev[addonKey],
+      [addonLabel]: !prev[addonLabel],
     }));
   };
 
-  // Helper function to figure out the exact weekday for July 2026
   const getWeekdayName = (dayNumber) => {
-    const dateObj = new Date(2026, 6, dayNumber); // July is month index 6
+    const dateObj = new Date(2026, 6, dayNumber); // July 2026
     return dateObj.toLocaleDateString("en-US", { weekday: "long" });
   };
 
-  // Compiles all state selections together and passes it up on confirmation
   const handleConfirmSchedule = () => {
     const chosenAddOns = Object.keys(selectedAddons).filter(
-      (key) => selectedAddons[key],
+      (key) => selectedAddons[key]
     );
 
     const bookingSummary = {
@@ -75,42 +73,20 @@ const PackageCard = ({
   };
 
   const addOns = [
-    { key: "Additional Head", label: "+1 adult", price: "₱250.00" },
-    { key: "Additional Pet", label: "+1 pet", price: "₱100.00" },
-    { key: "Additional 4R Photo Print", label: "+1 4R Print", price: "₱50.00" },
-    {
-      key: "Addtional 2x Photo Grid Strips",
-      label: "+1 2x Photo Grid Strips",
-      price: "₱50.00",
-    },
-    { key: "Raw Photos", label: "All Raw Photos", price: "₱400.00" },
-    {
-      key: "Hair & Makeup Services",
-      label: "Hair & Makeup Service",
-      price: "₱2,500.00",
-    },
-    {
-      key: "Studio Rental",
-      label: "Rental Studio (Rate is per hour)",
-      price: "₱1,000.00",
-    },
+    { key: "add_head", label: "+1 adult", price: "₱250.00" },
+    { key: "add_pet", label: "+1 pet", price: "₱100.00" },
+    { key: "add_4r_print", label: "+1 4R Print", price: "₱50.00" },
+    { key: "add_grid_strips", label: "+1 2x Photo Grid Strips", price: "₱50.00" },
+    { key: "raw_photos", label: "All Raw Photos", price: "₱400.00" },
+    { key: "hair_makeup", label: "Hair & Makeup Service", price: "₱2,500.00" },
+    { key: "studio_rental", label: "Rental Studio (Rate is per hour)", price: "₱1,000.00" },
   ];
 
   const timeSlots = [
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "12:00 PM",
-    "12:30 PM",
-    "1:00 PM",
-    "1:30 PM",
-    "2:00 PM",
-    "4:00 PM",
-    "4:30 PM",
-    "5:00 PM",
-    "5:30 PM",
-    "6:00 PM",
+    "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+    "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
+    "2:00 PM", "4:00 PM", "4:30 PM", "5:00 PM",
+    "5:30 PM", "6:00 PM",
   ];
 
   const daysInJuly = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -202,7 +178,6 @@ const PackageCard = ({
             </div>
 
             <div className="flex flex-col divide-y divide-neutral-100">
-              {/* Studio A */}
               <div className="flex items-center justify-between p-5 hover:bg-neutral-50/50 transition-colors">
                 <span className="font-bold text-base text-black lowercase">
                   studio a
@@ -219,7 +194,6 @@ const PackageCard = ({
                 </button>
               </div>
 
-              {/* Studio B */}
               <div className="flex items-center justify-between p-5 hover:bg-neutral-50/50 transition-colors">
                 <span className="font-bold text-base text-black lowercase">
                   studio b
@@ -254,8 +228,8 @@ const PackageCard = ({
                     >
                       <input
                         type="checkbox"
-                        checked={!!selectedAddons[addon.key]}
-                        onChange={() => handleAddonChange(addon.key)}
+                        checked={!!selectedAddons[addon.label]}
+                        onChange={() => handleAddonChange(addon.label)}
                         className="w-4 h-4 mt-1 accent-black rounded border-gray-300 focus:ring-0"
                       />
                       <div className="text-sm">
@@ -273,7 +247,7 @@ const PackageCard = ({
 
               {/* 2. CALENDAR & TIME SLOTS WRAPPER CONTAINER */}
               <div className="w-full bg-[#FAFAFA] border border-neutral-200 rounded-xl p-6 md:p-8 flex flex-col lg:flex-row gap-12">
-                {/* Left Side: Custom Minimalist Calendar */}
+                {/* Left Side: Calendar */}
                 <div className="w-full lg:w-5/12">
                   <div className="flex items-center justify-between mb-8">
                     <button className="text-neutral-500 hover:text-black">
@@ -313,7 +287,6 @@ const PackageCard = ({
                     </button>
                   </div>
 
-                  {/* Day Initials */}
                   <div className="grid grid-cols-7 gap-y-4 text-center text-xs font-bold text-neutral-900 mb-4">
                     <span>M</span>
                     <span>T</span>
@@ -324,11 +297,9 @@ const PackageCard = ({
                     <span>S</span>
                   </div>
 
-                  {/* Days Matrix Grid */}
                   <div className="grid grid-cols-7 gap-y-2 text-center text-sm font-medium">
-                    {/* Empty padding blocks to make July 1st correctly align to Wednesday */}
-                    <span className="text-transparent"></span>
-                    <span className="text-transparent"></span>
+                    <span key="pad-1" className="text-transparent"></span>
+                    <span key="pad-2" className="text-transparent"></span>
 
                     {daysInJuly.map((day) => {
                       const isPast = day < 13;
@@ -345,8 +316,8 @@ const PackageCard = ({
                             isPast
                               ? "text-neutral-300 cursor-not-allowed"
                               : isSelected
-                                ? "bg-black text-white shadow-sm font-bold"
-                                : "text-neutral-800 hover:bg-neutral-200"
+                              ? "bg-black text-white shadow-sm font-bold"
+                              : "text-neutral-800 hover:bg-neutral-200"
                           }`}
                         >
                           {day}
@@ -356,7 +327,7 @@ const PackageCard = ({
                   </div>
                 </div>
 
-                {/* Right Side: Dynamic Date Title & Time Slots Grid */}
+                {/* Right Side: Time Slots */}
                 <div className="w-full lg:w-7/12 flex flex-col">
                   <div className="mb-2">
                     <h4 className="text-base font-semibold text-neutral-900 capitalize">
@@ -370,7 +341,6 @@ const PackageCard = ({
                     </p>
                   </div>
 
-                  {/* Time Blocks Grid */}
                   <div className="grid grid-cols-3 gap-3 mt-6">
                     {timeSlots.map((time) => (
                       <button
@@ -387,7 +357,6 @@ const PackageCard = ({
                     ))}
                   </div>
 
-                  {/* Complete Button Trigger */}
                   {selectedTime && (
                     <button
                       onClick={handleConfirmSchedule}
@@ -407,10 +376,9 @@ const PackageCard = ({
 };
 
 // --- MAIN BOOK COMPONENT ---
-export const Book = ({ setActiveLink }) => {
+export const Book = ({ setActiveLink, userEmail }) => {
   const [activeBookingId, setActiveBookingId] = useState(null);
 
-  // State for Custom Confirmation Modal
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -428,29 +396,25 @@ export const Book = ({ setActiveLink }) => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [setActiveLink]);
 
-  // Handle data summary package confirmation received from the cards
   const handleBookingConfirmation = async (summaryData) => {
-    console.log("Sending to server:", summaryData);
+    const payload = {
+      packageId: summaryData.packageId,
+      packageTitle: summaryData.packageTitle,
+      basePrice: summaryData.basePrice,
+      studio: summaryData.studio,
+      date: summaryData.date,
+      dayOfWeek: summaryData.dayOfWeek,
+      time: summaryData.time,
+      addOns: summaryData.addOns || [],
+      userEmail: userEmail || "customer@example.com", // Safe fallback
+    };
 
     try {
       const response = await fetch("http://localhost:5000/api/bookings", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(summaryData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        setModal({
-          isOpen: true,
-          title: "Server Error",
-          message: "The server returned an invalid response structure.",
-          isSuccess: false,
-        });
-        return;
-      }
 
       const result = await response.json();
 
@@ -458,27 +422,23 @@ export const Book = ({ setActiveLink }) => {
         setModal({
           isOpen: true,
           title: "Booking Confirmed!",
-          message:
-            "Thank you for confirming your appointment. We look forward to seeing you on the scheduled date and time. If you need to reschedule or have any questions, please don't hesitate to contact us.",
+          message: `Thank you! Your booking for ${summaryData.packageTitle} on ${summaryData.date} at ${summaryData.time} is confirmed!`,
           isSuccess: true,
         });
       } else {
         setModal({
           isOpen: true,
-          title: "Database Error",
-          message:
-            result.message ||
-            "Server accepted request but database failed to save.",
+          title: "Booking Error",
+          message: result.error || "Failed to process booking.",
           isSuccess: false,
         });
       }
     } catch (error) {
-      console.error("Network error saving booking:", error);
+      console.error("Network Error:", error);
       setModal({
         isOpen: true,
         title: "Connection Error",
-        message:
-          "Could not connect to the backend server. Please try again later.",
+        message: "Could not connect to the backend server.",
         isSuccess: false,
       });
     }
@@ -638,9 +598,7 @@ export const Book = ({ setActiveLink }) => {
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
           <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Body */}
             <div className="p-6 text-center space-y-4">
-              {/* Status Icon */}
               <div
                 className={`mx-auto w-14 h-14 flex items-center justify-center rounded-full ${
                   modal.isSuccess
@@ -679,7 +637,6 @@ export const Book = ({ setActiveLink }) => {
                 )}
               </div>
 
-              {/* Title & Message */}
               <h3 className="text-lg font-bold font-serif text-neutral-900 tracking-wide">
                 {modal.title}
               </h3>
@@ -687,7 +644,6 @@ export const Book = ({ setActiveLink }) => {
                 {modal.message}
               </p>
 
-              {/* Close Action Button */}
               <div className="pt-2">
                 <button
                   type="button"
@@ -695,7 +651,7 @@ export const Book = ({ setActiveLink }) => {
                   className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm transition-colors duration-200 shadow-sm ${
                     modal.isSuccess
                       ? "bg-black hover:bg-neutral-800 text-white"
-                      : "bg-amber-900 hover:bg-stone-300 text-stone-800"
+                      : "bg-rose-600 hover:bg-rose-700 text-white"
                   }`}
                 >
                   {modal.isSuccess ? "Awesome" : "Dismiss"}

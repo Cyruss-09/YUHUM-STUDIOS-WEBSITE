@@ -6,6 +6,7 @@ import {
   Wand2,
   ArrowRight,
   CheckCircle,
+  Mail,
 } from "lucide-react";
 
 export const Rateus = () => {
@@ -14,6 +15,7 @@ export const Rateus = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState({
+    userEmail: "", // Added email field
     overallRating: 0,
     equipmentEase: 0,
     roomPrivacy: 0,
@@ -31,6 +33,7 @@ export const Rateus = () => {
     setSubmitted(false);
     setErrorMessage("");
     setFormData({
+      userEmail: "",
       overallRating: 0,
       equipmentEase: 0,
       roomPrivacy: 0,
@@ -48,13 +51,14 @@ export const Rateus = () => {
 
     // Sanitize data before sending to backend
     const sanitizedData = {
+      userEmail: formData.userEmail.trim() || null, // Included in payload
       overallRating: Number(formData.overallRating) || 0,
       equipmentEase: Number(formData.equipmentEase) || 0,
       roomPrivacy: Number(formData.roomPrivacy) || 0,
       propsSelection: Number(formData.propsSelection) || 0,
-      favoriteBackdrop: formData.favoriteBackdrop || null, // convert "" to null
+      favoriteBackdrop: formData.favoriteBackdrop || null,
       comments: formData.comments || null,
-      recommend: formData.recommend, // keeps true, false, or null
+      recommend: formData.recommend,
     };
 
     try {
@@ -64,8 +68,10 @@ export const Rateus = () => {
         body: JSON.stringify(sanitizedData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`Server responded with status ${response.status}`);
+        throw new Error(data.error || `Server responded with status ${response.status}`);
       }
 
       setSubmitted(true);
@@ -79,10 +85,8 @@ export const Rateus = () => {
 
   return (
     <div className="min-h-screen bg-amber-50/40 flex flex-col antialiased text-amber-950 font-sans">
-      {/* --- MAIN CONTENT AREA --- */}
       <main className="flex-grow flex items-center justify-center py-12 px-4">
         {submitted ? (
-          /* Success / Thank You Card */
           <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-amber-100 p-8 text-center space-y-4 transform transition-all duration-500 scale-100">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-900 mb-2">
               <CheckCircle
@@ -105,9 +109,7 @@ export const Rateus = () => {
             </button>
           </div>
         ) : (
-          /* Feedback Form Card */
           <div className="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
-            {/* Header Visual - Rich Espresso Brown */}
             <div className="bg-[#3E2723] px-8 py-10 text-amber-50 relative overflow-hidden">
               <div className="absolute right-[-20px] bottom-[-20px] text-[#2D1B18] opacity-40 pointer-events-none">
                 <Camera className="w-48 h-48" strokeWidth={1} />
@@ -124,13 +126,39 @@ export const Rateus = () => {
               </p>
             </div>
 
-            {/* Form Body */}
             <form onSubmit={handleSubmit} className="p-8 space-y-8">
               {errorMessage && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800">
                   {errorMessage}
                 </div>
               )}
+
+              {/* Email Input Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="userEmail"
+                  className="block text-xs uppercase tracking-wider font-medium text-amber-800/70"
+                >
+                  Your Email Address (Optional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    id="userEmail"
+                    placeholder="name@example.com"
+                    value={formData.userEmail}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        userEmail: e.target.value,
+                      }))
+                    }
+                    className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm font-light text-amber-900 placeholder-amber-900/40 focus:outline-none focus:border-[#5D4037] focus:ring-1 focus:ring-[#5D4037] transition-colors"
+                  />
+                </div>
+              </div>
+
+              <hr className="border-amber-100/70" />
 
               {/* 1. Overall Rating */}
               <div className="space-y-3">
@@ -266,7 +294,7 @@ export const Rateus = () => {
                     }
                     className={`flex-1 py-2.5 text-sm font-light rounded-xl border transition-all focus:outline-none ${
                       formData.recommend === true
-                        ? "border-[#5D4037] bg-[#5D4037] text-white font-normal"
+                        ? "border-[#5D4037] bg-[#5D4037] text-[#5D4037] font-normal"
                         : "border-amber-200 text-amber-900 hover:border-amber-400"
                     }`}
                   >
@@ -304,7 +332,6 @@ export const Rateus = () => {
   );
 };
 
-/* --- Sub-component for Studio Details score matrix --- */
 const MetricRow = ({ label, icon, category, currentValue, onRatingChange }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1">

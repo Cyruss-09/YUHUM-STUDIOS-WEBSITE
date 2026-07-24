@@ -12,8 +12,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@emailjs/nodejs": "^5.0.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "pg": "^8.22.0"
+    "nodemailer": "^9.0.3",
+    "pg": "^8.22.0",
+    "resend": "^6.18.0"
   }
 }
