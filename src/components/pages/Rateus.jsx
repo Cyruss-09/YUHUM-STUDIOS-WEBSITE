@@ -6,7 +6,6 @@ import {
   Wand2,
   ArrowRight,
   CheckCircle,
-  Mail,
 } from "lucide-react";
 
 export const Rateus = () => {
@@ -15,7 +14,7 @@ export const Rateus = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState({
-    userEmail: "", // Added email field
+    userEmail: "",
     overallRating: 0,
     equipmentEase: 0,
     roomPrivacy: 0,
@@ -51,7 +50,7 @@ export const Rateus = () => {
 
     // Sanitize data before sending to backend
     const sanitizedData = {
-      userEmail: formData.userEmail.trim() || null, // Included in payload
+      userEmail: formData.userEmail.trim() || null,
       overallRating: Number(formData.overallRating) || 0,
       equipmentEase: Number(formData.equipmentEase) || 0,
       roomPrivacy: Number(formData.roomPrivacy) || 0,
@@ -71,7 +70,9 @@ export const Rateus = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || `Server responded with status ${response.status}`);
+        throw new Error(
+          data.error || `Server responded with status ${response.status}`
+        );
       }
 
       setSubmitted(true);
@@ -292,10 +293,10 @@ export const Rateus = () => {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, recommend: true }))
                     }
-                    className={`flex-1 py-2.5 text-sm font-light rounded-xl border transition-all focus:outline-none ${
+                    className={`flex-1 py-2.5 text-sm rounded-xl border transition-all focus:outline-none ${
                       formData.recommend === true
-                        ? "border-[#5D4037] bg-[#5D4037] text-[#5D4037] font-normal"
-                        : "border-amber-200 text-amber-900 hover:border-amber-400"
+                        ? "border-[#5D4037] bg-[#5D4037] text-amber-50 font-normal"
+                        : "border-amber-200 text-amber-900 font-light hover:border-amber-400"
                     }`}
                   >
                     Yes, absolutely
@@ -305,10 +306,10 @@ export const Rateus = () => {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, recommend: false }))
                     }
-                    className={`flex-1 py-2.5 text-sm font-light rounded-xl border transition-all focus:outline-none ${
+                    className={`flex-1 py-2.5 text-sm rounded-xl border transition-all focus:outline-none ${
                       formData.recommend === false
-                        ? "border-[#5D4037] bg-[#5D4037] text-white font-normal"
-                        : "border-amber-200 text-amber-900 hover:border-amber-400"
+                        ? "border-[#5D4037] bg-[#5D4037] text-amber-50 font-normal"
+                        : "border-amber-200 text-amber-900 font-light hover:border-amber-400"
                     }`}
                   >
                     Maybe next time
@@ -332,7 +333,13 @@ export const Rateus = () => {
   );
 };
 
-const MetricRow = ({ label, icon, category, currentValue, onRatingChange }) => {
+const MetricRow = ({
+  label,
+  icon,
+  category,
+  currentValue,
+  onRatingChange,
+}) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1">
       <div className="flex items-center gap-2">

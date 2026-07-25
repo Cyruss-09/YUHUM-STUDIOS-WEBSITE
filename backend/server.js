@@ -1,11 +1,12 @@
-const path = require("path");
-// Explicitly resolve the path to .env in the current directory
-require("dotenv").config({ path: path.join(__dirname, ".env") });
+require("dotenv").config();
 
+const path = require("path");
 const express = require("express");
-const { Pool } = require("pg");
 const cors = require("cors");
-const emailjs = require("@emailjs/nodejs");
+const { Pool } = require("pg");
+const { Resend } = require("resend");
+const { BookingEmail } = require("./BookingEmail");
+const { ReviewEmail } = require("./ReviewEmail");
 
 const app = express();
 app.use(cors());
@@ -16,12 +17,11 @@ const pool = new Pool({
   user: process.env.DB_USER || "postgres",
   host: process.env.DB_HOST || "localhost",
   database: process.env.DB_NAME || "Yuhum.Studio.db",
-  // Ensures password is NEVER undefined/null/object
   password: String(process.env.DB_PASSWORD || "").trim(),
   port: parseInt(process.env.DB_PORT || "5432", 10),
 });
 
-// Test connection on startup
+// Test DB connection on startup
 pool.connect((err, client, release) => {
   if (err) {
     console.error("❌ Database Connection Failed:", err.message);
@@ -31,12 +31,16 @@ pool.connect((err, client, release) => {
   }
 });
 
-// --- EMAILJS CONFIGURATION ---
-const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID; // Booking Template
-const EMAILJS_FEEDBACK_TEMPLATE_ID = process.env.EMAILJS_FEEDBACK_TEMPLATE_ID; // Review Template
-const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
-const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+// --- RESEND INITIALIZATION & DIAGNOSTICS ---
+const rawKey = (process.env.RESEND_API_KEY || "").trim();
+const resend = rawKey ? new Resend(rawKey) : null;
+
+console.log("--- Resend Env Diagnostics ---");
+console.log("Resend API Key Loaded:", rawKey ? "✅ Yes" : "❌ Missing");
+if (rawKey) {
+  console.log("Key Preview:", `${rawKey.substring(0, 6)}...`);
+}
+console.log("------------------------------");
 
 /* ================= BOOKINGS ROUTE ================= */
 app.post("/api/bookings", async (req, res) => {
@@ -53,62 +57,77 @@ app.post("/api/bookings", async (req, res) => {
   } = req.body;
 
   try {
-    // 1. Format addOns safely for PostgreSQL array column
     const addOnsArray = Array.isArray(addOns) ? addOns : [];
 
-    // 2. Insert booking into PostgreSQL Database
+    // Safe fallback for package title (e.g. Kadlaw Package)
+    const safePackageTitle = packageTitle || "Studio Session";
+    const safeBasePrice = basePrice || "₱0";
+    const safeStudio = studio || "Standard Studio";
+
     const queryText = `
-      INSERT INTO bookings (package_id, package_title, base_price, studio, booking_date, day_of_week, booking_time, add_ons)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO bookings (package_id, package_title, base_price, studio, booking_date, day_of_week, booking_time, add_ons, user_email)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *;
     `;
 
     const values = [
-      packageId,
-      packageTitle,
-      basePrice,
-      studio,
-      date,
-      dayOfWeek,
-      time,
+      packageId || null,
+      safePackageTitle,
+      safeBasePrice,
+      safeStudio,
+      date || null,
+      dayOfWeek || null,
+      time || null,
       addOnsArray,
+      userEmail || null,
     ];
 
     const dbResult = await pool.query(queryText, values);
 
-    // 3. Prepare Template Parameters for EmailJS
     const formattedAddOns =
       addOnsArray.length > 0 ? addOnsArray.join(", ") : "None";
 
-    const templateParams = {
-      to_email: userEmail || "yourstudioemail@gmail.com",
-      package_title: packageTitle,
-      base_price: basePrice,
-      studio: studio,
-      booking_date: `${dayOfWeek}, ${date}`,
-      booking_time: time,
-      add_ons: formattedAddOns,
-    };
-
-    // 4. Send Email safely
     let emailSent = false;
+
     try {
-      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID) {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          templateParams,
-          {
-            publicKey: EMAILJS_PUBLIC_KEY,
-            privateKey: EMAILJS_PRIVATE_KEY,
-          }
-        );
+      if (resend) {
+        const FROM_EMAIL =
+          process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
+
+        // 🧪 LOCALHOST TESTING:
+        // Force sending to your registered Resend email address on localhost
+        const recipient =
+          process.env.NODE_ENV === "production" && userEmail
+            ? userEmail
+            : process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
+
+        // Generate dynamic HTML from updated BookingEmail component
+        const bookingHtml = BookingEmail({
+          packageTitle: safePackageTitle,
+          basePrice: safeBasePrice,
+          studio: safeStudio,
+          date:
+            dayOfWeek && date
+              ? `${dayOfWeek}, ${date}`
+              : date || "Scheduled Date",
+          time: time || "Scheduled Time",
+          addOns: formattedAddOns,
+          userEmail: userEmail || "Valued Customer",
+        });
+
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: [recipient],
+          subject: `Booking Confirmed - ${safePackageTitle}`,
+          html: bookingHtml,
+        });
+
         emailSent = true;
       }
     } catch (emailErr) {
       console.error(
-        "⚠️ Booking saved, but email dispatch failed:",
-        emailErr.text || emailErr
+        "⚠️ Booking saved, but Resend email dispatch failed:",
+        emailErr.message || emailErr,
       );
     }
 
@@ -128,7 +147,7 @@ app.post("/api/bookings", async (req, res) => {
   }
 });
 
-/* ================= REVIEWS ROUTE ================= */
+/* ================= REVIEWS ROUTE (WITH EMAIL RESENDER) ================= */
 app.post("/api/reviews", async (req, res) => {
   const {
     userEmail,
@@ -142,11 +161,9 @@ app.post("/api/reviews", async (req, res) => {
   } = req.body;
 
   try {
-    // 1. Insert review into PostgreSQL
-    // (Note: Add user_email column to DB query if you have created that column)
     const queryText = `
-      INSERT INTO reviews (overall_rating, equipment_ease, room_privacy, props_selection, favorite_backdrop, comments, recommend)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO reviews (overall_rating, equipment_ease, room_privacy, props_selection, favorite_backdrop, comments, recommend, user_email)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
     `;
 
@@ -158,52 +175,94 @@ app.post("/api/reviews", async (req, res) => {
       favoriteBackdrop || null,
       comments || null,
       recommend,
+      userEmail || null,
     ];
 
     const result = await pool.query(queryText, values);
 
-    // 2. Prepare Template Parameters for Review Template
-    // Keys match exact {{variables}} used in your EmailJS HTML template
-    const reviewParams = {
-      userEmail: userEmail || "Not provided",
-      to_email: userEmail || process.env.STUDIO_RECEIVER_EMAIL || "yourstudioemail@gmail.com",
-      overallRating: overallRating || "N/A",
-      equipmentEase: equipmentEase || "N/A",
-      roomPrivacy: roomPrivacy || "N/A",
-      propsSelection: propsSelection || "N/A",
-      favoriteBackdrop: favoriteBackdrop || "None selected",
-      comments: comments || "No additional comments",
-      recommend: recommend === true ? "Yes, absolutely" : recommend === false ? "Maybe next time" : "N/A",
-    };
-
-    // 3. Trigger EmailJS Review Notification
     let emailSent = false;
+
     try {
-      if (EMAILJS_SERVICE_ID && EMAILJS_FEEDBACK_TEMPLATE_ID) {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_FEEDBACK_TEMPLATE_ID,
-          reviewParams,
-          {
-            publicKey: EMAILJS_PUBLIC_KEY,
-            privateKey: EMAILJS_PRIVATE_KEY,
-          }
-        );
+      if (resend) {
+        const FROM_EMAIL =
+          process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
+
+        const adminRecipient =
+          process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
+
+        // 1. Internal Studio Admin Notification
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: [adminRecipient],
+          subject: `New Review Submitted (${overallRating || "N/A"} ⭐)`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
+              <h2 style="color: #2D1B18;">New Customer Feedback Received</h2>
+              <p><strong>Reviewer Email:</strong> ${userEmail || "Not provided"}</p>
+              
+              <hr style="border: none; border-top: 1px solid #eee;" />
+              
+              <ul style="line-height: 1.8;">
+                <li><strong>Overall Rating:</strong> ${overallRating || "N/A"} / 5</li>
+                <li><strong>Equipment Ease:</strong> ${equipmentEase || "N/A"} / 5</li>
+                <li><strong>Room Privacy:</strong> ${roomPrivacy || "N/A"} / 5</li>
+                <li><strong>Props Selection:</strong> ${propsSelection || "N/A"} / 5</li>
+                <li><strong>Favorite Backdrop:</strong> ${favoriteBackdrop || "None selected"}</li>
+                <li><strong>Recommends Us:</strong> ${
+                  recommend === true
+                    ? "Yes"
+                    : recommend === false
+                      ? "No"
+                      : "N/A"
+                }</li>
+              </ul>
+              
+              <p><strong>Comments:</strong></p>
+              <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #2D1B18; margin: 0;">
+                ${comments || "No additional comments"}
+              </blockquote>
+            </div>
+          `,
+        });
+
+        // 2. Customer Thank-You Confirmation Email (using ReviewEmail component)
+        const customerRecipient =
+          process.env.NODE_ENV === "production" && userEmail
+            ? userEmail.trim()
+            : adminRecipient;
+
+        const reviewHtml = ReviewEmail({
+          overallRating,
+          equipmentEase,
+          roomPrivacy,
+          propsSelection,
+          favoriteBackdrop,
+          comments,
+          userEmail,
+        });
+
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: [customerRecipient],
+          subject: "Thank you for your review! - Yuhum Studio",
+          html: reviewHtml,
+        });
+
         emailSent = true;
       } else {
-        console.warn("⚠️ EmailJS configuration missing (SERVICE_ID or FEEBACK_TEMPLATE_ID)");
+        console.warn("⚠️ Resend configuration missing (RESEND_API_KEY)");
       }
     } catch (emailErr) {
       console.error(
         "⚠️ Review saved, but email notification failed:",
-        emailErr.text || emailErr
+        emailErr.message || emailErr,
       );
     }
 
     return res.status(201).json({
       success: true,
       message: emailSent
-        ? "Review submitted and alert email sent!"
+        ? "Review submitted and thank-you email sent!"
         : "Review submitted successfully!",
       data: result.rows[0],
     });

@@ -386,7 +386,15 @@ export const Book = ({ setActiveLink, userEmail }) => {
     isSuccess: false,
   });
 
-  const closeModal = () => setModal((prev) => ({ ...prev, isOpen: false }));
+  // --- REFRESH PAGE IF BOOKING WAS SUCCESSFUL WHEN CLOSING MODAL ---
+  const closeModal = () => {
+    const wasSuccess = modal.isSuccess;
+    setModal((prev) => ({ ...prev, isOpen: false }));
+
+    if (wasSuccess) {
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -664,5 +672,4 @@ export const Book = ({ setActiveLink, userEmail }) => {
     </div>
   );
 };
-
 export default Book;

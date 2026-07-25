@@ -12,7 +12,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@babel/preset-react": "^8.0.1",
+    "@babel/register": "^8.0.1",
     "@emailjs/nodejs": "^5.0.2",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nodemailer": "^9.0.3",
