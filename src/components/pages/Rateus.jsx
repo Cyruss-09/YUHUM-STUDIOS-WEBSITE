@@ -48,7 +48,6 @@ export const Rateus = () => {
     setLoading(true);
     setErrorMessage("");
 
-    // Sanitize data before sending to backend
     const sanitizedData = {
       userEmail: formData.userEmail.trim() || null,
       overallRating: Number(formData.overallRating) || 0,
@@ -85,43 +84,44 @@ export const Rateus = () => {
   };
 
   return (
-    <div className="min-h-screen bg-amber-50/40 flex flex-col antialiased text-amber-950 font-sans">
+    <div className="min-h-screen bg-[#faf8f5] flex flex-col antialiased text-stone-700 font-sans">
       <main className="flex-grow flex items-center justify-center py-12 px-4">
         {submitted ? (
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-amber-100 p-8 text-center space-y-4 transform transition-all duration-500 scale-100">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-900 mb-2">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-sm border border-stone-200/80 p-8 text-center space-y-4 transform transition-all duration-500 scale-100">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-800 mb-2">
               <CheckCircle
                 className="w-8 h-8 text-amber-800"
                 strokeWidth={1.5}
               />
             </div>
-            <h2 className="text-2xl font-light tracking-tight text-amber-900">
+            <h2 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">
               Thank You for Shuttering!
             </h2>
-            <p className="text-amber-900/90 text-sm leading-relaxed font-light">
+            <p className="text-stone-600 text-sm leading-relaxed">
               Your feedback helps us perfect the lighting, props, and privacy
               for your next session. We appreciate you taking the time to share.
             </p>
             <button
               onClick={handleReset}
-              className="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-600/60 hover:text-amber-950 transition-colors focus:outline-none"
+              className="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-stone-500 hover:text-stone-900 transition-colors focus:outline-none font-bold"
             >
               Submit another response <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         ) : (
-          <div className="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
-            <div className="bg-[#3E2723] px-8 py-10 text-amber-50 relative overflow-hidden">
-              <div className="absolute right-[-20px] bottom-[-20px] text-[#2D1B18] opacity-40 pointer-events-none">
+          <div className="max-w-xl w-full bg-white rounded-3xl shadow-sm border border-stone-200/80 overflow-hidden">
+            {/* Header Banner */}
+            <div className="bg-stone-900 px-8 py-10 text-stone-50 relative overflow-hidden">
+              <div className="absolute right-[-20px] bottom-[-20px] text-stone-800 opacity-40 pointer-events-none">
                 <Camera className="w-48 h-48" strokeWidth={1} />
               </div>
-              <span className="text-[10px] uppercase tracking-widest bg-[#2D1B18] text-amber-200 px-2.5 py-1 rounded-full border border-amber-900/30">
+              <span className="text-[10px] uppercase tracking-widest bg-stone-800 text-amber-200 px-3 py-1 rounded-full border border-stone-700 font-semibold">
                 Session Review
               </span>
-              <h1 className="text-3xl font-light tracking-tight mt-3 text-amber-50">
+              <h1 className="text-3xl font-serif font-bold tracking-tight mt-3 text-white">
                 How was your self-photo experience?
               </h1>
-              <p className="text-amber-200/60 text-xs font-light mt-2 max-w-sm leading-relaxed">
+              <p className="text-stone-400 text-xs font-light mt-2 max-w-sm leading-relaxed">
                 Tell us about your time behind the remote. Your insight shapes
                 our studio environment.
               </p>
@@ -138,7 +138,7 @@ export const Rateus = () => {
               <div className="space-y-2">
                 <label
                   htmlFor="userEmail"
-                  className="block text-xs uppercase tracking-wider font-medium text-amber-800/70"
+                  className="block text-xs uppercase tracking-wider font-bold text-stone-900"
                 >
                   Your Email Address (Optional)
                 </label>
@@ -154,16 +154,16 @@ export const Rateus = () => {
                         userEmail: e.target.value,
                       }))
                     }
-                    className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm font-light text-amber-900 placeholder-amber-900/40 focus:outline-none focus:border-[#5D4037] focus:ring-1 focus:ring-[#5D4037] transition-colors"
+                    className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 transition-colors"
                   />
                 </div>
               </div>
 
-              <hr className="border-amber-100/70" />
+              <hr className="border-stone-100" />
 
               {/* 1. Overall Rating */}
               <div className="space-y-3">
-                <label className="block text-xs uppercase tracking-wider font-medium text-amber-800/70">
+                <label className="block text-xs uppercase tracking-wider font-bold text-stone-900">
                   1. Overall Experience
                 </label>
                 <div className="flex items-center gap-1.5">
@@ -179,8 +179,8 @@ export const Rateus = () => {
                       <Star
                         className={`w-7 h-7 transition-colors duration-150 ${
                           star <= (hoveredRating || formData.overallRating)
-                            ? "fill-amber-600 text-amber-600"
-                            : "text-amber-200/60"
+                            ? "fill-amber-700 text-amber-700"
+                            : "text-stone-200"
                         }`}
                         strokeWidth={1.5}
                       />
@@ -189,32 +189,32 @@ export const Rateus = () => {
                 </div>
               </div>
 
-              <hr className="border-amber-100/70" />
+              <hr className="border-stone-100" />
 
               {/* 2. Specific Metrics */}
               <div className="space-y-4">
-                <label className="block text-xs uppercase tracking-wider font-medium text-amber-800/70">
+                <label className="block text-xs uppercase tracking-wider font-bold text-stone-900">
                   2. Studio Details
                 </label>
 
-                <div className="space-y-4 bg-amber-50/30 rounded-xl p-4 border border-amber-100/50">
+                <div className="space-y-4 bg-stone-50/60 rounded-2xl p-5 border border-stone-100">
                   <MetricRow
                     label="Remote & lighting ease of use"
-                    icon={<Camera className="w-4 text-amber-700/60" />}
+                    icon={<Camera className="w-4 text-amber-800" />}
                     category="equipmentEase"
                     currentValue={formData.equipmentEase}
                     onRatingChange={handleRatingChange}
                   />
                   <MetricRow
                     label="Room privacy & comfort"
-                    icon={<Shield className="w-4 text-amber-700/60" />}
+                    icon={<Shield className="w-4 text-amber-800" />}
                     category="roomPrivacy"
                     currentValue={formData.roomPrivacy}
                     onRatingChange={handleRatingChange}
                   />
                   <MetricRow
                     label="Props & accessories variety"
-                    icon={<Wand2 className="w-4 text-amber-700/60" />}
+                    icon={<Wand2 className="w-4 text-amber-800" />}
                     category="propsSelection"
                     currentValue={formData.propsSelection}
                     onRatingChange={handleRatingChange}
@@ -222,13 +222,13 @@ export const Rateus = () => {
                 </div>
               </div>
 
-              <hr className="border-amber-100/70" />
+              <hr className="border-stone-100" />
 
               {/* 3. Dropdown Selection */}
               <div className="space-y-2">
                 <label
                   htmlFor="backdrop"
-                  className="block text-xs uppercase tracking-wider font-medium text-amber-800/70"
+                  className="block text-xs uppercase tracking-wider font-bold text-stone-900"
                 >
                   3. Which backdrop did you use?
                 </label>
@@ -241,7 +241,7 @@ export const Rateus = () => {
                       favoriteBackdrop: e.target.value,
                     }))
                   }
-                  className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2.5 text-sm font-light text-amber-900 focus:outline-none focus:border-amber-700 transition-colors appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23b45309%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat"
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 focus:outline-none focus:border-stone-900 transition-colors appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23292524%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:20px] bg-[right_12px_center] bg-no-repeat"
                 >
                   <option value="" disabled>
                     Select a color backdrop
@@ -263,7 +263,7 @@ export const Rateus = () => {
               <div className="space-y-2">
                 <label
                   htmlFor="comments"
-                  className="block text-xs uppercase tracking-wider font-medium text-amber-800/70"
+                  className="block text-xs uppercase tracking-wider font-bold text-stone-900"
                 >
                   4. Additional thoughts or special shoutouts?
                 </label>
@@ -278,13 +278,13 @@ export const Rateus = () => {
                     }))
                   }
                   placeholder="Tell us what you loved, or what we can tweak to make your experience smoother next time..."
-                  className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm font-light text-amber-900 placeholder-amber-900/40 focus:outline-none focus:border-[#5D4037] focus:ring-1 focus:ring-[#5D4037] transition-colors resize-none"
+                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 transition-colors resize-none"
                 />
               </div>
 
               {/* 5. Recommendation Toggle */}
               <div className="space-y-3">
-                <label className="block text-xs uppercase tracking-wider font-medium text-amber-800/70">
+                <label className="block text-xs uppercase tracking-wider font-bold text-stone-900">
                   5. Would you recommend us to a friend?
                 </label>
                 <div className="flex gap-3">
@@ -293,10 +293,10 @@ export const Rateus = () => {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, recommend: true }))
                     }
-                    className={`flex-1 py-2.5 text-sm rounded-xl border transition-all focus:outline-none ${
+                    className={`flex-1 py-3 text-xs uppercase tracking-wider font-bold rounded-xl border transition-all focus:outline-none ${
                       formData.recommend === true
-                        ? "border-[#5D4037] bg-[#5D4037] text-amber-50 font-normal"
-                        : "border-amber-200 text-amber-900 font-light hover:border-amber-400"
+                        ? "border-stone-900 bg-stone-900 text-white shadow-sm"
+                        : "border-stone-200 text-stone-700 hover:border-stone-400 bg-stone-50/50"
                     }`}
                   >
                     Yes, absolutely
@@ -306,10 +306,10 @@ export const Rateus = () => {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, recommend: false }))
                     }
-                    className={`flex-1 py-2.5 text-sm rounded-xl border transition-all focus:outline-none ${
+                    className={`flex-1 py-3 text-xs uppercase tracking-wider font-bold rounded-xl border transition-all focus:outline-none ${
                       formData.recommend === false
-                        ? "border-[#5D4037] bg-[#5D4037] text-amber-50 font-normal"
-                        : "border-amber-200 text-amber-900 font-light hover:border-amber-400"
+                        ? "border-stone-900 bg-stone-900 text-white shadow-sm"
+                        : "border-stone-200 text-stone-700 hover:border-stone-400 bg-stone-50/50"
                     }`}
                   >
                     Maybe next time
@@ -321,7 +321,7 @@ export const Rateus = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#2D1B18] hover:bg-[#3E2723] disabled:bg-stone-400 text-amber-50 font-light py-3.5 px-4 rounded-xl text-sm uppercase tracking-wider transition-colors duration-200 shadow-sm mt-4 focus:outline-none focus:ring-2 focus:ring-amber-700 focus:ring-offset-2"
+                className="w-full bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-widest transition-colors duration-200 shadow-sm mt-4 focus:outline-none"
               >
                 {loading ? "Submitting..." : "Submit Review"}
               </button>
@@ -342,20 +342,20 @@ const MetricRow = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {icon}
-        <span className="text-sm font-light text-amber-900">{label}</span>
+        <span className="text-sm font-medium text-stone-800">{label}</span>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1.5">
         {[1, 2, 3, 4, 5].map((val) => (
           <button
             key={val}
             type="button"
             onClick={() => onRatingChange(category, val)}
-            className={`w-7 h-7 text-xs rounded transition-all focus:outline-none ${
+            className={`w-8 h-8 text-xs font-bold rounded-lg transition-all focus:outline-none ${
               currentValue === val
-                ? "bg-[#5D4037] text-white font-medium"
-                : "bg-white text-amber-900 border border-amber-200 hover:border-amber-400"
+                ? "bg-stone-900 text-white shadow-sm"
+                : "bg-white text-stone-700 border border-stone-200 hover:border-stone-400"
             }`}
           >
             {val}
@@ -365,3 +365,5 @@ const MetricRow = ({
     </div>
   );
 };
+
+export default Rateus;

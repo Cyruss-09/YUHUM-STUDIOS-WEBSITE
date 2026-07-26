@@ -4,8 +4,8 @@ import { Home } from "./components/pages/Home";
 import { Book } from "./components/pages/Book";
 import { OurStory } from "./components/pages/OurStory";
 import { Rateus } from "./components/pages/Rateus";
-import NotFound from "./components/pages/NotFound"; 
-import { Footer } from "./components/Footer"; // 1. Import your standalone Footer component here
+import NotFound from "./components/pages/NotFound";
+import { Footer } from "./components/Footer";
 
 export default function App() {
   const [activeLink, setActiveLink] = useState(() => {
@@ -32,23 +32,24 @@ export default function App() {
   const isInvalidPage = !validPages.includes(activeLink);
 
   return (
-    // 2. Added flex & min-h-screen here to make a vertical sticky layout container
     <div className="flex flex-col min-h-screen bg-[#fdfbf7]">
       <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
 
-      {/* 3. Added flex-grow to <main> so it expands to push the footer down */}
       <main className="w-full flex-grow">
-        {/* Conditional Page Views */}
         {activeLink === "home" && <Home />}
         {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
-        {activeLink === "our-story" && <OurStory setActiveLink={handlePageChange} />}
-        {activeLink === "rate-us" && <Rateus setActiveLink={handlePageChange} />}
+        {activeLink === "our-story" && (
+          <OurStory setActiveLink={handlePageChange} />
+        )}
+        {activeLink === "rate-us" && (
+          <Rateus setActiveLink={handlePageChange} />
+        )}
 
         {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
       </main>
 
-      {/* 4. Drop it here! Since it's outside the main block, it shows up on ALL pages */}
-      <Footer />
+      {/* Pass handlePageChange as setActiveLink to the Footer */}
+      <Footer setActiveLink={handlePageChange} />
     </div>
   );
 }

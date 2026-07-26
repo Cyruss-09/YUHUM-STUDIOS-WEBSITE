@@ -7,6 +7,7 @@ const { Pool } = require("pg");
 const { Resend } = require("resend");
 const { BookingEmail } = require("./BookingEmail");
 const { ReviewEmail } = require("./ReviewEmail");
+const { SubscriberEmail } = require("./SubscriberEmail");
 
 const app = express();
 app.use(cors());
@@ -272,6 +273,110 @@ app.post("/api/reviews", async (req, res) => {
       success: false,
       error: "Failed to submit review.",
     });
+  }
+});
+
+/* ================= SUBSCRIBER EMAIL RESENDER ROUTE ================= */
+app.post("/api/resend-campaign", async (req, res) => {
+  const { campaignId } = req.body;
+
+  if (!campaignId) {
+    return res.status(400).json({ error: "Campaign ID is required." });
+  }
+
+  try {
+    // 1. Fetch the campaign details from your database
+    const campaignResult = await pool.query(
+      "SELECT * FROM campaigns WHERE id = $1",
+      [campaignId],
+    );
+
+    if (campaignResult.rows.length === 0) {
+      return res.status(404).json({ error: "Campaign not found." });
+    }
+    const campaign = campaignResult.rows[0];
+
+    // 2. Find active subscribers who haven't received this campaign yet
+    // (Using LEFT JOIN to safely check logs instead of risky NOT IN subqueries)
+    const queryText = `
+      SELECT s.id, s.email 
+      FROM subscribers s 
+      LEFT JOIN campaign_logs cl ON s.id = cl.subscriber_id AND cl.campaign_id = $1
+      WHERE s.status = 'active' AND cl.id IS NULL
+    `;
+    const subscriberResult = await pool.query(queryText, [campaignId]);
+    const subscribers = subscriberResult.rows;
+
+    if (subscribers.length === 0) {
+      return res.status(200).json({
+        message: "No pending subscribers found for resending this campaign.",
+      });
+    }
+
+    if (!resend) {
+      return res
+        .status(500)
+        .json({ error: "Resend configuration missing (RESEND_API_KEY)." });
+    }
+
+    const FROM_EMAIL =
+      process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
+    let successCount = 0;
+    let failCount = 0;
+
+    // 3. Loop and send using Resend API & SubscriberEmail template
+    for (const sub of subscribers) {
+      const recipient =
+        process.env.NODE_ENV === "production" && sub.email
+          ? sub.email.trim()
+          : process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
+
+      try {
+        const subscriberHtml = SubscriberEmail({
+          name: "Valued Subscriber",
+          messageBody: campaign.body,
+          unsubscribeUrl: `https://yuhumstudio.com/unsubscribe?email=${encodeURIComponent(sub.email)}`,
+        });
+
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: [recipient],
+          subject: campaign.subject,
+          html: subscriberHtml,
+        });
+
+        // Log successful send
+        await pool.query(
+          "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'sent')",
+          [campaignId, sub.id],
+        );
+        successCount++;
+      } catch (mailError) {
+        console.error(`❌ Failed to send to ${sub.email}:`, mailError.message);
+
+        // Log failed send
+        await pool.query(
+          "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'failed')",
+          [campaignId, sub.id],
+        );
+        failCount++;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Resend process completed.",
+      stats: {
+        totalTargeted: subscribers.length,
+        sentSuccessfully: successCount,
+        failed: failCount,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Resend campaign error:", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error during resend process." });
   }
 });
 
