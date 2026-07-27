@@ -387,7 +387,7 @@ export const Book = ({ setActiveLink, userEmail }) => {
     phone: "",
     email: userEmail || "",
     termsAccepted: false,
-    backdrop: "",
+    findUs: "",
     paymentMode: "",
     couponCode: "",
   });
