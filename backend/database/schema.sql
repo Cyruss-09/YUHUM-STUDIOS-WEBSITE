@@ -1,6 +1,6 @@
--- Active: 1784321332673@@127.0.0.1@5432@Yuhum.Studio.db
-CREATE TABLE bookings(
-     id SERIAL NOT NULL,
+-- Active: 1784321332673@@127.0.0.1@5432@Yuhum.Studio.d
+CREATE TABLE bookings (
+    id SERIAL NOT NULL,
     package_id varchar(50) NOT NULL,
     package_title varchar(100) NOT NULL,
     base_price varchar(20) NOT NULL,
@@ -10,8 +10,15 @@ CREATE TABLE bookings(
     booking_time varchar(20) NOT NULL,
     add_ons text[] DEFAULT '{}'::text[],
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    user_email varchar(255) ,
-    PRIMARY KEY(id) 
+    "firstName" varchar(50),
+    "lastName" varchar(50),
+    phone varchar(20),
+    email varchar(255),
+    "termsAccepted" boolean,
+    "findUs" varchar(50),
+    "paymentMode" varchar(50),
+    "couponCode" varchar(50),
+    PRIMARY KEY(id)
 );
 
 CREATE TABLE reviews(

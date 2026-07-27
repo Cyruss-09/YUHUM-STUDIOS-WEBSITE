@@ -54,20 +54,44 @@ app.post("/api/bookings", async (req, res) => {
     dayOfWeek,
     time,
     addOns,
-    userEmail,
+    firstName,
+    lastName,
+    phone,
+    email,
+    termsAccepted,
+    findUs,
+    paymentMode,
+    couponCode,
   } = req.body;
 
   try {
     const addOnsArray = Array.isArray(addOns) ? addOns : [];
 
-    // Safe fallback for package title (e.g. Kadlaw Package)
+    // Safe fallback values
     const safePackageTitle = packageTitle || "Studio Session";
     const safeBasePrice = basePrice || "₱0";
     const safeStudio = studio || "Standard Studio";
 
     const queryText = `
-      INSERT INTO bookings (package_id, package_title, base_price, studio, booking_date, day_of_week, booking_time, add_ons, user_email)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO bookings (
+        package_id, 
+        package_title, 
+        base_price, 
+        studio, 
+        booking_date, 
+        day_of_week, 
+        booking_time, 
+        add_ons, 
+        "firstName", 
+        "lastName", 
+        phone, 
+        email, 
+        "termsAccepted", 
+        "findUs", 
+        "paymentMode", 
+        "couponCode"
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *;
     `;
 
@@ -80,7 +104,14 @@ app.post("/api/bookings", async (req, res) => {
       dayOfWeek || null,
       time || null,
       addOnsArray,
-      userEmail || null,
+      firstName || null,
+      lastName || null,
+      phone ? String(phone, 10) : null,
+      email || null,
+      termsAccepted || false,
+      findUs || null,
+      paymentMode || null,
+      couponCode || null,
     ];
 
     const dbResult = await pool.query(queryText, values);
@@ -95,14 +126,11 @@ app.post("/api/bookings", async (req, res) => {
         const FROM_EMAIL =
           process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
 
-        // 🧪 LOCALHOST TESTING:
-        // Force sending to your registered Resend email address on localhost
         const recipient =
-          process.env.NODE_ENV === "production" && userEmail
-            ? userEmail
+          process.env.NODE_ENV === "production" && email
+            ? email
             : process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
 
-        // Generate dynamic HTML from updated BookingEmail component
         const bookingHtml = BookingEmail({
           packageTitle: safePackageTitle,
           basePrice: safeBasePrice,
@@ -113,7 +141,7 @@ app.post("/api/bookings", async (req, res) => {
               : date || "Scheduled Date",
           time: time || "Scheduled Time",
           addOns: formattedAddOns,
-          userEmail: userEmail || "Valued Customer",
+          userEmail: email || "Valued Customer",
         });
 
         await resend.emails.send({
@@ -285,7 +313,6 @@ app.post("/api/resend-campaign", async (req, res) => {
   }
 
   try {
-    // 1. Fetch the campaign details from your database
     const campaignResult = await pool.query(
       "SELECT * FROM campaigns WHERE id = $1",
       [campaignId],
@@ -296,8 +323,6 @@ app.post("/api/resend-campaign", async (req, res) => {
     }
     const campaign = campaignResult.rows[0];
 
-    // 2. Find active subscribers who haven't received this campaign yet
-    // (Using LEFT JOIN to safely check logs instead of risky NOT IN subqueries)
     const queryText = `
       SELECT s.id, s.email 
       FROM subscribers s 
@@ -324,7 +349,6 @@ app.post("/api/resend-campaign", async (req, res) => {
     let successCount = 0;
     let failCount = 0;
 
-    // 3. Loop and send using Resend API & SubscriberEmail template
     for (const sub of subscribers) {
       const recipient =
         process.env.NODE_ENV === "production" && sub.email
@@ -345,7 +369,6 @@ app.post("/api/resend-campaign", async (req, res) => {
           html: subscriberHtml,
         });
 
-        // Log successful send
         await pool.query(
           "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'sent')",
           [campaignId, sub.id],
@@ -354,7 +377,6 @@ app.post("/api/resend-campaign", async (req, res) => {
       } catch (mailError) {
         console.error(`❌ Failed to send to ${sub.email}:`, mailError.message);
 
-        // Log failed send
         await pool.query(
           "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'failed')",
           [campaignId, sub.id],
