@@ -58,10 +58,11 @@ app.post("/api/bookings", async (req, res) => {
     lastName,
     phone,
     email,
-    termsAccepted,
-    findUs,
+    termsAccepted, // Fallback if frontend sends underscore version
     paymentMode,
+    payment_mode, // Fallback if frontend sends underscore version
     couponCode,
+    findUs,
   } = req.body;
 
   try {
@@ -71,6 +72,12 @@ app.post("/api/bookings", async (req, res) => {
     const safePackageTitle = packageTitle || "Studio Session";
     const safeBasePrice = basePrice || "₱0";
     const safeStudio = studio || "Standard Studio";
+
+    // Resolve alternative naming conventions from frontend payload
+    const resolvedFindUs = findUs || find_us || null;
+    const resolvedPaymentMode = paymentMode || payment_mode || null;
+    const resolvedTerms =
+      termsAccepted === true || termsAccepted === "true" || termsAccepted === 1;
 
     const queryText = `
       INSERT INTO bookings (
@@ -106,11 +113,11 @@ app.post("/api/bookings", async (req, res) => {
       addOnsArray,
       firstName || null,
       lastName || null,
-      phone ? String(phone, 10) : null,
+      phone ? parseInt(phone, 10) : null,
       email || null,
-      termsAccepted || false,
-      findUs || null,
-      paymentMode || null,
+      resolvedTerms,
+      resolvedFindUs,
+      resolvedPaymentMode,
       couponCode || null,
     ];
 

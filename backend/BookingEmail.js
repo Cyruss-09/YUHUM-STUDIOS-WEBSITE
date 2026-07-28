@@ -1,4 +1,19 @@
-function BookingEmail({ packageTitle, basePrice, studio, date, time, addOns }) {
+function BookingEmail({
+  packageTitle,
+  basePrice,
+  studio,
+  date,
+  time,
+  addOns,
+  firstName,
+  lastName,
+  phone,
+  email,
+  termsAccepted,
+  findUs,
+  paymentMode,
+  couponCode,
+}) {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -37,7 +52,7 @@ function BookingEmail({ packageTitle, basePrice, studio, date, time, addOns }) {
           <tr>
             <td style="padding: 36px 36px 28px 36px;">
               <p style="color: #333333; font-size: 14px; margin: 0 0 12px 0; font-weight: 500;">
-                Hi there,
+                Hi ${firstName} ${lastName},
               </p>
               <p style="color: #666666; font-size: 13px; line-height: 1.6; margin: 0 0 28px 0;">
                 We're excited to host you! We have received your booking and reserved your studio space. Please review your session summary below.
@@ -64,27 +79,34 @@ function BookingEmail({ packageTitle, basePrice, studio, date, time, addOns }) {
 
                 <!-- Details List Table -->
                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13px;">
-                  
                   <tr>
                     <td style="color: #666666; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">Studio Setup</td>
                     <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">${studio}</td>
                   </tr>
-
                   <tr>
                     <td style="color: #666666; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">Date</td>
                     <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">${date}</td>
                   </tr>
-
                   <tr>
                     <td style="color: #666666; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">Time Slot</td>
                     <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">${time}</td>
                   </tr>
-
                   <tr>
-                    <td style="color: #666666; padding: 8px 0;">Add-ons</td>
-                    <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0;">${addOns}</td>
+                    <td style="color: #666666; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">Add-ons</td>
+                    <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">${addOns || "None"}</td>
                   </tr>
-
+                  <tr>
+                    <td style="color: #666666; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">Payment Mode</td>
+                    <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">${paymentMode}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #666666; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">Coupon Code</td>
+                    <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #f5f2ee;">${couponCode || "None"}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #666666; padding: 8px 0;">Contact Phone</td>
+                    <td align="right" style="color: #1a1a1a; font-weight: 500; padding: 8px 0;">${phone}</td>
+                  </tr>
                 </table>
               </div>
 
