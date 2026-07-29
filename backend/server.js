@@ -58,9 +58,8 @@ app.post("/api/bookings", async (req, res) => {
     lastName,
     phone,
     email,
-    termsAccepted, // Fallback if frontend sends underscore version
+    termsAccepted,
     paymentMode,
-    payment_mode, // Fallback if frontend sends underscore version
     couponCode,
     findUs,
   } = req.body;
@@ -74,8 +73,8 @@ app.post("/api/bookings", async (req, res) => {
     const safeStudio = studio || "Standard Studio";
 
     // Resolve alternative naming conventions from frontend payload
-    const resolvedFindUs = findUs || find_us || null;
-    const resolvedPaymentMode = paymentMode || payment_mode || null;
+    const resolvedFindUs = findUs || null;
+    const resolvedPaymentMode = paymentMode || null;
     const resolvedTerms =
       termsAccepted === true || termsAccepted === "true" || termsAccepted === 1;
 
@@ -148,7 +147,13 @@ app.post("/api/bookings", async (req, res) => {
               : date || "Scheduled Date",
           time: time || "Scheduled Time",
           addOns: formattedAddOns,
-          userEmail: email || "Valued Customer",
+          firstName,
+          lastName,
+          phone,
+          email,
+          paymentMode: resolvedPaymentMode,
+          couponCode,
+          findUs: resolvedFindUs,
         });
 
         await resend.emails.send({
@@ -183,7 +188,7 @@ app.post("/api/bookings", async (req, res) => {
   }
 });
 
-/* ================= REVIEWS ROUTE (WITH EMAIL RESENDER) ================= */
+/* ================= REVIEWS ROUTE ================= */
 app.post("/api/reviews", async (req, res) => {
   const {
     userEmail,
@@ -222,11 +227,9 @@ app.post("/api/reviews", async (req, res) => {
       if (resend) {
         const FROM_EMAIL =
           process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
-
         const adminRecipient =
           process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
 
-        // 1. Internal Studio Admin Notification
         await resend.emails.send({
           from: FROM_EMAIL,
           to: [adminRecipient],
@@ -235,24 +238,15 @@ app.post("/api/reviews", async (req, res) => {
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
               <h2 style="color: #2D1B18;">New Customer Feedback Received</h2>
               <p><strong>Reviewer Email:</strong> ${userEmail || "Not provided"}</p>
-              
               <hr style="border: none; border-top: 1px solid #eee;" />
-              
               <ul style="line-height: 1.8;">
                 <li><strong>Overall Rating:</strong> ${overallRating || "N/A"} / 5</li>
                 <li><strong>Equipment Ease:</strong> ${equipmentEase || "N/A"} / 5</li>
                 <li><strong>Room Privacy:</strong> ${roomPrivacy || "N/A"} / 5</li>
                 <li><strong>Props Selection:</strong> ${propsSelection || "N/A"} / 5</li>
                 <li><strong>Favorite Backdrop:</strong> ${favoriteBackdrop || "None selected"}</li>
-                <li><strong>Recommends Us:</strong> ${
-                  recommend === true
-                    ? "Yes"
-                    : recommend === false
-                      ? "No"
-                      : "N/A"
-                }</li>
+                <li><strong>Recommends Us:</strong> ${recommend === true ? "Yes" : recommend === false ? "No" : "N/A"}</li>
               </ul>
-              
               <p><strong>Comments:</strong></p>
               <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #2D1B18; margin: 0;">
                 ${comments || "No additional comments"}
@@ -261,7 +255,6 @@ app.post("/api/reviews", async (req, res) => {
           `,
         });
 
-        // 2. Customer Thank-You Confirmation Email (using ReviewEmail component)
         const customerRecipient =
           process.env.NODE_ENV === "production" && userEmail
             ? userEmail.trim()
@@ -285,8 +278,6 @@ app.post("/api/reviews", async (req, res) => {
         });
 
         emailSent = true;
-      } else {
-        console.warn("⚠️ Resend configuration missing (RESEND_API_KEY)");
       }
     } catch (emailErr) {
       console.error(
@@ -304,10 +295,9 @@ app.post("/api/reviews", async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Database error (reviews):", err);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to submit review.",
-    });
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to submit review." });
   }
 });
 
@@ -383,7 +373,6 @@ app.post("/api/resend-campaign", async (req, res) => {
         successCount++;
       } catch (mailError) {
         console.error(`❌ Failed to send to ${sub.email}:`, mailError.message);
-
         await pool.query(
           "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'failed')",
           [campaignId, sub.id],
