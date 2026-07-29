@@ -5,9 +5,9 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 const { Resend } = require("resend");
-const { BookingEmail } = require("./BookingEmail");
-const { ReviewEmail } = require("./ReviewEmail");
-const { SubscriberEmail } = require("./SubscriberEmail");
+const { BookingEmail } = require("./emails/BookingEmail");
+const { ReviewEmail } = require("./emails/ReviewEmail");
+const { SubscriberEmail } = require("./emails/SubscriberEmail");
 
 const app = express();
 app.use(cors());
