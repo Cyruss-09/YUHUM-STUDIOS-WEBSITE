@@ -1,52 +1,14 @@
-import { useState } from "react";
+import { features } from "../../data/features.js";
+import { useFeatureSelection } from "../../hooks/useFeatureSelection";
 
 export const Home = () => {
-  // Track which feature is currently clicked (defaults to null)
-  const [selectedFeature, setSelectedFeature] = useState(null);
-
-  const features = [
-    {
-      id: 1,
-      text: "Level-up your portraits.",
-      imageUrl: "/src/assets/Pic19.jpg",
-      description:
-        "Step in front of professional lighting optimized entirely for your style. Our self-portrait setups ensure high-definition quality where you can craft crisp, magazine-ready shots.",
-    },
-    {
-      id: 2,
-      text: "Make core memories.",
-      imageUrl: "/src/assets/Pic8.jpg",
-      description:
-        "Drop your guard and have genuine fun. Whether you come with friends, a loved one, or solo, the real experience is the unscripted core memory you make during the session.",
-    },
-    {
-      id: 3,
-      text: "Quality time = Quality photos",
-      imageUrl: "/src/assets/Pic1.jpg",
-      description:
-        "Take command of your portrait session with your own private wireless clicker. Without external photographers in the booth, there is zero pressure—giving you fully authentic captures.",
-    },
-    {
-      id: 4,
-      text: "Bring your furry friends!",
-      imageUrl: "/src/assets/Pic11.jpg",
-      description:
-        "Pets are absolute family! Our space is welcoming to all dogs, cats, and small companions, allowing you to easily immortalize their unique traits right next to yours.",
-    },
-  ];
-
-  const handleCardClick = (id) => {
-    setSelectedFeature(selectedFeature === id ? null : id);
-  };
-
-  const activeItem = features.find((item) => item.id === selectedFeature);
+  const { selectedFeature, handleCardClick, activeItem } =
+    useFeatureSelection(features);
 
   return (
-    /* FIXED: Changed pt-16 to pt-16 pb-24 to guarantee safe breathing room before the footer starts */
     <section className="flex flex-col items-center justify-center min-h-screen bg-stone-50 pt-16 pb-24 w-full gap-24">
       {/* --- HERO / INTRODUCTION SECTION --- */}
       <div className="flex flex-col items-center gap-8 w-full px-6">
-        {/* Video Container */}
         <div className="w-full max-w-sm overflow-hidden rounded-xl shadow-lg">
           <video
             src="/9gridsvideos.mp4"
@@ -58,7 +20,6 @@ export const Home = () => {
           />
         </div>
 
-        {/* Text Grouping container */}
         <div className="flex flex-col items-center gap-4 max-w-3xl text-center">
           <h2 className="text-black font-sans text-xl md:text-2xl font-bold tracking-wide lowercase">
             a photo studio for you, by you.
@@ -71,7 +32,6 @@ export const Home = () => {
           </p>
         </div>
 
-        {/* Rounded CTA Button */}
         <div className="pt-2">
           <a
             href="#book"
@@ -84,7 +44,6 @@ export const Home = () => {
 
       {/* --- RESPONSIVE FEATURES PHOTO GRID WITH DESCRIPTION --- */}
       <div className="w-full max-w-7xl mx-auto flex flex-col gap-10 px-6">
-        {/* The Image Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {features.map((item) => (
             <div
@@ -107,7 +66,6 @@ export const Home = () => {
           ))}
         </div>
 
-        {/* Dynamic Display Area at the Bottom */}
         <div className="min-h-[120px] flex items-center justify-center w-full transition-all duration-300">
           {activeItem ? (
             <div className="w-full max-w-3xl mx-auto text-center bg-white p-6 md:p-8 rounded-2xl border border-stone-200 shadow-sm transition-all duration-300">
@@ -128,9 +86,7 @@ export const Home = () => {
 
       {/* --- MINIMALIST LOCATION SECTION --- */}
       <div className="w-full max-w-5xl mx-auto px-6 flex flex-col gap-8 items-center">
-        {/* Responsive Grid Split (Map left, text right) */}
         <div className="w-full flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 pt-4">
-          {/* Map Frame wrapper */}
           <div className="w-full md:w-1/2 overflow-hidden rounded-xl border border-stone-200 shadow-sm hover:scale-105 transition-transform duration-300">
             <img
               src="/src/assets/location.png"
@@ -139,10 +95,8 @@ export const Home = () => {
             />
           </div>
 
-          {/* Location Content Details */}
           <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left gap-3">
             <div className="flex items-center gap-2 text-stone-800">
-              {/* Location Pin Icon */}
               <svg
                 className="w-5 h-5 shrink-0 text-stone-600"
                 fill="none"
