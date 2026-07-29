@@ -1,17 +1,15 @@
+import React, { useEffect, useRef, useState } from "react";
+import { COUNTRIES } from "../../data/countries";
 
-import React from 'react'
-
-const CountryCodeDropdown = () => {
-  return (
-    <div>
-      // --- SEARCHABLE CUSTOM COUNTRY CODE DROPDOWN COMPONENT ---
-const CountryCodeDropdown = ({ value, onChange }) => {
+// Purely presentational: the only state here is UI state (is the panel
+// open, what's typed in the search box) — never business data. The
+// selected value and the change handler both come from the parent.
+export const CountryCodeDropdown = ({ value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // Find currently selected country object
   const selectedCountry =
     COUNTRIES.find(
       (c) => c.code === value && c.flag === (value === "+63" ? "🇵🇭" : c.flag),
@@ -19,7 +17,6 @@ const CountryCodeDropdown = ({ value, onChange }) => {
     COUNTRIES.find((c) => c.code === value) ||
     COUNTRIES.find((c) => c.name === "Philippines");
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -31,14 +28,12 @@ const CountryCodeDropdown = ({ value, onChange }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Focus search input when dropdown opens
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isOpen]);
 
-  // Filter countries based on search query
   const filteredCountries = COUNTRIES.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,37 +42,25 @@ const CountryCodeDropdown = ({ value, onChange }) => {
 
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
-      {/* Trigger Button matching the styling reference */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="h-full bg-stone-100 border-r border-stone-200 px-3.5 py-3 text-sm flex items-center gap-2 hover:bg-stone-200/60 transition focus:outline-none"
       >
         <span className="text-base leading-none">{selectedCountry?.flag}</span>
-        <span className="font-medium text-stone-800">
-          {selectedCountry?.code}
-        </span>
+        <span className="font-medium text-stone-800">{selectedCountry?.code}</span>
         <svg
-          className={`w-3.5 h-3.5 text-stone-500 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-3.5 h-3.5 text-stone-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.5"
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
-      {/* Dropdown Menu matching the clean layout from the screenshot */}
       {isOpen && (
         <div className="absolute left-0 mt-1.5 w-64 bg-white border border-stone-200 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col animate-in fade-in duration-150">
-          {/* Search Box */}
           <div className="p-2.5 border-b border-stone-100 bg-stone-50">
             <input
               ref={searchInputRef}
@@ -89,7 +72,6 @@ const CountryCodeDropdown = ({ value, onChange }) => {
             />
           </div>
 
-          {/* Scrollable Country List */}
           <div className="max-h-60 overflow-y-auto py-1">
             {filteredCountries.length > 0 ? (
               filteredCountries.map((country, idx) => {
@@ -106,27 +88,21 @@ const CountryCodeDropdown = ({ value, onChange }) => {
                       setSearchQuery("");
                     }}
                     className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between transition-colors ${
-                      isSelected
-                        ? "bg-blue-600 text-white font-medium"
-                        : "text-stone-700 hover:bg-stone-100"
+                      isSelected ? "bg-blue-600 text-white font-medium" : "text-stone-700 hover:bg-stone-100"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <span className="text-sm">{country.flag}</span>
                       <span className="truncate">{country.name}</span>
                     </div>
-                    <span
-                      className={`font-mono text-[11px] ml-2 ${isSelected ? "text-blue-100" : "text-stone-400"}`}
-                    >
+                    <span className={`font-mono text-[11px] ml-2 ${isSelected ? "text-blue-100" : "text-stone-400"}`}>
                       {country.code}
                     </span>
                   </button>
                 );
               })
             ) : (
-              <div className="px-4 py-3 text-xs text-stone-400 text-center">
-                No countries found
-              </div>
+              <div className="px-4 py-3 text-xs text-stone-400 text-center">No countries found</div>
             )}
           </div>
         </div>
@@ -134,8 +110,5 @@ const CountryCodeDropdown = ({ value, onChange }) => {
     </div>
   );
 };
-    </div>
-  )
-}
 
-export default CountryCodeDropdown
+export default CountryCodeDropdown;

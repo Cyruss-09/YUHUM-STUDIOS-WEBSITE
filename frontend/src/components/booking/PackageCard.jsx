@@ -1,10 +1,11 @@
+import React from "react";
+import { usePackageBooking } from "../../hooks/usePackageBooking";
+import { ADD_ONS, TIME_SLOTS, DAYS_IN_JULY } from "../../data/bookingOptions";
+import { getWeekdayName } from "../../utils/dateUtils";
 
-import React from 'react'
-
-const PackageCard = () => {
-  return (
-    <div>
-            const PackageCard = ({
+// Pure UI: renders a package + its booking wizard, but owns no booking
+// rules itself — everything comes from usePackageBooking().
+export const PackageCard = ({
   id,
   title,
   price,
@@ -16,107 +17,31 @@ const PackageCard = () => {
   setActiveBookingId,
   onProceedToForm,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedStudio, setSelectedStudio] = useState(null);
-
-  // State for Add-ons checklist
-  const [selectedAddons, setSelectedAddons] = useState({});
-  // State for Calendar & Time Selection
-  const [selectedDate, setSelectedDate] = useState(14);
-  const [selectedTime, setSelectedTime] = useState(null);
-
   const isBookingOpen = activeBookingId === id;
 
-  // Automatically clear sub-selections if this specific card closes
-  useEffect(() => {
-    if (!isBookingOpen) {
-      setSelectedStudio(null);
-      setSelectedTime(null);
-      setSelectedAddons({});
-    }
-  }, [isBookingOpen]);
-
-  const handleStudioSelect = (studioName) => {
-    setSelectedStudio(studioName);
-  };
-
-  const handleAddonChange = (addonLabel) => {
-    setSelectedAddons((prev) => ({
-      ...prev,
-      [addonLabel]: !prev[addonLabel],
-    }));
-  };
-
-  const getWeekdayName = (dayNumber) => {
-    const dateObj = new Date(2026, 6, dayNumber); // July 2026
-    return dateObj.toLocaleDateString("en-US", { weekday: "long" });
-  };
-
-  const handleProceed = () => {
-    const chosenAddOns = Object.keys(selectedAddons).filter(
-      (key) => selectedAddons[key],
-    );
-
-    const bookingSummary = {
-      packageId: id,
-      packageTitle: title,
-      basePrice: price,
-      studio: selectedStudio,
-      date: `July ${selectedDate}, 2026`,
-      dayOfWeek: getWeekdayName(selectedDate),
-      time: selectedTime,
-      addOns: chosenAddOns,
-      image: image,
-      description: description,
-    };
-
-    if (onProceedToForm) {
-      onProceedToForm(bookingSummary);
-    }
-  };
-
-  const addOns = [
-    { key: "add_head", label: "+1 adult", price: "₱250.00" },
-    { key: "add_pet", label: "+1 pet", price: "₱100.00" },
-    { key: "add_4r_print", label: "+1 4R Print", price: "₱50.00" },
-    {
-      key: "add_grid_strips",
-      label: "+1 2x Photo Grid Strips",
-      price: "₱50.00",
-    },
-    { key: "raw_photos", label: "All Raw Photos", price: "₱400.00" },
-    { key: "hair_makeup", label: "Hair & Makeup Service", price: "₱2,500.00" },
-    {
-      key: "studio_rental",
-      label: "Rental Studio (Rate is per hour)",
-      price: "₱1,000.00",
-    },
-  ];
-
-  const timeSlots = [
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "12:00 PM",
-    "12:30 PM",
-    "1:00 PM",
-    "1:30 PM",
-    "2:00 PM",
-    "4:00 PM",
-    "4:30 PM",
-    "5:00 PM",
-    "5:30 PM",
-    "6:00 PM",
-  ];
-
-  const daysInJuly = Array.from({ length: 31 }, (_, i) => i + 1);
+  const {
+    isExpanded,
+    setIsExpanded,
+    selectedStudio,
+    handleStudioSelect,
+    selectedAddons,
+    handleAddonChange,
+    selectedDate,
+    handleDateSelect,
+    selectedTime,
+    setSelectedTime,
+    handleProceed,
+  } = usePackageBooking({
+    id,
+    packageMeta: { title, price, image, description },
+    isBookingOpen,
+    onProceedToForm,
+  });
 
   return (
     <div className="w-full flex flex-col mb-8">
       {/* Main Card */}
       <div className="w-full bg-white border border-stone-200/80 rounded-2xl flex flex-col md:flex-row items-stretch overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-        {/* Left Side: Image with Overlay Tag */}
         <div className="w-full md:w-[260px] min-h-[280px] md:min-h-full shrink-0 relative overflow-hidden group">
           <img
             src={image}
@@ -126,22 +51,15 @@ const PackageCard = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent md:hidden" />
         </div>
 
-        {/* Right Side: Content */}
         <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start gap-4 mb-4">
               <div>
-                <h3 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">
-                  {title}
-                </h3>
-                <span className="text-lg font-medium text-amber-800 block mt-1">
-                  {price}
-                </span>
+                <h3 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">{title}</h3>
+                <span className="text-lg font-medium text-amber-800 block mt-1">{price}</span>
               </div>
               <button
-                onClick={() => {
-                  setActiveBookingId(isBookingOpen ? null : id);
-                }}
+                onClick={() => setActiveBookingId(isBookingOpen ? null : id)}
                 className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-sm ${
                   isBookingOpen
                     ? "bg-stone-900 text-white shadow-stone-900/20"
@@ -152,9 +70,7 @@ const PackageCard = () => {
               </button>
             </div>
 
-            <p className="font-normal text-stone-600 text-[15px] leading-relaxed mb-4">
-              {description}
-            </p>
+            <p className="font-normal text-stone-600 text-[15px] leading-relaxed mb-4">{description}</p>
 
             {isExpanded && (
               <div className="mt-4 text-stone-800 text-[15px] leading-relaxed space-y-5 border-t border-stone-100 pt-5 animate-in fade-in duration-300">
@@ -164,14 +80,7 @@ const PackageCard = () => {
                   </span>
                   <ul className="list-none space-y-1.5">
                     {inclusions.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className={
-                          item.indent
-                            ? "pl-4 text-stone-500 text-sm"
-                            : "text-stone-700"
-                        }
-                      >
+                      <li key={idx} className={item.indent ? "pl-4 text-stone-500 text-sm" : "text-stone-700"}>
                         {item.text}
                       </li>
                     ))}
@@ -188,37 +97,65 @@ const PackageCard = () => {
             >
               <span>{isExpanded ? "Hide Details" : "View Inclusions"}</span>
               <svg
-                className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
+                className={`w-3.5 h-3.5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M19 9l-7 7-7-7"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
           </div>
         </div>
       </div>
 
+      {/* Booking wizard */}
+      {isBookingOpen && (
+        <div className="w-full mt-4 flex flex-col gap-6 animate-in slide-in-from-top-4 duration-300">
+          {/* Step 1: Studio */}
+          <div className="w-full bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-stone-50/80 px-6 py-3.5 border-b border-stone-100 flex items-center justify-between">
+              <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">
+                Step 1: Choose Your Studio Space
+              </span>
+            </div>
 
-          {/* --- NESTED ADD-ONS AND SCHEDULER SECTION --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-stone-100">
+              {["Studio A", "Studio B"].map((studioName) => (
+                <div key={studioName} className="flex items-center justify-between p-6 hover:bg-stone-50/50 transition-colors">
+                  <div>
+                    <span className="font-bold text-lg text-stone-900 block capitalize">{studioName}</span>
+                    <span className="text-xs text-stone-500">
+                      {studioName === "Studio A"
+                        ? "Wheat, Scarlet Red, Marine Blue"
+                        : "White, Blush Pink, Amber Brown"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleStudioSelect(studioName)}
+                    className={`px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${
+                      selectedStudio === studioName
+                        ? "bg-stone-900 text-white shadow-sm"
+                        : "bg-stone-100 text-stone-900 hover:bg-stone-200"
+                    }`}
+                  >
+                    {selectedStudio === studioName ? "Selected" : "Select"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {selectedStudio && (
             <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300">
-              {/* 1. ADD TO APPOINTMENT BLOCK */}
+              {/* Step 2: Add-ons */}
               <div className="w-full bg-white border border-stone-200 rounded-2xl p-6 md:p-8 shadow-sm">
                 <h3 className="text-xs font-bold tracking-widest text-stone-900 uppercase mb-6 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-amber-700"></span>
                   Step 2: Customise with Add-ons (Optional)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                  {addOns.map((addon) => (
+                  {ADD_ONS.map((addon) => (
                     <label
                       key={addon.key}
                       className="flex items-start gap-3.5 cursor-pointer select-none group p-2.5 rounded-xl hover:bg-stone-50 transition-colors"
@@ -230,9 +167,7 @@ const PackageCard = () => {
                         className="w-4 h-4 mt-0.5 accent-stone-900 rounded border-stone-300 cursor-pointer"
                       />
                       <div className="text-sm flex-1 flex justify-between items-center">
-                        <span className="font-medium text-stone-700 group-hover:text-stone-900">
-                          {addon.label}
-                        </span>
+                        <span className="font-medium text-stone-700 group-hover:text-stone-900">{addon.label}</span>
                         <span className="text-xs text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-full">
                           {addon.price === "Free" ? "Free" : `+ ${addon.price}`}
                         </span>
@@ -242,9 +177,8 @@ const PackageCard = () => {
                 </div>
               </div>
 
-              {/* 2. CALENDAR & TIME SLOTS WRAPPER CONTAINER */}
+              {/* Step 3: Calendar & time */}
               <div className="w-full bg-white border border-stone-200 rounded-2xl p-6 md:p-8 flex flex-col lg:flex-row gap-12 shadow-sm">
-                {/* Left Side: Calendar */}
                 <div className="w-full lg:w-5/12">
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-xs font-bold tracking-widest text-stone-900 uppercase flex items-center gap-2">
@@ -256,67 +190,34 @@ const PackageCard = () => {
                   <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100">
                     <div className="flex items-center justify-between mb-6">
                       <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-600 transition-colors">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                          className="w-4 h-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.75 19.5L8.25 12l7.5-7.5"
-                          />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                         </svg>
                       </button>
-                      <span className="text-sm font-bold text-stone-900 tracking-wide">
-                        July 2026
-                      </span>
+                      <span className="text-sm font-bold text-stone-900 tracking-wide">July 2026</span>
                       <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-600 transition-colors">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                          className="w-4 h-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M8.25 4.5l7.5 7.5-7.5 7.5"
-                          />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                         </svg>
                       </button>
                     </div>
 
                     <div className="grid grid-cols-7 gap-y-2 text-center text-xs font-bold text-stone-400 mb-3">
-                      <span>M</span>
-                      <span>T</span>
-                      <span>W</span>
-                      <span>T</span>
-                      <span>F</span>
-                      <span>S</span>
-                      <span>S</span>
+                      <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
                     </div>
 
                     <div className="grid grid-cols-7 gap-y-1.5 text-center text-sm font-medium">
                       <span key="pad-1" className="text-transparent"></span>
                       <span key="pad-2" className="text-transparent"></span>
 
-                      {daysInJuly.map((day) => {
+                      {DAYS_IN_JULY.map((day) => {
                         const isPast = day < 13;
                         const isSelected = selectedDate === day;
                         return (
                           <button
                             key={day}
                             disabled={isPast}
-                            onClick={() => {
-                              setSelectedDate(day);
-                              setSelectedTime(null);
-                            }}
+                            onClick={() => handleDateSelect(day)}
                             className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full transition-all text-xs font-semibold ${
                               isPast
                                 ? "text-stone-300 cursor-not-allowed bg-transparent"
@@ -333,7 +234,6 @@ const PackageCard = () => {
                   </div>
                 </div>
 
-                {/* Right Side: Time Slots */}
                 <div className="w-full lg:w-7/12 flex flex-col justify-between">
                   <div>
                     <div className="mb-4">
@@ -341,15 +241,12 @@ const PackageCard = () => {
                         {getWeekdayName(selectedDate)}, July {selectedDate}
                       </h4>
                       <p className="text-[11px] font-bold tracking-wider text-stone-400 uppercase mt-0.5">
-                        Time Zone:{" "}
-                        <span className="text-stone-700 underline">
-                          Manila (GMT+08:00)
-                        </span>
+                        Time Zone: <span className="text-stone-700 underline">Manila (GMT+08:00)</span>
                       </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
-                      {timeSlots.map((time) => (
+                      {TIME_SLOTS.map((time) => (
                         <button
                           key={time}
                           onClick={() => setSelectedTime(time)}
@@ -384,8 +281,5 @@ const PackageCard = () => {
     </div>
   );
 };
-    </div>
-  )
-}
 
-export default PackageCard
+export default PackageCard;
