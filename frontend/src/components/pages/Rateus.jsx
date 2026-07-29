@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Star,
   Camera,
@@ -7,81 +7,21 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
+import { useReviewForm } from "../../hooks/useReviewForm.js";
 
 export const Rateus = () => {
-  const [submitted, setSubmitted] = useState(false);
-  const [hoveredRating, setHoveredRating] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [formData, setFormData] = useState({
-    userEmail: "",
-    overallRating: 0,
-    equipmentEase: 0,
-    roomPrivacy: 0,
-    propsSelection: 0,
-    favoriteBackdrop: "",
-    comments: "",
-    recommend: null,
-  });
-
-  const handleRatingChange = (category, value) => {
-    setFormData((prev) => ({ ...prev, [category]: value }));
-  };
-
-  const handleReset = () => {
-    setSubmitted(false);
-    setErrorMessage("");
-    setFormData({
-      userEmail: "",
-      overallRating: 0,
-      equipmentEase: 0,
-      roomPrivacy: 0,
-      propsSelection: 0,
-      favoriteBackdrop: "",
-      comments: "",
-      recommend: null,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage("");
-
-    const sanitizedData = {
-      userEmail: formData.userEmail.trim() || null,
-      overallRating: Number(formData.overallRating) || 0,
-      equipmentEase: Number(formData.equipmentEase) || 0,
-      roomPrivacy: Number(formData.roomPrivacy) || 0,
-      propsSelection: Number(formData.propsSelection) || 0,
-      favoriteBackdrop: formData.favoriteBackdrop || null,
-      comments: formData.comments || null,
-      recommend: formData.recommend,
-    };
-
-    try {
-      const response = await fetch("http://localhost:5000/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sanitizedData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || `Server responded with status ${response.status}`
-        );
-      }
-
-      setSubmitted(true);
-    } catch (error) {
-      console.error("Submission error:", error);
-      setErrorMessage("Something went wrong on the server. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    submitted,
+    hoveredRating,
+    setHoveredRating,
+    loading,
+    errorMessage,
+    formData,
+    updateField,
+    handleRatingChange,
+    handleReset,
+    handleSubmit,
+  } = useReviewForm();
 
   return (
     <div className="min-h-screen bg-[#faf8f5] flex flex-col antialiased text-stone-700 font-sans">
@@ -103,9 +43,10 @@ export const Rateus = () => {
             </p>
             <button
               onClick={handleReset}
-              className="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-stone-500 hover:text-stone-900 transition-colors focus:outline-none font-bold"
+              className="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-stone-500 hover:text-stone-900 hover:gap-3 active:scale-95 transition-all duration-200 focus:outline-none font-bold group"
             >
-              Submit another response <ArrowRight className="w-3 h-3" />
+              Submit another response
+              <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-1" />
             </button>
           </div>
         ) : (
@@ -129,7 +70,7 @@ export const Rateus = () => {
 
             <form onSubmit={handleSubmit} className="p-8 space-y-8">
               {errorMessage && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 animate-[fadeIn_0.2s_ease-in]">
                   {errorMessage}
                 </div>
               )}
@@ -148,13 +89,8 @@ export const Rateus = () => {
                     id="userEmail"
                     placeholder="name@example.com"
                     value={formData.userEmail}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        userEmail: e.target.value,
-                      }))
-                    }
-                    className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 transition-colors"
+                    onChange={(e) => updateField("userEmail", e.target.value)}
+                    className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 placeholder-stone-400 hover:border-stone-300 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition-all duration-200"
                   />
                 </div>
               </div>
@@ -174,13 +110,13 @@ export const Rateus = () => {
                       onClick={() => handleRatingChange("overallRating", star)}
                       onMouseEnter={() => setHoveredRating(star)}
                       onMouseLeave={() => setHoveredRating(0)}
-                      className="p-1 focus:outline-none transition-transform active:scale-95"
+                      className="p-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/40 transition-transform duration-150 hover:scale-110 active:scale-90"
                     >
                       <Star
-                        className={`w-7 h-7 transition-colors duration-150 ${
+                        className={`w-7 h-7 transition-all duration-150 ${
                           star <= (hoveredRating || formData.overallRating)
-                            ? "fill-amber-700 text-amber-700"
-                            : "text-stone-200"
+                            ? "fill-amber-700 text-amber-700 drop-shadow-sm"
+                            : "text-stone-200 hover:text-stone-300"
                         }`}
                         strokeWidth={1.5}
                       />
@@ -235,13 +171,8 @@ export const Rateus = () => {
                 <select
                   id="backdrop"
                   value={formData.favoriteBackdrop}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      favoriteBackdrop: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 focus:outline-none focus:border-stone-900 transition-colors appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23292524%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:20px] bg-[right_12px_center] bg-no-repeat"
+                  onChange={(e) => updateField("favoriteBackdrop", e.target.value)}
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 hover:border-stone-300 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition-all duration-200 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23292524%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:20px] bg-[right_12px_center] bg-no-repeat"
                 >
                   <option value="" disabled>
                     Select a color backdrop
@@ -271,14 +202,9 @@ export const Rateus = () => {
                   id="comments"
                   rows={4}
                   value={formData.comments}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      comments: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => updateField("comments", e.target.value)}
                   placeholder="Tell us what you loved, or what we can tweak to make your experience smoother next time..."
-                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 transition-colors resize-none"
+                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm font-light text-stone-900 placeholder-stone-400 hover:border-stone-300 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition-all duration-200 resize-none"
                 />
               </div>
 
@@ -290,26 +216,22 @@ export const Rateus = () => {
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, recommend: true }))
-                    }
-                    className={`flex-1 py-3 text-xs uppercase tracking-wider font-bold rounded-xl border transition-all focus:outline-none ${
+                    onClick={() => updateField("recommend", true)}
+                    className={`flex-1 py-3 text-xs uppercase tracking-wider font-bold rounded-xl border transition-all duration-200 focus:outline-none active:scale-[0.97] ${
                       formData.recommend === true
                         ? "border-stone-900 bg-stone-900 text-white shadow-sm"
-                        : "border-stone-200 text-stone-700 hover:border-stone-400 bg-stone-50/50"
+                        : "border-stone-200 text-stone-700 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm bg-stone-50/50"
                     }`}
                   >
                     Yes, absolutely
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, recommend: false }))
-                    }
-                    className={`flex-1 py-3 text-xs uppercase tracking-wider font-bold rounded-xl border transition-all focus:outline-none ${
+                    onClick={() => updateField("recommend", false)}
+                    className={`flex-1 py-3 text-xs uppercase tracking-wider font-bold rounded-xl border transition-all duration-200 focus:outline-none active:scale-[0.97] ${
                       formData.recommend === false
                         ? "border-stone-900 bg-stone-900 text-white shadow-sm"
-                        : "border-stone-200 text-stone-700 hover:border-stone-400 bg-stone-50/50"
+                        : "border-stone-200 text-stone-700 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm bg-stone-50/50"
                     }`}
                   >
                     Maybe next time
@@ -321,7 +243,7 @@ export const Rateus = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-widest transition-colors duration-200 shadow-sm mt-4 focus:outline-none"
+                className="w-full bg-stone-900 hover:bg-stone-800 hover:shadow-md active:scale-[0.98] disabled:bg-stone-300 disabled:active:scale-100 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-widest transition-all duration-200 shadow-sm mt-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/30 focus-visible:ring-offset-2"
               >
                 {loading ? "Submitting..." : "Submit Review"}
               </button>
@@ -333,13 +255,7 @@ export const Rateus = () => {
   );
 };
 
-const MetricRow = ({
-  label,
-  icon,
-  category,
-  currentValue,
-  onRatingChange,
-}) => {
+const MetricRow = ({ label, icon, category, currentValue, onRatingChange }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1">
       <div className="flex items-center gap-2.5">
@@ -352,10 +268,10 @@ const MetricRow = ({
             key={val}
             type="button"
             onClick={() => onRatingChange(category, val)}
-            className={`w-8 h-8 text-xs font-bold rounded-lg transition-all focus:outline-none ${
+            className={`w-8 h-8 text-xs font-bold rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/40 active:scale-90 ${
               currentValue === val
-                ? "bg-stone-900 text-white shadow-sm"
-                : "bg-white text-stone-700 border border-stone-200 hover:border-stone-400"
+                ? "bg-stone-900 text-white shadow-sm scale-105"
+                : "bg-white text-stone-700 border border-stone-200 hover:border-stone-400 hover:bg-stone-50 hover:scale-105"
             }`}
           >
             {val}
