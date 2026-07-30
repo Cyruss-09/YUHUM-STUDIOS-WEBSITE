@@ -43,6 +43,42 @@ if (rawKey) {
 }
 console.log("------------------------------");
 
+const FROM_EMAIL =
+  process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
+const ADMIN_EMAIL =
+  process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
+
+// --- EMAIL SANDBOX MODE ---
+// While using Resend's shared sandbox domain (onboarding@resend.dev) without
+// a verified domain, Resend only allows sending to the email address on your
+// own Resend account. Set DEV_EMAIL_SANDBOX=true in .env during local
+// development so every email safely routes to ADMIN_EMAIL instead of
+// triggering a 403. Once you verify a domain (resend.com/domains) and set a
+// custom FROM_EMAIL on that domain, set DEV_EMAIL_SANDBOX=false (or remove it)
+// to start sending to real customer addresses.
+const SANDBOX_MODE = process.env.DEV_EMAIL_SANDBOX === "true";
+const SANDBOX_RECIPIENT = ADMIN_EMAIL; // must match your Resend account email
+
+console.log(
+  SANDBOX_MODE
+    ? "📦 Email sandbox mode: ON — all emails will be sent to " +
+        SANDBOX_RECIPIENT
+    : "📤 Email sandbox mode: OFF — emails will be sent to real recipients",
+);
+
+// Simple email format check, reused wherever we need to validate a customer email.
+const isValidEmail = (value) =>
+  typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+// Decides where an email actually gets sent:
+// - In sandbox mode, everything goes to SANDBOX_RECIPIENT (avoids Resend 403s).
+// - Otherwise, sends to the real candidate email if it's valid, falling back
+//   to ADMIN_EMAIL only when no usable address was provided.
+const resolveRecipient = (candidateEmail) => {
+  if (SANDBOX_MODE) return SANDBOX_RECIPIENT;
+  return isValidEmail(candidateEmail) ? candidateEmail.trim() : ADMIN_EMAIL;
+};
+
 /* ================= BOOKINGS ROUTE ================= */
 app.post("/api/bookings", async (req, res) => {
   const {
@@ -129,13 +165,7 @@ app.post("/api/bookings", async (req, res) => {
 
     try {
       if (resend) {
-        const FROM_EMAIL =
-          process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
-
-        const recipient =
-          process.env.NODE_ENV === "production" && email
-            ? email
-            : process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
+        const recipient = resolveRecipient(email);
 
         const bookingHtml = BookingEmail({
           packageTitle: safePackageTitle,
@@ -221,18 +251,15 @@ app.post("/api/reviews", async (req, res) => {
 
     const result = await pool.query(queryText, values);
 
-    let emailSent = false;
+    let adminEmailSent = false;
+    let customerEmailSent = false;
 
+    // --- 1. Admin notification: always goes to the studio inbox ---
     try {
       if (resend) {
-        const FROM_EMAIL =
-          process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
-        const adminRecipient =
-          process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
-
         await resend.emails.send({
           from: FROM_EMAIL,
-          to: [adminRecipient],
+          to: [ADMIN_EMAIL],
           subject: `New Review Submitted (${overallRating || "N/A"} ⭐)`,
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
@@ -254,11 +281,20 @@ app.post("/api/reviews", async (req, res) => {
             </div>
           `,
         });
+        adminEmailSent = true;
+      }
+    } catch (adminEmailErr) {
+      console.error(
+        "⚠️ Review saved, but admin notification email failed:",
+        adminEmailErr.message || adminEmailErr,
+      );
+    }
 
-        const customerRecipient =
-          process.env.NODE_ENV === "production" && userEmail
-            ? userEmail.trim()
-            : adminRecipient;
+    // --- 2. Customer thank-you: routed through resolveRecipient so sandbox
+    //        mode and the "valid email" fallback are both handled in one place ---
+    try {
+      if (resend) {
+        const customerRecipient = resolveRecipient(userEmail);
 
         const reviewHtml = ReviewEmail({
           overallRating,
@@ -276,21 +312,23 @@ app.post("/api/reviews", async (req, res) => {
           subject: "Thank you for your review! - Yuhum Studio",
           html: reviewHtml,
         });
-
-        emailSent = true;
+        customerEmailSent = true;
       }
-    } catch (emailErr) {
+    } catch (customerEmailErr) {
       console.error(
-        "⚠️ Review saved, but email notification failed:",
-        emailErr.message || emailErr,
+        "⚠️ Review saved, but customer thank-you email failed:",
+        customerEmailErr.message || customerEmailErr,
       );
     }
 
     return res.status(201).json({
       success: true,
-      message: emailSent
-        ? "Review submitted and thank-you email sent!"
-        : "Review submitted successfully!",
+      message:
+        adminEmailSent && customerEmailSent
+          ? "Review submitted! Admin notified and thank-you email sent."
+          : adminEmailSent
+            ? "Review submitted and admin notified! (Thank-you email not sent.)"
+            : "Review submitted successfully!",
       data: result.rows[0],
     });
   } catch (err) {
@@ -341,16 +379,11 @@ app.post("/api/resend-campaign", async (req, res) => {
         .json({ error: "Resend configuration missing (RESEND_API_KEY)." });
     }
 
-    const FROM_EMAIL =
-      process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
     let successCount = 0;
     let failCount = 0;
 
     for (const sub of subscribers) {
-      const recipient =
-        process.env.NODE_ENV === "production" && sub.email
-          ? sub.email.trim()
-          : process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
+      const recipient = resolveRecipient(sub.email);
 
       try {
         const subscriberHtml = SubscriberEmail({
