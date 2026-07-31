@@ -39,3 +39,4 @@ CREATE TABLE reviews(
     CONSTRAINT reviews_props_selection_check CHECK ((props_selection >= 0) AND (props_selection <= 5)) 
 );
 
+

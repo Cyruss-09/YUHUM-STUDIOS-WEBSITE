@@ -238,6 +238,17 @@ app.post("/api/reviews", async (req, res) => {
       RETURNING *;
     `;
 
+    // FIX: `recommend` had no fallback. If the frontend didn't send it (e.g. an
+    // untouched yes/no toggle), it arrives as `undefined`, and node-postgres
+    // throws on undefined query parameters — which crashed this entire route
+    // (500) before the review was ever saved or an email ever attempted.
+    const safeRecommend =
+      recommend === true || recommend === "true" || recommend === 1
+        ? true
+        : recommend === false || recommend === "false" || recommend === 0
+          ? false
+          : null;
+
     const values = [
       overallRating || 0,
       equipmentEase || 0,
@@ -245,7 +256,7 @@ app.post("/api/reviews", async (req, res) => {
       propsSelection || 0,
       favoriteBackdrop || null,
       comments || null,
-      recommend,
+      safeRecommend,
       userEmail || null,
     ];
 
@@ -272,7 +283,7 @@ app.post("/api/reviews", async (req, res) => {
                 <li><strong>Room Privacy:</strong> ${roomPrivacy || "N/A"} / 5</li>
                 <li><strong>Props Selection:</strong> ${propsSelection || "N/A"} / 5</li>
                 <li><strong>Favorite Backdrop:</strong> ${favoriteBackdrop || "None selected"}</li>
-                <li><strong>Recommends Us:</strong> ${recommend === true ? "Yes" : recommend === false ? "No" : "N/A"}</li>
+                <li><strong>Recommends Us:</strong> ${safeRecommend === true ? "Yes" : safeRecommend === false ? "No" : "N/A"}</li>
               </ul>
               <p><strong>Comments:</strong></p>
               <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #2D1B18; margin: 0;">
@@ -456,7 +467,42 @@ app.post("/api/subscribers", async (req, res) => {
       return res.status(200).json({ message: "You are already subscribed!" });
     }
 
-    return res.status(201).json({ message: "Thank you for subscribing!" });
+    // FIX: this route never sent anything through Resend — SubscriberEmail
+    // was imported but unused. Send a welcome email now, same pattern as the
+    // other routes (best-effort: subscription still succeeds if mail fails).
+    let welcomeEmailSent = false;
+    try {
+      if (resend) {
+        const recipient = resolveRecipient(cleanEmail);
+
+        const subscriberHtml = SubscriberEmail({
+          name: "Valued Subscriber",
+          messageBody:
+            "Thanks for subscribing to Yuhum Studio! We'll keep you posted on new sessions, promos, and updates.",
+          unsubscribeUrl: `https://yuhumstudio.com/unsubscribe?email=${encodeURIComponent(cleanEmail)}`,
+        });
+
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: [recipient],
+          subject: "Welcome to Yuhum Studio!",
+          html: subscriberHtml,
+        });
+
+        welcomeEmailSent = true;
+      }
+    } catch (welcomeEmailErr) {
+      console.error(
+        "⚠️ Subscriber saved, but welcome email failed:",
+        welcomeEmailErr.message || welcomeEmailErr,
+      );
+    }
+
+    return res.status(201).json({
+      message: welcomeEmailSent
+        ? "Thank you for subscribing! A welcome email is on its way."
+        : "Thank you for subscribing!",
+    });
   } catch (err) {
     console.error("Database error (subscribers):", err);
     return res.status(500).json({ error: "Internal server error." });

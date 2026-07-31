@@ -1,5 +1,5 @@
 import { ImageOff } from "lucide-react";
-import { notFoundContent } from "../../data/notFoundContent.js";
+import { notFoundContent } from "";
 
 const NotFound = ({ setActiveLink }) => {
   const { code, heading, message, buttonLabel } = notFoundContent;
