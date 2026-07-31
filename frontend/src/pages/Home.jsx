@@ -1,5 +1,5 @@
-import { features } from "../../data/features.js";
-import { useFeatureSelection } from "../../hooks/useFeatureSelection";
+import { features } from "../data/features.js";
+import { useFeatureSelection } from "../hooks/useFeatureSelection";
 
 export const Home = () => {
   const { selectedFeature, handleCardClick, activeItem } =

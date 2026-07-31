@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Pic25 from "../../assets/Pic25.jpg";
-import Pic8 from "../../assets/Pic8.jpg";
+import Pic25 from "../assets/Pic25.jpg";
+import Pic8 from "../assets/Pic8.jpg";
 
-import { PackageCard } from "../booking/PackageCard";
-import { StudioBackdropGuide } from "../booking/StudioBackdropGuide";
-import { BookingInformationForm } from "../booking/BookingInformationForm";
-import { ConfirmationModal } from "../booking/ConfirmationModal";
-import { useBookingForm } from "../../hooks/useBookingForm";
-import { PACKAGES } from "../../data/bookingOptions";
+import { PackageCard } from "../components/booking/PackageCard";
+import { StudioBackdropGuide } from "../components/booking/StudioBackdropGuide";
+import { BookingInformationForm } from "../components/booking/BookingInformationForm";
+import { ConfirmationModal } from "../components/booking/ConfirmationModal";
+import { useBookingForm } from "../hooks/useBookingForm";
+import { PACKAGES } from "../data/bookingOptions";
 
 // Map static package data to its image (images can't live in the plain
 // data file since bundlers resolve `import` paths at build time).
@@ -58,7 +58,13 @@ export const Book = ({ setActiveLink, userEmail }) => {
 
             <div className="w-full max-w-3xl mx-auto px-2 md:px-0">
               <div className="flex items-center justify-center gap-2 mb-4 text-amber-800 font-bold text-xs uppercase tracking-widest">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -104,24 +110,3 @@ export const Book = ({ setActiveLink, userEmail }) => {
 };
 
 export default Book;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

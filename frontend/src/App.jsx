@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
-import { Home } from "./components/pages/Home";
-import { Book } from "./components/pages/Book";
-import { OurStory } from "./components/pages/OurStory";
-import { Rateus } from "./components/pages/Rateus";
-import NotFound from "./components/pages/NotFound";
+import { Home } from "./pages/Home";
+import { Book } from "./pages/Book";
+import { OurStory } from "./pages/OurStory";
+import { Rateus } from "./pages/Rateus";
+import NotFound from "./pages/NotFound";
 import { Footer } from "./components/Footer";
+import  {CustomerLogin}  from "./pages/CustomerLogin";
+import { AdminLogin } from "./pages/AdminLogin";
+import { AuthProvider } from "./context/AuthContext"; // Added AuthProvider import
 
 export default function App() {
   const [activeLink, setActiveLink] = useState(() => {
@@ -28,28 +31,42 @@ export default function App() {
     setActiveLink(newPage);
   };
 
-  const validPages = ["home", "book", "our-story", "rate-us"];
+  const validPages = [
+    "home",
+    "book",
+    "our-story",
+    "rate-us",
+    "login",
+    "admin-login",
+  ];
   const isInvalidPage = !validPages.includes(activeLink);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fdfbf7]">
-      <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
+    <AuthProvider>
+      <div className="flex flex-col min-h-screen bg-[#fdfbf7]">
+        <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
 
-      <main className="w-full flex-grow">
-        {activeLink === "home" && <Home />}
-        {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
-        {activeLink === "our-story" && (
-          <OurStory setActiveLink={handlePageChange} />
-        )}
-        {activeLink === "rate-us" && (
-          <Rateus setActiveLink={handlePageChange} />
-        )}
+        <main className="w-full flex-grow">
+          {activeLink === "home" && <Home />}
+          {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
+          {activeLink === "our-story" && (
+            <OurStory setActiveLink={handlePageChange} />
+          )}
+          {activeLink === "rate-us" && (
+            <Rateus setActiveLink={handlePageChange} />
+          )}
+          {activeLink === "login" && (
+            <CustomerLogin setActiveLink={handlePageChange} />
+          )}
+          {activeLink === "admin-login" && (
+            <AdminLogin setActiveLink={handlePageChange} />
+          )}
 
-        {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
-      </main>
+          {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
+        </main>
 
-      {/* Pass handlePageChange as setActiveLink to the Footer */}
-      <Footer setActiveLink={handlePageChange} />
-    </div>
+        <Footer setActiveLink={handlePageChange} />
+      </div>
+    </AuthProvider>
   );
 }

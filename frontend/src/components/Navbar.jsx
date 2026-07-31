@@ -26,6 +26,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
     { id: "book", label: "book", url: "#book" },
     { id: "our-story", label: "our story", url: "#our-story" },
     { id: "rate-us", label: "rate us", url: "#rate-us" },
+    { id: "login", label: "login", url: "#login" },
   ];
 
   const handleLinkClick = (e, id) => {
