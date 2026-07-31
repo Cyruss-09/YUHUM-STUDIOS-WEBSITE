@@ -1,4 +1,4 @@
-import { ourStoryContent } from "../data/ourStoryContent.js";
+import { ourStoryContent } from "../../data/ourStoryContent.js";
 
 export const OurStory = () => {
   const { bannerImage, bannerAlt, video, headline, address } = ourStoryContent;

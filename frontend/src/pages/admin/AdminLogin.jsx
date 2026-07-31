@@ -1,6 +1,6 @@
 import React from "react";
-import { LoginForm } from "../components/LoginForm";
-import { useAuth } from "../context/AuthContext";
+import { LoginForm } from "../../components/LoginForm";
+import { useAuth } from "../../context/AuthContext";
 
 // No react-router-dom in this project — navigation goes through the
 // setActiveLink prop, same as your other pages.

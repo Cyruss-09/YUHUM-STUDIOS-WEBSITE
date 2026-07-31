@@ -7,7 +7,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import { useReviewForm } from "../hooks/useReviewForm.js";
+import { useReviewForm } from "../../hooks/useReviewForm.js";
 
 export const Rateus = () => {
   const {

@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
-import { Home } from "./pages/Home";
-import { Book } from "./pages/Book";
-import { OurStory } from "./pages/OurStory";
-import { Rateus } from "./pages/Rateus";
-import NotFound from "./pages/NotFound";
+import { Home } from "./pages/public/Home";
+import { Book } from "./pages/public/Book";
+import { OurStory } from "./pages/public/OurStory";
+import { Rateus } from "./pages/public/Rateus";
+import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
-import  {CustomerLogin}  from "./pages/CustomerLogin";
-import { AdminLogin } from "./pages/AdminLogin";
+import  {CustomerLogin}  from "./pages/public/CustomerLogin";
+import { AdminLogin } from "./pages/admin/AdminLogin";
 import { AuthProvider } from "./context/AuthContext"; // Added AuthProvider import
 
 export default function App() {

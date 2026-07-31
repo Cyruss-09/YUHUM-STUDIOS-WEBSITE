@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Pic25 from "../assets/Pic25.jpg";
-import Pic8 from "../assets/Pic8.jpg";
+import Pic25 from "../../assets/Pic25.jpg";
+import Pic8 from "../../assets/Pic8.jpg";
 
-import { PackageCard } from "../components/booking/PackageCard";
-import { StudioBackdropGuide } from "../components/booking/StudioBackdropGuide";
-import { BookingInformationForm } from "../components/booking/BookingInformationForm";
-import { ConfirmationModal } from "../components/booking/ConfirmationModal";
-import { useBookingForm } from "../hooks/useBookingForm";
-import { PACKAGES } from "../data/bookingOptions";
+import { PackageCard } from "../../components/booking/PackageCard";
+import { StudioBackdropGuide } from "../../components/booking/StudioBackdropGuide";
+import { BookingInformationForm } from "../../components/booking/BookingInformationForm";
+import { ConfirmationModal } from "../../components/booking/ConfirmationModal";
+import { useBookingForm } from "../../hooks/useBookingForm";
+import { PACKAGES } from "../../data/bookingOptions";
 
 // Map static package data to its image (images can't live in the plain
 // data file since bundlers resolve `import` paths at build time).
