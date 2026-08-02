@@ -1,6 +1,5 @@
 import React from "react";
-import { LoginForm } from "../public/CustomerLogin";
-
+import { LoginForm } from "../../components/LoginForm";
 // No react-router-dom in this project — App.jsx drives pages via
 // activeLink + window.location.hash, so navigation happens by calling
 // setActiveLink (passed down the same way Book/OurStory/Rateus get it).

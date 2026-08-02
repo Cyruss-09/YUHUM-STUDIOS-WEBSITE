@@ -1,5 +1,11 @@
 import { ImageOff } from "lucide-react";
-import { notFoundContent } from "";
+
+const notFoundContent = {
+  code: "404",
+  heading: "Page not found",
+  message: "The page you're looking for doesn't exist or has been moved.",
+  buttonLabel: "back to home",
+};
 
 const NotFound = ({ setActiveLink }) => {
   const { code, heading, message, buttonLabel } = notFoundContent;
@@ -18,13 +24,12 @@ const NotFound = ({ setActiveLink }) => {
             style={{ animation: "float 4s ease-in-out infinite" }}
           >
             <div className="absolute inset-0 rounded-full border border-amber-800/10" />
-            <ImageOff
-              className="w-11 h-11 text-stone-400"
-              strokeWidth={1.25}
-            />
+            <ImageOff className="w-11 h-11 text-stone-400" strokeWidth={1.25} />
             {/* Little "torn corner" accent */}
             <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-50 border border-stone-200 flex items-center justify-center">
-              <span className="text-[10px] font-serif italic text-amber-800">?</span>
+              <span className="text-[10px] font-serif italic text-amber-800">
+                ?
+              </span>
             </div>
           </div>
         </div>
