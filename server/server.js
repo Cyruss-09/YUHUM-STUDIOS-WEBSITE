@@ -3,24 +3,19 @@ require("dotenv").config();
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
 const { Resend } = require("resend");
 const { BookingEmail } = require("./emails/BookingEmail");
 const { ReviewEmail } = require("./emails/ReviewEmail");
 const { SubscriberEmail } = require("./emails/SubscriberEmail");
 
+const pool = require("./src/config/db");
+const { verifyToken, requireAdmin } = require("./middleware/auth");
+const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/admin");
+
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// --- POSTGRESQL POOL CONFIGURATION ---
-const pool = new Pool({
-  user: process.env.DB_USER || "postgres",
-  host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "Yuhum.Studio.db",
-  password: String(process.env.DB_PASSWORD || "").trim(),
-  port: parseInt(process.env.DB_PORT || "5432", 10),
-});
 
 // Test DB connection on startup
 pool.connect((err, client, release) => {
@@ -31,6 +26,12 @@ pool.connect((err, client, release) => {
     release();
   }
 });
+
+// --- AUTH + ADMIN ROUTES ---
+// /api/auth/register and /api/auth/login — open to anyone
+app.use("/api/auth", authRoutes(pool));
+// /api/admin/* — requires a valid token AND role === 'admin'
+app.use("/api/admin", verifyToken, requireAdmin, adminRoutes(pool));
 
 // --- RESEND INITIALIZATION & DIAGNOSTICS ---
 const rawKey = (process.env.RESEND_API_KEY || "").trim();

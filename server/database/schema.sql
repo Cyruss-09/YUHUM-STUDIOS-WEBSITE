@@ -1,4 +1,4 @@
--- Active: 1784321332673@@127.0.0.1@5432@Yuhum.Studio.d
+-- Active: 1784321332673@@127.0.0.1@5432@Yuhum.Studio.db
 CREATE TABLE bookings (
     id SERIAL NOT NULL,
     package_id varchar(50) NOT NULL,
@@ -39,4 +39,11 @@ CREATE TABLE reviews(
     CONSTRAINT reviews_props_selection_check CHECK ((props_selection >= 0) AND (props_selection <= 5)) 
 );
 
-
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'guest', -- 'guest' | 'admin'
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
