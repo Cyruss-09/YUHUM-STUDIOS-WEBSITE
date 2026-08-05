@@ -1,10 +1,7 @@
 import { useState } from "react";
-import BookingsTab from "./tabs/BookingsTab";
-import ReviewsTab from "./tabs/ReviewsTab";
-import RescheduleTab from "./tabs/RescheduleTab";
 import { getCurrentUser, logoutUser } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
-import "./AdminDashboard.css";
+import "../../index.css";
 
 const TABS = [
   { key: "bookings", label: "Bookings" },

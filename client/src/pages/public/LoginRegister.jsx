@@ -1,11 +1,9 @@
 import { useState } from "react";
-import Navbar from "../../components/Navbar"
 import { useNavigate } from "react-router-dom";
 import { loginUser, registerUser } from "../../services/authService";
-import "./LoginRegister.css";
 
 export default function LoginRegister() {
-  const [isFlipped, setIsFlipped] = useState(false); // false = Login face, true = Register face
+  const [isRegistering, setIsRegistering] = useState(false); // false = Login, true = Register
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -32,7 +30,7 @@ export default function LoginRegister() {
       const data = await loginUser(loginData);
       navigate(data.user?.role === "admin" ? "/admin" : "/");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Invalid credentials.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +40,7 @@ export default function LoginRegister() {
     e.preventDefault();
     setError("");
     if (registerData.password !== registerData.confirmPassword) {
-      setError("Passwords don't match.");
+      setError("Passwords do not match.");
       return;
     }
     setLoading(true);
@@ -52,36 +50,53 @@ export default function LoginRegister() {
         email: registerData.email,
         password: registerData.password,
       });
-      setIsFlipped(false);
+      setIsRegistering(false);
       setLoginData({ email: registerData.email, password: "" });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Registration failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  const switchFace = () => {
+  const toggleView = () => {
     setError("");
-    setIsFlipped((f) => !f);
+    setIsRegistering((prev) => !prev);
   };
 
   return (
-    <div className="auth-page">
-      {/* Include the Navbar here so it renders on the page */}
-      <Navbar />
+    <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-12 bg-[#150E09] relative overflow-hidden">
+      {/* Background ambient lighting/glow element */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#C08A3E]/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="auth-stage">
-        <div className={`auth-card ${isFlipped ? "is-flipped" : ""}`}>
-          {/* FRONT — Login */}
-          <div className="auth-face auth-face--front">
-            <span className="auth-eyebrow">Returning Guest</span>
-            <h1 className="auth-title">Welcome back</h1>
-            <p className="auth-sub">Sign in to manage your stay</p>
+      {/* Main container card */}
+      <div className="w-full max-w-md bg-[#1c1410] border border-[#C08A3E]/20 rounded-2xl p-8 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10">
+        {!isRegistering ? (
+          /* ==================== LOGIN FORM ==================== */
+          <div>
+            <div className="text-center mb-8">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E8B368]">
+                Returning Guest
+              </span>
+              <h1 className="font-serif text-3xl text-[#F3EDE3] mt-2 mb-1">
+                Welcome back
+              </h1>
+              <p className="text-sm text-[#B8AA98]">
+                Sign in to manage your bookings and sessions
+              </p>
+            </div>
 
-            <form onSubmit={handleLoginSubmit} className="auth-form">
-              <label className="auth-field">
-                <span>Email</span>
+            {error && (
+              <div className="mb-6 p-3 text-xs text-red-200 bg-red-950/60 border border-red-800/50 rounded-lg text-center">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleLoginSubmit} className="space-y-5">
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wider text-[#B8AA98] mb-2">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -89,10 +104,14 @@ export default function LoginRegister() {
                   value={loginData.email}
                   onChange={handleLoginChange}
                   placeholder="you@example.com"
+                  className="w-full bg-[#150E09] border border-[#C08A3E]/30 rounded-lg px-4 py-3 text-sm text-[#F3EDE3] placeholder-[#B8AA98]/40 focus:outline-none focus:border-[#E8B368] focus:ring-1 focus:ring-[#E8B368] transition-all"
                 />
-              </label>
-              <label className="auth-field">
-                <span>Password</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wider text-[#B8AA98] mb-2">
+                  Password
+                </label>
                 <input
                   type="password"
                   name="password"
@@ -100,33 +119,58 @@ export default function LoginRegister() {
                   value={loginData.password}
                   onChange={handleLoginChange}
                   placeholder="••••••••"
+                  className="w-full bg-[#150E09] border border-[#C08A3E]/30 rounded-lg px-4 py-3 text-sm text-[#F3EDE3] placeholder-[#B8AA98]/40 focus:outline-none focus:border-[#E8B368] focus:ring-1 focus:ring-[#E8B368] transition-all"
                 />
-              </label>
+              </div>
 
-              {!isFlipped && error && <p className="auth-error">{error}</p>}
-
-              <button className="auth-submit" type="submit" disabled={loading}>
-                {loading ? "Signing in…" : "Sign in"}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 bg-gradient-to-b from-[#E8B368] to-[#C08A3E] hover:from-[#F0C07E] hover:to-[#CE9750] text-[#1c1410] font-semibold text-xs tracking-[0.15em] uppercase py-3.5 rounded-lg shadow-[0_4px_14px_rgba(192,138,62,0.35)] hover:shadow-[0_6px_20px_rgba(192,138,62,0.5)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
 
-            <p className="auth-switch">
-              New here?{" "}
-              <button type="button" onClick={switchFace} className="auth-link">
-                Create an account
-              </button>
-            </p>
+            <div className="mt-8 text-center border-t border-[#C08A3E]/15 pt-6">
+              <p className="text-xs text-[#B8AA98]">
+                New to Yuhum Studios?{" "}
+                <button
+                  type="button"
+                  onClick={toggleView}
+                  className="text-[#E8B368] hover:text-[#F0C07E] font-medium underline underline-offset-4 transition-colors"
+                >
+                  Create an account
+                </button>
+              </p>
+            </div>
           </div>
+        ) : (
+          /* ==================== REGISTER FORM ==================== */
+          <div>
+            <div className="text-center mb-6">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E8B368]">
+                New Guest
+              </span>
+              <h1 className="font-serif text-2xl text-[#F3EDE3] mt-1 mb-1">
+                Create Account
+              </h1>
+              <p className="text-xs text-[#B8AA98]">
+                Join us to book your sessions seamlessly
+              </p>
+            </div>
 
-          {/* BACK — Register */}
-          <div className="auth-face auth-face--back">
-            <span className="auth-eyebrow">New Guest</span>
-            <h1 className="auth-title">Create your account</h1>
-            <p className="auth-sub">Just a few details to get you checked in</p>
+            {error && (
+              <div className="mb-4 p-3 text-xs text-red-200 bg-red-950/60 border border-red-800/50 rounded-lg text-center">
+                {error}
+              </div>
+            )}
 
-            <form onSubmit={handleRegisterSubmit} className="auth-form">
-              <label className="auth-field">
-                <span>Username</span>
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-[#B8AA98] mb-1.5">
+                  Username
+                </label>
                 <input
                   type="text"
                   name="username"
@@ -134,10 +178,14 @@ export default function LoginRegister() {
                   value={registerData.username}
                   onChange={handleRegisterChange}
                   placeholder="janedoe"
+                  className="w-full bg-[#150E09] border border-[#C08A3E]/30 rounded-lg px-3.5 py-2.5 text-sm text-[#F3EDE3] placeholder-[#B8AA98]/40 focus:outline-none focus:border-[#E8B368] focus:ring-1 focus:ring-[#E8B368] transition-all"
                 />
-              </label>
-              <label className="auth-field">
-                <span>Email</span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-[#B8AA98] mb-1.5">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -145,10 +193,14 @@ export default function LoginRegister() {
                   value={registerData.email}
                   onChange={handleRegisterChange}
                   placeholder="you@example.com"
+                  className="w-full bg-[#150E09] border border-[#C08A3E]/30 rounded-lg px-3.5 py-2.5 text-sm text-[#F3EDE3] placeholder-[#B8AA98]/40 focus:outline-none focus:border-[#E8B368] focus:ring-1 focus:ring-[#E8B368] transition-all"
                 />
-              </label>
-              <label className="auth-field">
-                <span>Password</span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-[#B8AA98] mb-1.5">
+                  Password
+                </label>
                 <input
                   type="password"
                   name="password"
@@ -157,10 +209,14 @@ export default function LoginRegister() {
                   value={registerData.password}
                   onChange={handleRegisterChange}
                   placeholder="At least 8 characters"
+                  className="w-full bg-[#150E09] border border-[#C08A3E]/30 rounded-lg px-3.5 py-2.5 text-sm text-[#F3EDE3] placeholder-[#B8AA98]/40 focus:outline-none focus:border-[#E8B368] focus:ring-1 focus:ring-[#E8B368] transition-all"
                 />
-              </label>
-              <label className="auth-field">
-                <span>Confirm password</span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-[#B8AA98] mb-1.5">
+                  Confirm Password
+                </label>
                 <input
                   type="password"
                   name="confirmPassword"
@@ -168,24 +224,33 @@ export default function LoginRegister() {
                   value={registerData.confirmPassword}
                   onChange={handleRegisterChange}
                   placeholder="••••••••"
+                  className="w-full bg-[#150E09] border border-[#C08A3E]/30 rounded-lg px-3.5 py-2.5 text-sm text-[#F3EDE3] placeholder-[#B8AA98]/40 focus:outline-none focus:border-[#E8B368] focus:ring-1 focus:ring-[#E8B368] transition-all"
                 />
-              </label>
+              </div>
 
-              {isFlipped && error && <p className="auth-error">{error}</p>}
-
-              <button className="auth-submit" type="submit" disabled={loading}>
-                {loading ? "Creating account…" : "Create account"}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 bg-gradient-to-b from-[#E8B368] to-[#C08A3E] hover:from-[#F0C07E] hover:to-[#CE9750] text-[#1c1410] font-semibold text-xs tracking-[0.15em] uppercase py-3 rounded-lg shadow-[0_4px_14px_rgba(192,138,62,0.35)] hover:shadow-[0_6px_20px_rgba(192,138,62,0.5)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Creating account..." : "Create Account"}
               </button>
             </form>
 
-            <p className="auth-switch">
-              Already registered?{" "}
-              <button type="button" onClick={switchFace} className="auth-link">
-                Sign in instead
-              </button>
-            </p>
+            <div className="mt-6 text-center border-t border-[#C08A3E]/15 pt-4">
+              <p className="text-xs text-[#B8AA98]">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={toggleView}
+                  className="text-[#E8B368] hover:text-[#F0C07E] font-medium underline underline-offset-4 transition-colors"
+                >
+                  Sign in
+                </button>
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

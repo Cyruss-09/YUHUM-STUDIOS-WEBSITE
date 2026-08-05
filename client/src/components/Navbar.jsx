@@ -28,13 +28,13 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
     { id: "rate-us", label: "rate us", path: "/rate-us" },
   ];
 
-  const loginItem = { id: "login", label: "login", path: "/login" };
+  const loginItem = { id: "register", label: "login", path: "/register" };
 
   const handleLinkClick = (e, id, path) => {
     e.preventDefault();
     setActiveLink(id);
     setIsOpen(false);
-    navigate(path);
+    navigate(path, { state: { mode: "register" } });
   };
 
   const isLoginActive = activeLink === loginItem.id;
@@ -62,10 +62,14 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
 
         .yh-iris {
           clip-path: circle(0% at calc(100% - 2.75rem) 2.75rem);
-          transition: clip-path 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+          visibility: hidden;
+          pointer-events: none;
+          transition: clip-path 0.6s cubic-bezier(0.65, 0, 0.35, 1), visibility 0.6s;
         }
         .yh-iris.is-open {
           clip-path: circle(150% at calc(100% - 2.75rem) 2.75rem);
+          visibility: visible;
+          pointer-events: auto;
         }
         .yh-drawer-item {
           opacity: 0;
@@ -138,7 +142,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
           {/* Right: login / CTA / toggle */}
           <div className="flex items-center gap-5">
             <a
-              href={loginItem.path}
+              href="/register"
               onClick={(e) => handleLinkClick(e, loginItem.id, loginItem.path)}
               className={`yh-link ${isLoginActive ? "is-active" : ""} hidden md:inline-flex items-center pb-1 pr-5 mr-1 border-r border-[#C08A3E]/25 text-xs font-medium tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] focus-visible:ring-offset-2 focus-visible:ring-offset-[#150E09] ${
                 isLoginActive ? "text-[#E8B368]" : "text-[#B8AA98] hover:text-[#F3EDE3]"
@@ -182,7 +186,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
       {/* Mobile Drawer */}
       <div
         className={`yh-iris fixed inset-0 bg-[#150E09] z-40 flex flex-col items-center justify-center md:hidden ${
-          isOpen ? "is-open pointer-events-auto" : "pointer-events-none"
+          isOpen ? "is-open" : ""
         }`}
       >
         <div className="absolute top-6 left-6 yh-drawer-item" style={{ transitionDelay: isOpen ? "0.15s" : "0s" }}>
