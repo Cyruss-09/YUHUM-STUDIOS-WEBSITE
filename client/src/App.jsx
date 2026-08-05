@@ -4,30 +4,31 @@ import { Home } from "./pages/public/Home";
 import { Book } from "./pages/public/Book";
 import { OurStory } from "./pages/public/OurStory";
 import { Rateus } from "./pages/public/Rateus";
+import Register from "./pages/public/LoginRegister"; // adjust based on your file path
+import AdminDashboard from "./pages/admin/AdminDashbord"; // adjust based on your file path
 import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
-import  {CustomerLogin}  from "./pages/public/CustomerLogin";
-import { AdminLogin } from "./pages/admin/AdminLogin";
-import { AuthProvider } from "./context/AuthContext"; // Added AuthProvider import
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   const [activeLink, setActiveLink] = useState(() => {
-    const hash = window.location.hash.replace("#", "");
-    return hash || "home";
+    const path = window.location.pathname.replace("/", "");
+    return path || "home";
   });
 
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace("#", "");
-      setActiveLink(hash || "home");
+    const handlePopState = () => {
+      const path = window.location.pathname.replace("/", "");
+      setActiveLink(path || "home");
     };
 
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   const handlePageChange = (newPage) => {
-    window.location.hash = newPage === "home" ? "" : newPage;
+    const targetPath = newPage === "home" ? "/" : `/${newPage}`;
+    window.history.pushState({}, "", targetPath);
     setActiveLink(newPage);
   };
 
@@ -38,6 +39,7 @@ export default function App() {
     "rate-us",
     "login",
     "admin-login",
+    "register",
   ];
   const isInvalidPage = !validPages.includes(activeLink);
 
@@ -55,11 +57,11 @@ export default function App() {
           {activeLink === "rate-us" && (
             <Rateus setActiveLink={handlePageChange} />
           )}
-          {activeLink === "login" && (
-            <CustomerLogin setActiveLink={handlePageChange} />
+          {activeLink === "register" && (
+            <Register setActiveLink={handlePageChange} />
           )}
           {activeLink === "admin-login" && (
-            <AdminLogin setActiveLink={handlePageChange} />
+            <AdminDashboard setActiveLink={handlePageChange} />
           )}
 
           {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
