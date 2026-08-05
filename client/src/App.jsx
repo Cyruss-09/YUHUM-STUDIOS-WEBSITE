@@ -6,9 +6,7 @@ import { OurStory } from "./pages/public/OurStory";
 import { Rateus } from "./pages/public/Rateus";
 import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
-import  {CustomerLogin}  from "./pages/public/CustomerLogin";
-import { AdminLogin } from "./pages/admin/AdminLogin";
-import { AuthProvider } from "./context/AuthContext"; // Added AuthProvider import
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   const [activeLink, setActiveLink] = useState(() => {
@@ -38,6 +36,7 @@ export default function App() {
     "rate-us",
     "login",
     "admin-login",
+    "register",
   ];
   const isInvalidPage = !validPages.includes(activeLink);
 
@@ -55,8 +54,8 @@ export default function App() {
           {activeLink === "rate-us" && (
             <Rateus setActiveLink={handlePageChange} />
           )}
-          {activeLink === "login" && (
-            <CustomerLogin setActiveLink={handlePageChange} />
+          {activeLink === "register" && (
+            <Register setActiveLink={handlePageChange}/>
           )}
           {activeLink === "admin-login" && (
             <AdminLogin setActiveLink={handlePageChange} />
