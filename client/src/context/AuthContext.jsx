@@ -2,9 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
-// Vite project (main.jsx entry) -> use import.meta.env, not process.env.
-// Set VITE_API_BASE in a .env at the frontend root if your API isn't
-// proxied/same-origin, e.g. VITE_API_BASE=http://localhost:5000
 const API_BASE = import.meta.env?.VITE_API_BASE || "";
 
 export const AuthProvider = ({ children }) => {
@@ -12,8 +9,6 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("yuhum_token"));
   const [loading, setLoading] = useState(true);
 
-  // On first load, if we have a stored token, verify it's still valid and
-  // fetch the current user so refreshing the page doesn't log you out.
   useEffect(() => {
     const bootstrap = async () => {
       if (!token) {
@@ -54,6 +49,25 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
+  // CHANGED: added loginAdmin — AdminLogin.jsx was calling this but it
+  // never existed in the context, so it always threw "loginAdmin is not a function".
+  // Hits the admin-specific backend route and reads `data.admin` (not `data.user`,
+  // since that's the key your server.js /admin/login route actually returns).
+  const loginAdmin = async (email, password) => {
+    const res = await fetch(`${API_BASE}/api/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Login failed.");
+
+    localStorage.setItem("yuhum_token", data.token);
+    setToken(data.token);
+    setUser(data.admin); // CHANGED: matches backend's { admin: {...} } shape
+    return data.admin;
+  };
+
   const register = async ({ firstName, lastName, email, password }) => {
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
@@ -77,7 +91,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout }}
+      value={{ user, token, loading, login, loginAdmin, register, logout }} // CHANGED: added loginAdmin to the exposed value
     >
       {children}
     </AuthContext.Provider>

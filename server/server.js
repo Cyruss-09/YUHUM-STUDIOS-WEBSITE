@@ -8,7 +8,7 @@ const { BookingEmail } = require("./emails/BookingEmail");
 const { ReviewEmail } = require("./emails/ReviewEmail");
 const { SubscriberEmail } = require("./emails/SubscriberEmail");
 
-const pool = require("./src/config/db");
+const pool = require("./config/db");
 const { verifyToken, requireAdmin } = require("./middleware/auth");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
@@ -29,9 +29,8 @@ pool.connect((err, client, release) => {
 
 // --- AUTH + ADMIN ROUTES ---
 // /api/auth/register and /api/auth/login — open to anyone
-app.use("/api/auth", authRoutes(pool));
-// /api/admin/* — requires a valid token AND role === 'admin'
-app.use("/api/admin", verifyToken, requireAdmin, adminRoutes(pool));
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 // --- RESEND INITIALIZATION & DIAGNOSTICS ---
 const rawKey = (process.env.RESEND_API_KEY || "").trim();

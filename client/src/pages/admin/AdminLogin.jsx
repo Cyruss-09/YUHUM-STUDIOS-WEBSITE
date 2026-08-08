@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 export default function AdminLogin({ setActiveLink }) {
-  const { loginAdmin } = useAuth(); // adjust to whatever your AuthContext exposes
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

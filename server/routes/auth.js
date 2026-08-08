@@ -9,10 +9,9 @@ router.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM admins WHERE email = $1",
-      [email]
-    );
+    const result = await pool.query("SELECT * FROM admins WHERE email = $1", [
+      email,
+    ]);
     const admin = result.rows[0];
 
     if (!admin) {
@@ -27,12 +26,17 @@ router.post("/admin/login", async (req, res) => {
     const token = jwt.sign(
       { id: admin.id, role: admin.role },
       process.env.JWT_SECRET,
-      { expiresIn: "8h" }
+      { expiresIn: "8h" },
     );
 
     res.json({
       token,
-      admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
     });
   } catch (err) {
     console.error(err);
