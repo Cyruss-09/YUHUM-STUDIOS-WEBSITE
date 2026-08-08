@@ -1,16 +1,11 @@
 import { useState } from "react";
 import { getCurrentUser, logoutUser } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
-import "../../index.css";
 
-const TABS = [
-  { key: "bookings", label: "Bookings" },
-  { key: "reviews", label: "Reviews" },
-  { key: "reschedule", label: "Reschedule Requests" },
-];
+const TABS = [];
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("bookings");
+  const [activeTab, setActiveTab] = useState("");
   const navigate = useNavigate();
   const user = getCurrentUser();
 
@@ -20,44 +15,55 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <span className="admin-brand-mark">A</span>
-          <span>Admin</span>
+    <div className="flex min-h-screen bg-gray-50">
+      <aside className="flex w-64 flex-col justify-between border-r border-gray-200 bg-white p-6">
+        <div>
+          <div className="mb-8 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 text-sm font-bold text-white">
+              A
+            </span>
+            <span className="text-lg font-semibold text-gray-900">Admin</span>
+          </div>
+
+          <nav className="flex flex-col gap-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
+                  activeTab === tab.key
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
 
-        <nav className="admin-nav">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              className={`admin-nav-item ${activeTab === tab.key ? "is-active" : ""}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="admin-sidebar-footer">
-          <div className="admin-user">
-            <div className="admin-user-name">{user?.username || "Admin"}</div>
-            <div className="admin-user-email">{user?.email}</div>
+        <div className="border-t border-gray-200 pt-4">
+          <div className="mb-3">
+            <div className="text-sm font-medium text-gray-900">
+              {user?.username || "Admin"}
+            </div>
+            <div className="text-xs text-gray-500">{user?.email}</div>
           </div>
-          <button className="admin-logout" onClick={handleLogout}>
+          <button
+            onClick={handleLogout}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+          >
             Log out
           </button>
         </div>
       </aside>
 
-      <main className="admin-content">
-        <header className="admin-content-header">
-          <h1>{TABS.find((t) => t.key === activeTab)?.label}</h1>
+      <main className="flex-1 p-8">
+        <header className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {TABS.find((t) => t.key === activeTab)?.label}
+          </h1>
         </header>
-
-        {activeTab === "bookings" && <BookingsTab />}
-        {activeTab === "reviews" && <ReviewsTab />}
-        {activeTab === "reschedule" && <RescheduleTab />}
       </main>
     </div>
   );

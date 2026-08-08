@@ -9,6 +9,8 @@ import AdminDashboard from "./pages/admin/AdminDashbord"; // adjust based on you
 import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
 import { AuthProvider } from "./context/AuthContext";
+import AdminLogin from "./pages/admin/AdminLogin";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
   const [activeLink, setActiveLink] = useState(() => {
@@ -39,6 +41,7 @@ export default function App() {
     "rate-us",
     "login",
     "admin-login",
+    "admin-dashboard",
     "register",
   ];
   const isInvalidPage = !validPages.includes(activeLink);
@@ -63,6 +66,13 @@ export default function App() {
           {activeLink === "admin-login" && (
             <AdminDashboard setActiveLink={handlePageChange} />
           )}
+
+          {activeLink === "admin-dashboard" &&
+            (isAdmin ? (
+              <AdminDashboard setActiveLink={handlePageChange} />
+            ) : (
+              <AdminLogin setActiveLink={handlePageChange} />
+            ))}
 
           {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
         </main>
