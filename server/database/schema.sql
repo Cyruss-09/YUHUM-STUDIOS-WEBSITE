@@ -47,3 +47,13 @@ CREATE TABLE users (
   role VARCHAR(20) NOT NULL DEFAULT 'guest', -- 'guest' | 'admin'
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE admins (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(50) DEFAULT 'admin',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);

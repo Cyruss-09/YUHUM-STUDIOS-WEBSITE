@@ -1,22 +1,19 @@
--- Active: 1784321332673@@127.0.0.1@5432@Yuhum.Studio.db
-INSERT INTO bookings (
-    package_id, 
-    package_title, 
-    base_price, 
-    studio, 
-    booking_date, 
-    day_of_week, 
-    booking_time, 
-    add_ons, 
-    user_email
-) VALUES (
-    'pkg_01', 
-    'Standard Portrait Session', 
-    '1500', 
-    'Yuhum Studios Main', 
-    '2026-08-15', 
-    'Saturday', 
-    '14:00', 
-    ARRAY['Extra Edited Photo', 'Hair & Makeup'], 
-    'client@example.com'
-);
+// server/scripts/seedAdmin.js
+import bcrypt from "bcrypt";
+import db from "../config/db.js"; // your mysql2/pg pool
+
+async function seedAdmin() {
+  const email = "admin@yuhumstudios.com";
+  const plainPassword = "changeme123!"; // change immediately after first login
+  const hash = await bcrypt.hash(plainPassword, 12);
+
+  await db.query(
+    `INSERT INTO admins (name, email, password_hash) VALUES (?, ?, ?)`,
+    ["Super Admin", email, hash]
+  );
+
+  console.log("Admin seeded:", email);
+  process.exit();
+}
+
+seedAdmin();
