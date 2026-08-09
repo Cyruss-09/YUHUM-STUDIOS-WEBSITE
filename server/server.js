@@ -80,7 +80,9 @@ const resolveRecipient = (candidateEmail) => {
 };
 
 /* ================= BOOKINGS ROUTE ================= */
-app.post("/api/bookings", async (req, res) => {
+// CHANGED: added verifyToken — booking now requires a logged-in user.
+// req.user is set by verifyToken (from the JWT) and gives us { id, role }.
+app.post("/api/bookings", verifyToken, async (req, res) => {
   const {
     packageId,
     packageTitle,
@@ -114,6 +116,8 @@ app.post("/api/bookings", async (req, res) => {
     const resolvedTerms =
       termsAccepted === true || termsAccepted === "true" || termsAccepted === 1;
 
+    // CHANGED: added user_id column — ties every booking to the
+    // authenticated user (req.user.id) instead of only a typed-in email.
     const queryText = `
       INSERT INTO bookings (
         package_id, 
@@ -131,9 +135,10 @@ app.post("/api/bookings", async (req, res) => {
         "termsAccepted", 
         "findUs", 
         "paymentMode", 
-        "couponCode"
+        "couponCode",
+        user_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *;
     `;
 
@@ -154,6 +159,7 @@ app.post("/api/bookings", async (req, res) => {
       resolvedFindUs,
       resolvedPaymentMode,
       couponCode || null,
+      req.user.id, // CHANGED: attach the logged-in user's id
     ];
 
     const dbResult = await pool.query(queryText, values);
