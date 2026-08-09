@@ -2,7 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
-const API_BASE = import.meta.env?.VITE_API_BASE || "";
+// CHANGED: was `|| ""`, which made every request a relative URL resolved
+// against the frontend's own origin (localhost:5173) instead of the
+// backend (localhost:5000) — causing a 404 on an empty body, which then
+// broke response.json() with "Unexpected end of JSON input".
+const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -41,7 +45,9 @@ export const AuthProvider = ({ children }) => {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Login failed.");
+    // CHANGED: routes/auth.js returns errors as { message: ... }, not
+    // { error: ... } — this was always reading undefined before.
+    if (!res.ok) throw new Error(data.message || "Login failed.");
 
     localStorage.setItem("yuhum_token", data.token);
     setToken(data.token);
@@ -49,10 +55,8 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
-  // CHANGED: added loginAdmin — AdminLogin.jsx was calling this but it
-  // never existed in the context, so it always threw "loginAdmin is not a function".
-  // Hits the admin-specific backend route and reads `data.admin` (not `data.user`,
-  // since that's the key your server.js /admin/login route actually returns).
+  // loginAdmin — hits the admin-specific backend route and reads `data.admin`
+  // (not `data.user`, since that's the key server.js's /admin/login route returns).
   const loginAdmin = async (email, password) => {
     const res = await fetch(`${API_BASE}/api/admin/login`, {
       method: "POST",
@@ -64,18 +68,23 @@ export const AuthProvider = ({ children }) => {
 
     localStorage.setItem("yuhum_token", data.token);
     setToken(data.token);
-    setUser(data.admin); // CHANGED: matches backend's { admin: {...} } shape
+    setUser(data.admin);
     return data.admin;
   };
 
-  const register = async ({ firstName, lastName, email, password }) => {
+  // CHANGED: register() now sends { username, email, password } — matching
+  // both routes/auth.js (which expects `username`) and LoginRegister.jsx
+  // (which collects `username`, not firstName/lastName). The previous
+  // { firstName, lastName, email, password } shape matched neither.
+  const register = async ({ username, email, password }) => {
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName, lastName, email, password }),
+      body: JSON.stringify({ username, email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Registration failed.");
+    // CHANGED: data.message instead of data.error, same reason as login().
+    if (!res.ok) throw new Error(data.message || "Registration failed.");
 
     localStorage.setItem("yuhum_token", data.token);
     setToken(data.token);
@@ -91,7 +100,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, loginAdmin, register, logout }} // CHANGED: added loginAdmin to the exposed value
+      value={{ user, token, loading, login, loginAdmin, register, logout }}
     >
       {children}
     </AuthContext.Provider>

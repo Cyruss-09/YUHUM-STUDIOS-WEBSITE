@@ -8,6 +8,7 @@ import { BookingInformationForm } from "../../components/booking/BookingInformat
 import { ConfirmationModal } from "../../components/booking/ConfirmationModal";
 import { useBookingForm } from "../../hooks/useBookingForm";
 import { PACKAGES } from "../../data/bookingOptions";
+import { useAuth } from "../../context/AuthContext"; // CHANGED: added
 
 // Map static package data to its image (images can't live in the plain
 // data file since bundlers resolve `import` paths at build time).
@@ -20,6 +21,7 @@ const PACKAGE_IMAGES = {
 // (which card is open, which booking is pending) and wires components +
 // hooks together. It renders no booking rules itself.
 export const Book = ({ setActiveLink, userEmail }) => {
+  const { user, loading: authLoading } = useAuth(); // CHANGED: added
   const [activeBookingId, setActiveBookingId] = useState(null);
   const [pendingBooking, setPendingBooking] = useState(null);
 
@@ -39,6 +41,42 @@ export const Book = ({ setActiveLink, userEmail }) => {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [setActiveLink]);
+
+  // CHANGED: wait for AuthContext to finish checking localStorage/`/api/auth/me`
+  // before deciding whether to show the gate — avoids a flash of the
+  // "please log in" screen for users who are actually logged in.
+  if (authLoading) {
+    return (
+      <div className="w-full min-h-screen bg-[#faf8f5] flex items-center justify-center">
+        <p className="text-stone-500 text-sm">Loading...</p>
+      </div>
+    );
+  }
+
+  // CHANGED: block the whole booking flow behind login. Backend also
+  // enforces this (verifyToken on POST /api/bookings) — this is just the
+  // frontend UX so users aren't filling out a form only to hit a 401.
+  if (!user) {
+    return (
+      <div className="w-full min-h-screen bg-[#faf8f5] flex flex-col items-center justify-center px-4 text-center gap-6">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 mb-3">
+            Please Sign In to Book
+          </h2>
+          <p className="text-stone-500 text-sm max-w-md mx-auto">
+            You'll need an account to schedule a session with us. It only
+            takes a minute to create one.
+          </p>
+        </div>
+        <button
+          onClick={() => setActiveLink && setActiveLink("register")}
+          className="bg-gradient-to-b from-[#E8B368] to-[#C08A3E] hover:from-[#F0C07E] hover:to-[#CE9750] text-[#1c1410] font-semibold text-xs tracking-[0.15em] uppercase py-3.5 px-8 rounded-lg shadow-[0_4px_14px_rgba(192,138,62,0.35)] hover:shadow-[0_6px_20px_rgba(192,138,62,0.5)] transition-all"
+        >
+          Sign In / Create Account
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-[#faf8f5] flex flex-col font-sans text-stone-600 select-none relative">

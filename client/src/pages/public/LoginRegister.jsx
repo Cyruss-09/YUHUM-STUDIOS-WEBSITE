@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { loginUser, registerUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext"; // CHANGED: replaces authService import
 
-export default function LoginRegister() {
+// CHANGED: now accepts setActiveLink, matching how App.jsx actually renders
+// this component (<Register setActiveLink={handlePageChange} />). The old
+// version ignored that prop entirely and used react-router's useNavigate()
+// instead — but App.jsx's page switching is done manually via
+// window.history.pushState + local state, not <Routes>/<Route>, so
+// navigate() would change the URL without ever updating the visible page.
+export default function LoginRegister({ setActiveLink }) {
+  const { login, register } = useAuth(); // CHANGED: single source of truth for auth state
   const [isRegistering, setIsRegistering] = useState(false); // false = Login, true = Register
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
@@ -27,8 +32,10 @@ export default function LoginRegister() {
     setError("");
     setLoading(true);
     try {
-      const data = await loginUser(loginData);
-      navigate(data.user?.role === "admin" ? "/admin" : "/");
+      const user = await login(loginData.email, loginData.password);
+      if (setActiveLink) {
+        setActiveLink(user?.role === "admin" ? "admin-dashboard" : "home");
+      }
     } catch (err) {
       setError(err.message || "Invalid credentials.");
     } finally {
@@ -45,13 +52,15 @@ export default function LoginRegister() {
     }
     setLoading(true);
     try {
-      await registerUser({
+      // CHANGED: register() already logs the user in (sets token + user in
+      // context), so there's no need to bounce back to the login form and
+      // make them sign in a second time — send them straight in.
+      await register({
         username: registerData.username,
         email: registerData.email,
         password: registerData.password,
       });
-      setIsRegistering(false);
-      setLoginData({ email: registerData.email, password: "" });
+      if (setActiveLink) setActiveLink("home");
     } catch (err) {
       setError(err.message || "Registration failed.");
     } finally {

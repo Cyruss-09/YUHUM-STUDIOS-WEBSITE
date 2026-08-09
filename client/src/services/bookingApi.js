@@ -3,9 +3,17 @@
 // Swapping the endpoint, adding auth headers, retry logic, etc. only
 // touches this file.
 export async function submitBooking(payload) {
+  // CHANGED: attach the logged-in user's JWT so the backend's verifyToken
+  // middleware accepts the request. Without this, /api/bookings now
+  // returns 401 for every submission (by design — booking requires login).
+  const token = localStorage.getItem("yuhum_token");
+
   const response = await fetch("http://localhost:5000/api/bookings", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(payload),
   });
 
