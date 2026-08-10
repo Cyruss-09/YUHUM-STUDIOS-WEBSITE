@@ -48,11 +48,11 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
           position: absolute;
           left: 50%;
           bottom: -3px;
-          height: 1px;
+          height: 2px;
           width: 100%;
           transform: translateX(-50%) scaleX(0);
           transform-origin: center;
-          background: linear-gradient(90deg, transparent, #E8B368, transparent);
+          background: #A3704C;
           transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .yh-link.is-active::after,
@@ -101,8 +101,10 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
       `}</style>
 
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 bg-[#150E09]/95 backdrop-blur-md px-6 md:px-12 border-b ${
-          scrolled ? "border-[#C08A3E]/30 shadow-[0_8px_30px_rgba(0,0,0,0.35)] py-4" : "border-[#C08A3E]/10 py-6"
+        className={`sticky top-0 z-50 w-full transition-all duration-300 bg-[#FBF9F5]/90 backdrop-blur-md px-6 md:px-12 border-b ${
+          scrolled
+            ? "border-[#E8DFD1] shadow-[0_10px_30px_rgba(163,112,76,0.06)] py-3.5"
+            : "border-[#E8DFD1]/60 py-5"
         }`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -110,10 +112,14 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
           <a
             href="/"
             onClick={(e) => handleLinkClick(e, "home", "/")}
-            className="group text-left rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] focus-visible:ring-offset-2 focus-visible:ring-offset-[#150E09]"
+            className="group text-left rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
           >
-            <h1 className="font-serif text-xl md:text-2xl font-normal tracking-[0.25em] text-[#F3EDE3] transition-opacity duration-200 group-hover:opacity-80 m-0 uppercase">
-              Yuhum<span className="text-[#E8B368] font-sans tracking-normal font-light">.</span>Studios
+            <h1 className="font-serif text-xl md:text-2xl font-normal tracking-[0.25em] text-[#2C221E] transition-opacity duration-200 group-hover:opacity-75 m-0 uppercase">
+              Yuhum
+              <span className="text-[#9A6C31] font-sans tracking-normal font-light">
+                .
+              </span>
+              Studios
             </h1>
           </a>
 
@@ -127,8 +133,10 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                     <a
                       href={item.path}
                       onClick={(e) => handleLinkClick(e, item.id, item.path)}
-                      className={`yh-link ${isActive ? "is-active" : ""} inline-block pb-1 text-xs font-medium tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] focus-visible:ring-offset-2 focus-visible:ring-offset-[#150E09] ${
-                        isActive ? "text-[#E8B368]" : "text-[#B8AA98] hover:text-[#F3EDE3]"
+                      className={`yh-link ${isActive ? "is-active" : ""} inline-block pb-1 text-xs font-semibold tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] ${
+                        isActive
+                          ? "text-[#A3704C]"
+                          : "text-[#7A6B63] hover:text-[#2C221E]"
                       }`}
                     >
                       {item.label}
@@ -144,8 +152,10 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
             <a
               href="/register"
               onClick={(e) => handleLinkClick(e, loginItem.id, loginItem.path)}
-              className={`yh-link ${isLoginActive ? "is-active" : ""} hidden md:inline-flex items-center pb-1 pr-5 mr-1 border-r border-[#C08A3E]/25 text-xs font-medium tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] focus-visible:ring-offset-2 focus-visible:ring-offset-[#150E09] ${
-                isLoginActive ? "text-[#E8B368]" : "text-[#B8AA98] hover:text-[#F3EDE3]"
+              className={`yh-link ${isLoginActive ? "is-active" : ""} hidden md:inline-flex items-center pb-1 pr-5 mr-1 border-r border-[#E8DFD1] text-xs font-semibold tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] ${
+                isLoginActive
+                  ? "text-[#A3704C]"
+                  : "text-[#7A6B63] hover:text-[#2C221E]"
               }`}
             >
               {loginItem.label}
@@ -154,18 +164,18 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
             <a
               href="/book"
               onClick={(e) => handleLinkClick(e, "book", "/book")}
-              className="hidden lg:inline-flex items-center justify-center bg-gradient-to-b from-[#E8B368] to-[#C08A3E] hover:from-[#F0C07E] hover:to-[#CE9750] text-[#1c1410] text-xs font-semibold px-5 py-2.5 rounded-sm transition-all duration-200 shadow-[0_4px_14px_rgba(192,138,62,0.35)] hover:shadow-[0_6px_18px_rgba(192,138,62,0.5)] hover:-translate-y-px active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F3EDE3] focus-visible:ring-offset-2 focus-visible:ring-offset-[#150E09]"
+              className="hidden lg:inline-flex items-center justify-center bg-gradient-to-r from-[#A3704C] to-[#8C5A35] hover:from-[#8C5A35] hover:to-[#754829] text-white text-xs font-medium tracking-wider uppercase px-6 py-2.5 rounded-full transition-all duration-200 shadow-[0_4px_16px_rgba(163,112,76,0.25)] hover:shadow-[0_6px_20px_rgba(163,112,76,0.35)] hover:-translate-y-px active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
             >
               Reserve Session
             </a>
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="yh-toggle relative md:hidden w-10 h-10 flex items-center justify-center text-[#E8D9C4] rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] focus-visible:ring-offset-2 focus-visible:ring-offset-[#150E09]"
+              className="yh-toggle relative md:hidden w-10 h-10 flex items-center justify-center text-[#2C221E] bg-[#F4EFEA] rounded-full hover:bg-[#EBE3DC] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
               aria-label="Toggle Menu"
               aria-expanded={isOpen}
             >
-              <span className="yh-ring pointer-events-none absolute inset-0 rounded-full border border-[#C08A3E]/50 scale-90 opacity-0" />
+              <span className="yh-ring pointer-events-none absolute inset-0 rounded-full border border-[#A3704C]/40 scale-90 opacity-0" />
               <svg
                 className={`w-5 h-5 relative transition-transform duration-300 ${isOpen ? "rotate-90" : "rotate-0"}`}
                 fill="none"
@@ -173,9 +183,19 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                 viewBox="0 0 24 24"
               >
                 {isOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 7h16M4 12h16M4 17h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 7h16M4 12h16M4 17h16"
+                  />
                 )}
               </svg>
             </button>
@@ -185,13 +205,16 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
 
       {/* Mobile Drawer */}
       <div
-        className={`yh-iris fixed inset-0 bg-[#150E09] z-40 flex flex-col items-center justify-center md:hidden ${
+        className={`yh-iris fixed inset-0 bg-[#FBF9F5] z-40 flex flex-col items-center justify-center md:hidden ${
           isOpen ? "is-open" : ""
         }`}
       >
-        <div className="absolute top-6 left-6 yh-drawer-item" style={{ transitionDelay: isOpen ? "0.15s" : "0s" }}>
-          <span className="font-serif text-lg tracking-[0.2em] text-[#F3EDE3] uppercase">
-            Yuhum<span className="text-[#E8B368]">.</span>Studios
+        <div
+          className="absolute top-6 left-6 yh-drawer-item"
+          style={{ transitionDelay: isOpen ? "0.15s" : "0s" }}
+        >
+          <span className="font-serif text-lg tracking-[0.2em] text-[#2C221E] uppercase">
+            Yuhum<span className="text-[#A3704C]">.</span>Studios
           </span>
         </div>
 
@@ -203,13 +226,17 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                 <li
                   key={item.id}
                   className="w-full max-w-xs yh-drawer-item"
-                  style={{ transitionDelay: isOpen ? `${0.2 + i * 0.06}s` : "0s" }}
+                  style={{
+                    transitionDelay: isOpen ? `${0.2 + i * 0.06}s` : "0s",
+                  }}
                 >
                   <a
                     href={item.path}
                     onClick={(e) => handleLinkClick(e, item.id, item.path)}
-                    className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] ${
-                      isActive ? "text-[#E8B368] font-semibold" : "text-[#B8AA98] hover:text-[#F3EDE3] font-normal"
+                    className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] ${
+                      isActive
+                        ? "text-[#A3704C] font-bold"
+                        : "text-[#7A6B63] hover:text-[#2C221E] font-medium"
                     }`}
                   >
                     {item.label}
@@ -219,25 +246,32 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
             })}
 
             <li
-              className="w-full max-w-xs pt-5 mt-1 border-t border-[#C08A3E]/20 yh-drawer-item"
+              className="w-full max-w-xs pt-5 mt-1 border-t border-[#E8DFD1] yh-drawer-item"
               style={{ transitionDelay: isOpen ? "0.45s" : "0s" }}
             >
               <a
                 href={loginItem.path}
-                onClick={(e) => handleLinkClick(e, loginItem.id, loginItem.path)}
-                className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8B368] ${
-                  isLoginActive ? "text-[#E8B368] font-semibold" : "text-[#B8AA98] hover:text-[#F3EDE3] font-normal"
+                onClick={(e) =>
+                  handleLinkClick(e, loginItem.id, loginItem.path)
+                }
+                className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] ${
+                  isLoginActive
+                    ? "text-[#A3704C] font-bold"
+                    : "text-[#7A6B63] hover:text-[#2C221E] font-medium"
                 }`}
               >
                 {loginItem.label}
               </a>
             </li>
 
-            <li className="w-full max-w-xs pt-4 yh-drawer-item" style={{ transitionDelay: isOpen ? "0.52s" : "0s" }}>
+            <li
+              className="w-full max-w-xs pt-4 yh-drawer-item"
+              style={{ transitionDelay: isOpen ? "0.52s" : "0s" }}
+            >
               <a
                 href="/book"
                 onClick={(e) => handleLinkClick(e, "book", "/book")}
-                className="block w-full py-3 text-sm tracking-widest uppercase bg-gradient-to-b from-[#E8B368] to-[#C08A3E] text-[#1c1410] font-semibold rounded-sm text-center shadow-[0_4px_14px_rgba(192,138,62,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F3EDE3]"
+                className="block w-full py-3.5 text-xs tracking-widest uppercase bg-gradient-to-r from-[#A3704C] to-[#8C5A35] text-white font-semibold rounded-full text-center shadow-[0_4px_16px_rgba(163,112,76,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
               >
                 Book Online
               </a>
