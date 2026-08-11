@@ -23,20 +23,29 @@ export const AuthProvider = ({ children }) => {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Session expired");
-        const data = await res.json();
-        setUser(data.user);
-      } catch {
-        localStorage.removeItem("yuhum_token");
-        setToken(null);
-        setUser(null);
+
+        // Only force logout if explicitly unauthorized
+        if (res.status === 401 || res.status === 403) {
+          throw new Error("Session expired");
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch (err) {
+        // Only clear token on explicit expiration, not random network drops
+        if (err.message === "Session expired") {
+          localStorage.removeItem("yuhum_token");
+          setToken(null);
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }
     };
     bootstrap();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token]); // <-- Add token here so it tracks state properly, or protect the catch block from destroying valid tokens on minor network errors.
 
   const login = async (email, password) => {
     const res = await fetch(`${API_BASE}/api/auth/login`, {

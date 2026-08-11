@@ -1,20 +1,30 @@
 import { useState } from "react";
 import { submitBooking } from "../services/bookingApi";
 
-// Owns the "your information" form: field state, validation-relevant
-// change handlers, the submit → API → result-modal pipeline. The form
-// component only renders fields and wires up these handlers.
+const PENDING_FORM_KEY = "yuhum_pendingForm";
+
 export function useBookingForm({ userEmail, pendingBooking }) {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: userEmail || "",
-    termsAccepted: false,
-    findUs: "",
-    paymentMode: "",
-    couponCode: "",
-    countryCode: "+63",
+  // 🔥 FIX: Initialize form state directly from localStorage if a saved draft exists
+  const [formData, setFormData] = useState(() => {
+    try {
+      const savedForm = localStorage.getItem(PENDING_FORM_KEY);
+      if (savedForm) {
+        return JSON.parse(savedForm);
+      }
+    } catch (e) {
+      console.error("Failed to load saved form draft:", e);
+    }
+    return {
+      firstName: "",
+      lastName: "",
+      phone: "",
+      email: userEmail || "",
+      termsAccepted: false,
+      findUs: "",
+      paymentMode: "",
+      couponCode: "",
+      countryCode: "+63",
+    };
   });
 
   const [modal, setModal] = useState({
@@ -37,9 +47,7 @@ export function useBookingForm({ userEmail, pendingBooking }) {
   };
 
   const closeModal = () => {
-    const wasSuccess = modal.isSuccess;
     setModal((prev) => ({ ...prev, isOpen: false }));
-    if (wasSuccess) window.location.reload();
   };
 
   const handleFinalSubmit = async (e) => {
@@ -70,6 +78,14 @@ export function useBookingForm({ userEmail, pendingBooking }) {
       const { ok, result } = await submitBooking(payload);
 
       if (ok && result.success) {
+        // Clear saved drafts upon successful booking
+        try {
+          localStorage.removeItem("yuhum_pendingBooking");
+          localStorage.removeItem(PENDING_FORM_KEY);
+        } catch (err) {
+          console.error("Failed to clear storage:", err);
+        }
+
         setModal({
           isOpen: true,
           title: "Booking Confirmed!",
@@ -97,6 +113,7 @@ export function useBookingForm({ userEmail, pendingBooking }) {
 
   return {
     formData,
+    setFormData, // 👈 Exposed so Book.jsx can manage it if needed
     handleInputChange,
     handleCountryCodeChange,
     modal,

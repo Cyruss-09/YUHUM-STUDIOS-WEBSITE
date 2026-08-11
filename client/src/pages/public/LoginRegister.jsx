@@ -41,7 +41,7 @@ export default function LoginRegister({ setActiveLink }) {
     try {
       const user = await login(loginData.email, loginData.password);
       if (setActiveLink) {
-        setActiveLink(user?.role === "admin" ? "admin-dashboard" : "home");
+        setActiveLink(user?.role === "admin" ? "admin-dashboard" : "book");
       }
     } catch (err) {
       setError(
