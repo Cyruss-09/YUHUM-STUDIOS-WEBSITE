@@ -131,4 +131,54 @@ router.post("/admin/login", async (req, res) => {
   }
 });
 
+/* ================= GET CURRENT USER (ME) ================= */
+router.get("/me", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if it's an admin or regular user based on token role
+    const tableName = decoded.role === "admin" ? "admins" : "users";
+    const idField = decoded.role === "admin" ? "id" : "id";
+    
+    const result = await pool.query(`SELECT * FROM ${tableName} WHERE ${idField} = $1`, [decoded.id]);
+    const account = result.rows[0];
+
+    if (!account) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    // Return user or admin object matching what your frontend expects
+    if (decoded.role === "admin") {
+      res.json({
+        user: {
+          id: account.id,
+          name: account.name,
+          email: account.email,
+          role: account.role,
+        }
+      });
+    } else {
+      res.json({
+        user: {
+          id: account.id,
+          username: account.username,
+          email: account.email,
+          role: "user",
+        }
+      });
+    }
+  } catch (err) {
+    console.error("❌ Token verification error:", err.message);
+    return res.status(403).json({ message: "Invalid or expired token" });
+  }
+});
+
 module.exports = router;

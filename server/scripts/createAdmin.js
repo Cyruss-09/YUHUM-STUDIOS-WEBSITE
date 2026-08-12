@@ -1,7 +1,7 @@
 // Usage: node scripts/createAdmin.js someone@example.com
 // Promotes an already-registered user to role = 'admin'.
 require("dotenv").config();
-const pool = require("../src/config/db");
+const pool = require("../config/db");
 
 async function main() {
   const email = process.argv[2];
