@@ -67,7 +67,8 @@ export const AuthProvider = ({ children }) => {
   // loginAdmin — hits the admin-specific backend route and reads `data.admin`
   // (not `data.user`, since that's the key server.js's /admin/login route returns).
   const loginAdmin = async (email, password) => {
-    const res = await fetch(`${API_BASE}/api/admin/login`, {
+    // Added "/auth" so it matches your backend route mount point
+    const res = await fetch(`${API_BASE}/api/auth/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

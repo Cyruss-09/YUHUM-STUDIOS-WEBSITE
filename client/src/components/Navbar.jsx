@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export const Navbar = ({ activeLink, setActiveLink }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const profileRef = useRef(null);
 
   // Add subtle shadow/shrink effect on scroll for a premium feel
   useEffect(() => {
@@ -21,6 +25,18 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
     };
   }, [isOpen]);
 
+  // Close the profile dropdown when clicking outside it
+  useEffect(() => {
+    if (!profileOpen) return;
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [profileOpen]);
+
   const navItems = [
     { id: "home", label: "home", path: "/" },
     { id: "book", label: "book", path: "/book" },
@@ -35,6 +51,22 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
     setActiveLink(id);
     setIsOpen(false);
     navigate(path, { state: { mode: "register" } });
+  };
+
+  const handleLogout = () => {
+    logout();
+    setProfileOpen(false);
+    setIsOpen(false);
+    setActiveLink("home");
+    navigate("/");
+  };
+
+  // Initials-based avatar fallback — the users table has no photo field yet,
+  // so this renders e.g. "J" for "julianacyrene". Swap for an <img> once a
+  // photo_url column + upload flow exist.
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.trim().charAt(0).toUpperCase();
   };
 
   const isLoginActive = activeLink === loginItem.id;
@@ -89,11 +121,24 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
           opacity: 1;
         }
 
+        .yh-profile-menu {
+          opacity: 0;
+          transform: translateY(-6px);
+          pointer-events: none;
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .yh-profile-menu.is-open {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .yh-link::after,
           .yh-iris,
           .yh-drawer-item,
           .yh-toggle .yh-ring,
+          .yh-profile-menu,
           header {
             transition: none !important;
           }
@@ -147,27 +192,56 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
             </ul>
           </nav>
 
-          {/* Right: login / CTA / toggle */}
+          {/* Right: profile / login / CTA / toggle */}
           <div className="flex items-center gap-5">
-            <a
-              href="/register"
-              onClick={(e) => handleLinkClick(e, loginItem.id, loginItem.path)}
-              className={`yh-link ${isLoginActive ? "is-active" : ""} hidden md:inline-flex items-center pb-1 pr-5 mr-1 border-r border-[#E8DFD1] text-xs font-semibold tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] ${
-                isLoginActive
-                  ? "text-[#A3704C]"
-                  : "text-[#7A6B63] hover:text-[#2C221E]"
-              }`}
-            >
-              {loginItem.label}
-            </a>
+            {user ? (
+              <div className="relative hidden md:block" ref={profileRef}>
+                <button
+                  onClick={() => setProfileOpen((o) => !o)}
+                  aria-haspopup="true"
+                  aria-expanded={profileOpen}
+                  aria-label="Account menu"
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-[#A3704C] to-[#8C5A35] text-white text-sm font-semibold flex items-center justify-center shadow-sm hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                >
+                  {getInitials(user.username)}
+                </button>
 
-            <a
-              href="/book"
-              onClick={(e) => handleLinkClick(e, "book", "/book")}
-              className="hidden lg:inline-flex items-center justify-center bg-gradient-to-r from-[#A3704C] to-[#8C5A35] hover:from-[#8C5A35] hover:to-[#754829] text-white text-xs font-medium tracking-wider uppercase px-6 py-2.5 rounded-full transition-all duration-200 shadow-[0_4px_16px_rgba(163,112,76,0.25)] hover:shadow-[0_6px_20px_rgba(163,112,76,0.35)] hover:-translate-y-px active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
-            >
-              Reserve Session
-            </a>
+                <div
+                  className={`yh-profile-menu absolute right-0 mt-3 w-52 bg-white border border-[#E8DFD1] rounded-xl shadow-[0_12px_30px_rgba(163,112,76,0.12)] py-2 ${
+                    profileOpen ? "is-open" : ""
+                  }`}
+                >
+                  <div className="px-4 py-2.5 border-b border-[#E8DFD1]">
+                    <p className="text-sm font-semibold text-[#2C221E] truncate">
+                      {user.username}
+                    </p>
+                    <p className="text-xs text-[#7A6B63] truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#A3704C] hover:bg-[#F4EFEA] transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <a
+                href="/register"
+                onClick={(e) =>
+                  handleLinkClick(e, loginItem.id, loginItem.path)
+                }
+                className={`yh-link ${isLoginActive ? "is-active" : ""} hidden md:inline-flex items-center pb-1 pr-5 mr-1 border-r border-[#E8DFD1] text-xs font-semibold tracking-[0.15em] uppercase transition-colors duration-300 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] ${
+                  isLoginActive
+                    ? "text-[#A3704C]"
+                    : "text-[#7A6B63] hover:text-[#2C221E]"
+                }`}
+              >
+                {loginItem.label}
+              </a>
+            )}
 
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -249,32 +323,41 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
               className="w-full max-w-xs pt-5 mt-1 border-t border-[#E8DFD1] yh-drawer-item"
               style={{ transitionDelay: isOpen ? "0.45s" : "0s" }}
             >
-              <a
-                href={loginItem.path}
-                onClick={(e) =>
-                  handleLinkClick(e, loginItem.id, loginItem.path)
-                }
-                className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] ${
-                  isLoginActive
-                    ? "text-[#A3704C] font-bold"
-                    : "text-[#7A6B63] hover:text-[#2C221E] font-medium"
-                }`}
-              >
-                {loginItem.label}
-              </a>
-            </li>
-
-            <li
-              className="w-full max-w-xs pt-4 yh-drawer-item"
-              style={{ transitionDelay: isOpen ? "0.52s" : "0s" }}
-            >
-              <a
-                href="/book"
-                onClick={(e) => handleLinkClick(e, "book", "/book")}
-                className="block w-full py-3.5 text-xs tracking-widest uppercase bg-gradient-to-r from-[#A3704C] to-[#8C5A35] text-white font-semibold rounded-full text-center shadow-[0_4px_16px_rgba(163,112,76,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
-              >
-                Book Online
-              </a>
+              {user ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A3704C] to-[#8C5A35] text-white text-sm font-semibold flex items-center justify-center shadow-sm">
+                      {getInitials(user.username)}
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-[#2C221E]">
+                        {user.username}
+                      </p>
+                      <p className="text-xs text-[#7A6B63]">{user.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full py-3 text-sm tracking-widest uppercase font-bold text-[#A3704C] hover:text-[#8C5A35] transition-colors rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <a
+                  href={loginItem.path}
+                  onClick={(e) =>
+                    handleLinkClick(e, loginItem.id, loginItem.path)
+                  }
+                  className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] ${
+                    isLoginActive
+                      ? "text-[#A3704C] font-bold"
+                      : "text-[#7A6B63] hover:text-[#2C221E] font-medium"
+                  }`}
+                >
+                  {loginItem.label}
+                </a>
+              )}
             </li>
           </ul>
         </nav>

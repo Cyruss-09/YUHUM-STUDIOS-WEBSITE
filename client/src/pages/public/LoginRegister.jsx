@@ -44,10 +44,20 @@ export default function LoginRegister({ setActiveLink }) {
         setActiveLink(user?.role === "admin" ? "admin-dashboard" : "book");
       }
     } catch (err) {
-      setError(
-        err.message ||
-          "Invalid credentials. Please check your email and password.",
-      );
+      // Check if backend error indicates user not found / doesn't exist
+      const errMessage = err?.message?.toLowerCase() || "";
+      if (
+        errMessage.includes("not found") ||
+        errMessage.includes("no account") ||
+        errMessage.includes("does not exist") ||
+        errMessage.includes("user not registered")
+      ) {
+        setError(
+          "No account found with this email. Please check or create an account.",
+        );
+      } else {
+        setError("The email or password you entered is incorrect.");
+      }
     } finally {
       setLoading(false);
     }

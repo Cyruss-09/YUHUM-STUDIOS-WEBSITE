@@ -8,15 +8,12 @@ import Register from "./pages/public/LoginRegister";
 import AdminDashboard from "./pages/admin/AdminDashbord";
 import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
-import { AuthProvider, useAuth } from "./context/AuthContext"; // CHANGED: combined imports
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminLogin from "./pages/admin/AdminLogin";
 
-// CHANGED: moved all page-switching logic into an inner component so it can
-// call useAuth() — useAuth() only works INSIDE <AuthProvider>, and the old
-// App() was calling it (well, importing it) at the same level as the provider.
 function AppContent() {
-  const { user } = useAuth(); // CHANGED: added — this was missing entirely
-  const isAdmin = user?.role === "admin"; // CHANGED: added — isAdmin was undefined before
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const [activeLink, setActiveLink] = useState(() => {
     const path = window.location.pathname.replace("/", "");
@@ -50,9 +47,15 @@ function AppContent() {
   ];
   const isInvalidPage = !validPages.includes(activeLink);
 
+  // 🔹 ADDED: Check if we are currently looking at any admin screen
+  const isAdminPage = activeLink.startsWith("admin");
+
   return (
     <div className="flex flex-col min-h-screen bg-[#fdfbf7]">
-      <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
+      {/* 🔹 CHANGED: Hide public Navbar when on admin pages */}
+      {!isAdminPage && (
+        <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
+      )}
 
       <main className="w-full flex-grow">
         {activeLink === "home" && <Home />}
@@ -67,7 +70,6 @@ function AppContent() {
           <Register setActiveLink={handlePageChange} />
         )}
 
-        {/* CHANGED: was rendering <AdminDashboard> here — now correctly renders <AdminLogin> */}
         {activeLink === "admin-login" && (
           <AdminLogin setActiveLink={handlePageChange} />
         )}
@@ -82,12 +84,12 @@ function AppContent() {
         {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
       </main>
 
-      <Footer setActiveLink={handlePageChange} />
+      {/* 🔹 CHANGED: Hide public Footer when on admin pages */}
+      {!isAdminPage && <Footer setActiveLink={handlePageChange} />}
     </div>
   );
 }
 
-// CHANGED: App() now only sets up the provider and renders AppContent inside it
 export default function App() {
   return (
     <AuthProvider>
