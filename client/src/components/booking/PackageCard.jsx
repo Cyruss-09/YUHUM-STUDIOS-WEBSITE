@@ -1,7 +1,12 @@
 import React from "react";
 import { usePackageBooking } from "../../hooks/usePackageBooking";
-import { ADD_ONS, TIME_SLOTS, DAYS_IN_JULY } from "../../data/bookingOptions";
-import { getWeekdayName } from "../../utils/dateUtils";
+import {
+  getWeekdayName,
+  MONTH_NAMES,
+  getMonthGrid,
+  isPastDate,
+} from "../../utils/dateUtils";
+import { ADD_ONS, TIME_SLOTS } from "../../data/bookingOptions";
 
 // Pure UI: renders a package + its booking wizard, but owns no booking
 // rules itself — everything comes from usePackageBooking().
@@ -26,7 +31,13 @@ export const PackageCard = ({
     handleStudioSelect,
     selectedAddons,
     handleAddonChange,
+    viewYear,
+    viewMonth,
+    goPrevMonth,
+    goNextMonth,
     selectedDate,
+    selectedMonth,
+    selectedYear,
     handleDateSelect,
     selectedTime,
     setSelectedTime,
@@ -37,6 +48,8 @@ export const PackageCard = ({
     isBookingOpen,
     onProceedToForm,
   });
+
+  const monthGrid = getMonthGrid(viewYear, viewMonth);
 
   return (
     <div className="w-full flex flex-col mb-8">
@@ -55,8 +68,12 @@ export const PackageCard = ({
           <div>
             <div className="flex justify-between items-start gap-4 mb-4">
               <div>
-                <h3 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">{title}</h3>
-                <span className="text-lg font-medium text-amber-800 block mt-1">{price}</span>
+                <h3 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">
+                  {title}
+                </h3>
+                <span className="text-lg font-medium text-amber-800 block mt-1">
+                  {price}
+                </span>
               </div>
               <button
                 onClick={() => setActiveBookingId(isBookingOpen ? null : id)}
@@ -70,7 +87,9 @@ export const PackageCard = ({
               </button>
             </div>
 
-            <p className="font-normal text-stone-600 text-[15px] leading-relaxed mb-4">{description}</p>
+            <p className="font-normal text-stone-600 text-[15px] leading-relaxed mb-4">
+              {description}
+            </p>
 
             {isExpanded && (
               <div className="mt-4 text-stone-800 text-[15px] leading-relaxed space-y-5 border-t border-stone-100 pt-5 animate-in fade-in duration-300">
@@ -80,7 +99,14 @@ export const PackageCard = ({
                   </span>
                   <ul className="list-none space-y-1.5">
                     {inclusions.map((item, idx) => (
-                      <li key={idx} className={item.indent ? "pl-4 text-stone-500 text-sm" : "text-stone-700"}>
+                      <li
+                        key={idx}
+                        className={
+                          item.indent
+                            ? "pl-4 text-stone-500 text-sm"
+                            : "text-stone-700"
+                        }
+                      >
                         {item.text}
                       </li>
                     ))}
@@ -102,7 +128,12 @@ export const PackageCard = ({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
           </div>
@@ -122,9 +153,14 @@ export const PackageCard = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-stone-100">
               {["Studio A", "Studio B"].map((studioName) => (
-                <div key={studioName} className="flex items-center justify-between p-6 hover:bg-stone-50/50 transition-colors">
+                <div
+                  key={studioName}
+                  className="flex items-center justify-between p-6 hover:bg-stone-50/50 transition-colors"
+                >
                   <div>
-                    <span className="font-bold text-lg text-stone-900 block capitalize">{studioName}</span>
+                    <span className="font-bold text-lg text-stone-900 block capitalize">
+                      {studioName}
+                    </span>
                     <span className="text-xs text-stone-500">
                       {studioName === "Studio A"
                         ? "Wheat, Scarlet Red, Marine Blue"
@@ -152,7 +188,7 @@ export const PackageCard = ({
               <div className="w-full bg-white border border-stone-200 rounded-2xl p-6 md:p-8 shadow-sm">
                 <h3 className="text-xs font-bold tracking-widest text-stone-900 uppercase mb-6 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-amber-700"></span>
-                  Step 2: Customise with Add-ons (Optional)
+                  Step 2: Customize with Add-ons (Optional)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                   {ADD_ONS.map((addon) => (
@@ -167,7 +203,9 @@ export const PackageCard = ({
                         className="w-4 h-4 mt-0.5 accent-stone-900 rounded border-stone-300 cursor-pointer"
                       />
                       <div className="text-sm flex-1 flex justify-between items-center">
-                        <span className="font-medium text-stone-700 group-hover:text-stone-900">{addon.label}</span>
+                        <span className="font-medium text-stone-700 group-hover:text-stone-900">
+                          {addon.label}
+                        </span>
                         <span className="text-xs text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-full">
                           {addon.price === "Free" ? "Free" : `+ ${addon.price}`}
                         </span>
@@ -189,37 +227,85 @@ export const PackageCard = ({
 
                   <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100">
                     <div className="flex items-center justify-between mb-6">
-                      <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                      <button
+                        onClick={goPrevMonth}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-600 transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.75 19.5L8.25 12l7.5-7.5"
+                          />
                         </svg>
                       </button>
-                      <span className="text-sm font-bold text-stone-900 tracking-wide">July 2026</span>
-                      <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      <span className="text-sm font-bold text-stone-900 tracking-wide">
+                        {MONTH_NAMES[viewMonth]} {viewYear}
+                      </span>
+                      <button
+                        onClick={goNextMonth}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-600 transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                          />
                         </svg>
                       </button>
                     </div>
 
                     <div className="grid grid-cols-7 gap-y-2 text-center text-xs font-bold text-stone-400 mb-3">
-                      <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                      <span>M</span>
+                      <span>T</span>
+                      <span>W</span>
+                      <span>T</span>
+                      <span>F</span>
+                      <span>S</span>
+                      <span>S</span>
                     </div>
 
                     <div className="grid grid-cols-7 gap-y-1.5 text-center text-sm font-medium">
-                      <span key="pad-1" className="text-transparent"></span>
-                      <span key="pad-2" className="text-transparent"></span>
+                      {monthGrid.map((day, idx) => {
+                        if (day === null) {
+                          return (
+                            <span
+                              key={`pad-${idx}`}
+                              className="text-transparent"
+                            >
+                              .
+                            </span>
+                          );
+                        }
 
-                      {DAYS_IN_JULY.map((day) => {
-                        const isPast = day < 13;
-                        const isSelected = selectedDate === day;
+                        const past = isPastDate(viewYear, viewMonth, day);
+                        const isSelected =
+                          selectedDate === day &&
+                          selectedMonth === viewMonth &&
+                          selectedYear === viewYear;
+
                         return (
                           <button
-                            key={day}
-                            disabled={isPast}
+                            key={`${viewYear}-${viewMonth}-${day}`}
+                            disabled={past}
                             onClick={() => handleDateSelect(day)}
                             className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full transition-all text-xs font-semibold ${
-                              isPast
+                              past
                                 ? "text-stone-300 cursor-not-allowed bg-transparent"
                                 : isSelected
                                   ? "bg-stone-900 text-white shadow-md font-bold scale-105"
@@ -238,10 +324,15 @@ export const PackageCard = ({
                   <div>
                     <div className="mb-4">
                       <h4 className="text-lg font-serif font-bold text-stone-900 capitalize">
-                        {getWeekdayName(selectedDate)}, July {selectedDate}
+                        {selectedDate
+                          ? `${getWeekdayName(selectedDate, selectedYear, selectedMonth)}, ${MONTH_NAMES[selectedMonth]} ${selectedDate}`
+                          : "Select a date"}
                       </h4>
                       <p className="text-[11px] font-bold tracking-wider text-stone-400 uppercase mt-0.5">
-                        Time Zone: <span className="text-stone-700 underline">Manila (GMT+08:00)</span>
+                        Time Zone:{" "}
+                        <span className="text-stone-700 underline">
+                          Manila (GMT+08:00)
+                        </span>
                       </p>
                     </div>
 
