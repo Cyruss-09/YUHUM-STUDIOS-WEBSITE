@@ -44,7 +44,7 @@ export const Home = () => {
 
       {/* --- RESPONSIVE FEATURES PHOTO GRID WITH DESCRIPTION --- */}
       <div className="w-full max-w-7xl mx-auto flex flex-col gap-10 px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-=4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {features.map((item) => (
             <div
               key={item.id}
