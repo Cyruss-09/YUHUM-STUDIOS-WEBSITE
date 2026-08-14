@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import BookingsPanel from "../../components/admin/BookingsPanel";
+// Import other panels when ready:
+// import OverviewPanel from "../../components/admin/OverviewPanel";
+// import UsersPanel from "../../components/admin/UsersPanel";
+// import SettingsPanel from "../../components/admin/SettingsPanel";
 
 // Standard admin navigation tabs with descriptive icons
 const TABS = [
@@ -100,6 +105,58 @@ export default function AdminDashboard() {
 
   const currentTabLabel =
     TABS.find((t) => t.key === activeTab)?.label || "Dashboard";
+
+  // Switch statement to conditionally render panels based on the active tab
+  const renderActivePanel = () => {
+    switch (activeTab) {
+      case "bookings":
+        return <BookingsPanel />;
+      case "overview":
+        return (
+          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+              📊
+            </div>
+            <h3 className="text-base font-semibold text-gray-800">
+              Overview Panel
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Analytics metrics and recent charts will appear here.
+            </p>
+          </div>
+        );
+      case "users":
+        return (
+          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+              👥
+            </div>
+            <h3 className="text-base font-semibold text-gray-800">
+              Manage Users Panel
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              User role management tools will appear here.
+            </p>
+          </div>
+        );
+      case "settings":
+        return (
+          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+              ⚙️
+            </div>
+            <h3 className="text-base font-semibold text-gray-800">
+              Settings Panel
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Studio configurations and system options will appear here.
+            </p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -202,17 +259,7 @@ export default function AdminDashboard() {
         {/* Dynamic Panel Content */}
         <main className="p-8">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm min-h-[70vh]">
-            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
-                📂
-              </div>
-              <h3 className="text-base font-semibold text-gray-800">
-                Content for {currentTabLabel}
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                This section is ready for your tables, charts, or components.
-              </p>
-            </div>
+            {renderActivePanel()}
           </div>
         </main>
       </div>
