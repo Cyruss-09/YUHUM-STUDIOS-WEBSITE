@@ -4,7 +4,7 @@ import { submitBooking } from "../services/bookingApi";
 const PENDING_FORM_KEY = "yuhum_pendingForm";
 
 export function useBookingForm({ userEmail, pendingBooking }) {
-  // 🔥 FIX: Initialize form state directly from localStorage if a saved draft exists
+
   const [formData, setFormData] = useState(() => {
     try {
       const savedForm = localStorage.getItem(PENDING_FORM_KEY);
@@ -78,7 +78,6 @@ export function useBookingForm({ userEmail, pendingBooking }) {
       const { ok, result } = await submitBooking(payload);
 
       if (ok && result.success) {
-        // Clear saved drafts upon successful booking
         try {
           localStorage.removeItem("yuhum_pendingBooking");
           localStorage.removeItem(PENDING_FORM_KEY);
@@ -113,7 +112,7 @@ export function useBookingForm({ userEmail, pendingBooking }) {
 
   return {
     formData,
-    setFormData, // 👈 Exposed so Book.jsx can manage it if needed
+    setFormData,
     handleInputChange,
     handleCountryCodeChange,
     modal,

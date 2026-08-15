@@ -3,8 +3,6 @@ import { useAuth } from "../context/AuthContext";
 
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
-// Fetches all bookings for the admin Booking Schedule view.
-// Mirrors the fetch + Bearer-token pattern used in AuthContext.jsx.
 export function useBookingSchedule() {
   const { token } = useAuth();
 

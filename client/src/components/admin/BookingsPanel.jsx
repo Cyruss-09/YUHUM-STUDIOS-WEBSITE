@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { useBookingSchedule } from "../../hooks/useBookingSchedule.js"
+import BookingScheduleTable from "./BookingScheduleTable"
 
 // Mock data — shaped to match the bookingSummary object from usePackageBooking.
 // Swap this out for a real fetch() once the backend exists.

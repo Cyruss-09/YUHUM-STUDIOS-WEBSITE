@@ -515,6 +515,30 @@ app.post("/api/subscribers", async (req, res) => {
   }
 });
 
+/* ================= ADMIN BOOKINGS ROUTE ================= */
+// Fetches all bookings for the Admin Dashboard
+app.get("/api/admin/bookings", verifyToken, async (req, res) => {
+  try {
+    const queryText = `
+      SELECT * FROM bookings 
+      ORDER BY created_at DESC;
+    `;
+
+    const dbResult = await pool.query(queryText);
+
+    return res.status(200).json({
+      success: true,
+      bookings: dbResult.rows,
+    });
+  } catch (error) {
+    console.error("❌ Database query error (fetching admin bookings):", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch bookings.",
+    });
+  }
+});
+
 /* ================= SERVER LISTEN ================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
