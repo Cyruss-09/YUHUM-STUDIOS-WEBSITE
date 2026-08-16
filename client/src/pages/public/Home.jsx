@@ -35,7 +35,7 @@ export const Home = () => {
 
         <div className="pt-2">
           <a
-            href="#book"
+            href="book"
             className="inline-block bg-[#1a1919] hover:bg-black text-white font-sans text-sm md:text-base font-normal tracking-wide px-8 py-4 rounded-full transition-colors duration-200 shadow-sm"
           >
             book an appointment
@@ -59,7 +59,7 @@ export const Home = () => {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/10">
-                <div className="w-[260px] h-[60px] flex items-center justify-center  bg-white/10 border border-white/40 text-white font-sans text-sm md:text-base font-semibold tracking-wide text-center px-4 rounded-full shadow-md">
+                <div className="w-[260px] h-[60px] flex items-center justify-center bg-white/10 border border-white/40 text-white font-sans text-sm md:text-base font-semibold tracking-wide text-center px-4 rounded-full shadow-md">
                   {item.text}
                 </div>
               </div>
