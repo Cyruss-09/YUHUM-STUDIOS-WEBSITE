@@ -1,71 +1,5 @@
 import { useState, useMemo } from "react";
-import { useBookingSchedule } from "../../hooks/useBookingSchedule.js"
-import BookingScheduleTable from "./BookingScheduleTable"
-
-// Mock data — shaped to match the bookingSummary object from usePackageBooking.
-// Swap this out for a real fetch() once the backend exists.
-const MOCK_BOOKINGS = [
-  {
-    id: "BK-1001",
-    customerName: "Maria Santos",
-    customerEmail: "maria.santos@email.com",
-    packageTitle: "Duo Package",
-    studio: "Studio A",
-    date: "August 16, 2026",
-    time: "2:00 PM",
-    addOns: ["Extra 15 mins", "Printed Photos"],
-    status: "Confirmed",
-    total: "₱1,800",
-  },
-  {
-    id: "BK-1002",
-    customerName: "Jake Reyes",
-    customerEmail: "jake.reyes@email.com",
-    packageTitle: "Solo Package",
-    studio: "Studio B",
-    date: "August 16, 2026",
-    time: "4:30 PM",
-    addOns: [],
-    status: "Pending",
-    total: "₱950",
-  },
-  {
-    id: "BK-1003",
-    customerName: "Anna Cruz",
-    customerEmail: "anna.cruz@email.com",
-    packageTitle: "Group Package",
-    studio: "Studio A",
-    date: "August 18, 2026",
-    time: "10:00 AM",
-    addOns: ["Digital Copies", "Props Set"],
-    status: "Confirmed",
-    total: "₱2,500",
-  },
-  {
-    id: "BK-1004",
-    customerName: "Liza Dela Cruz",
-    customerEmail: "liza.delacruz@email.com",
-    packageTitle: "Solo Package",
-    studio: "Studio B",
-    date: "August 12, 2026",
-    time: "1:00 PM",
-    addOns: ["Printed Photos"],
-    status: "Completed",
-    total: "₱1,150",
-  },
-  {
-    id: "BK-1005",
-    customerName: "Paolo Garcia",
-    customerEmail: "paolo.garcia@email.com",
-    packageTitle: "Duo Package",
-    studio: "Studio A",
-    date: "August 14, 2026",
-    time: "5:00 PM",
-    addOns: [],
-    status: "Cancelled",
-    total: "₱1,600",
-  },
-];
+import { useAdminBookings } from "../../hooks/useAdminBookings.js"; // fix typo: "usedAdminBookings" -> "useAdminBookings"
 
 const STATUS_STYLES = {
   Pending: "bg-amber-50 text-amber-700 border-amber-200",
@@ -75,10 +9,17 @@ const STATUS_STYLES = {
   "No-show": "bg-gray-100 text-gray-600 border-gray-200",
 };
 
-const STATUS_FILTERS = ["All", "Pending", "Confirmed", "Completed", "Cancelled", "No-show"];
+const STATUS_FILTERS = [
+  "All",
+  "Pending",
+  "Confirmed",
+  "Completed",
+  "Cancelled",
+  "No-show",
+];
 
 export default function BookingsPanel() {
-  const [bookings, setBookings] = useState(MOCK_BOOKINGS);
+  const { bookings, loading, error, updateBookingStatus } = useAdminBookings();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [studioFilter, setStudioFilter] = useState("All");
@@ -103,22 +44,41 @@ export default function BookingsPanel() {
   }, [bookings, searchQuery, statusFilter, studioFilter]);
 
   const updateStatus = (id, newStatus) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
-    );
+    updateBookingStatus(id, newStatus);
     if (selectedBooking?.id === id) {
       setSelectedBooking((prev) => ({ ...prev, status: newStatus }));
     }
   };
+
+  if (loading)
+    return <div className="p-6 text-sm text-gray-400">Loading bookings…</div>;
+  if (error)
+    return (
+      <div className="p-6 text-sm text-red-500">
+        Failed to load bookings: {error}
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-6">
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Total Bookings" value={stats.total} />
-        <StatCard label="Pending" value={stats.pending} accent="text-amber-600" />
-        <StatCard label="Confirmed" value={stats.confirmed} accent="text-emerald-600" />
-        <StatCard label="Completed" value={stats.completed} accent="text-blue-600" />
+        <StatCard
+          label="Pending"
+          value={stats.pending}
+          accent="text-amber-600"
+        />
+        <StatCard
+          label="Confirmed"
+          value={stats.confirmed}
+          accent="text-emerald-600"
+        />
+        <StatCard
+          label="Completed"
+          value={stats.completed}
+          accent="text-blue-600"
+        />
       </div>
 
       {/* Search + filters */}
@@ -146,7 +106,9 @@ export default function BookingsPanel() {
             className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
           >
             {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
@@ -174,7 +136,9 @@ export default function BookingsPanel() {
                 onClick={() => setSelectedBooking(b)}
               >
                 <td className="px-4 py-3">
-                  <div className="font-medium text-gray-900">{b.customerName}</div>
+                  <div className="font-medium text-gray-900">
+                    {b.customerName}
+                  </div>
                   <div className="text-xs text-gray-400">{b.id}</div>
                 </td>
                 <td className="px-4 py-3 text-gray-700">{b.packageTitle}</td>
@@ -183,7 +147,9 @@ export default function BookingsPanel() {
                   <div>{b.date}</div>
                   <div className="text-xs text-gray-400">{b.time}</div>
                 </td>
-                <td className="px-4 py-3 text-gray-700 font-medium">{b.total}</td>
+                <td className="px-4 py-3 text-gray-700 font-medium">
+                  {b.total}
+                </td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${STATUS_STYLES[b.status]}`}
@@ -191,7 +157,10 @@ export default function BookingsPanel() {
                     {b.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                <td
+                  className="px-4 py-3 text-right"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {b.status === "Pending" && (
                     <div className="flex gap-2 justify-end">
                       <button
@@ -213,7 +182,10 @@ export default function BookingsPanel() {
             ))}
             {filteredBookings.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-gray-400 text-sm">
+                <td
+                  colSpan={7}
+                  className="px-4 py-10 text-center text-gray-400 text-sm"
+                >
                   No bookings match your filters.
                 </td>
               </tr>
@@ -234,7 +206,9 @@ export default function BookingsPanel() {
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{selectedBooking.customerName}</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {selectedBooking.customerName}
+                </h3>
                 <p className="text-xs text-gray-400">{selectedBooking.id}</p>
               </div>
               <span
@@ -252,7 +226,11 @@ export default function BookingsPanel() {
               <DetailRow label="Time" value={selectedBooking.time} />
               <DetailRow
                 label="Add-ons"
-                value={selectedBooking.addOns.length ? selectedBooking.addOns.join(", ") : "None"}
+                value={
+                  selectedBooking.addOns.length
+                    ? selectedBooking.addOns.join(", ")
+                    : "None"
+                }
               />
               <DetailRow label="Total" value={selectedBooking.total} />
             </div>
@@ -261,13 +239,17 @@ export default function BookingsPanel() {
               {selectedBooking.status === "Pending" && (
                 <>
                   <button
-                    onClick={() => updateStatus(selectedBooking.id, "Confirmed")}
+                    onClick={() =>
+                      updateStatus(selectedBooking.id, "Confirmed")
+                    }
                     className="flex-1 rounded-xl bg-black text-white text-sm font-semibold py-2.5 hover:bg-gray-800"
                   >
                     Confirm Booking
                   </button>
                   <button
-                    onClick={() => updateStatus(selectedBooking.id, "Cancelled")}
+                    onClick={() =>
+                      updateStatus(selectedBooking.id, "Cancelled")
+                    }
                     className="flex-1 rounded-xl border border-red-200 text-red-600 text-sm font-semibold py-2.5 hover:bg-red-50"
                   >
                     Cancel
@@ -291,7 +273,9 @@ export default function BookingsPanel() {
 function StatCard({ label, value, accent = "text-gray-900" }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5">
-      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</div>
+      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+        {label}
+      </div>
       <div className={`text-2xl font-bold ${accent}`}>{value}</div>
     </div>
   );

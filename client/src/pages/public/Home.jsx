@@ -17,6 +17,7 @@ export const Home = () => {
             muted
             loop
             playsInline
+            preload="auto"
           />
         </div>
 

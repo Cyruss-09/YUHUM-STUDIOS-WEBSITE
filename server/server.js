@@ -539,6 +539,62 @@ app.get("/api/admin/bookings", verifyToken, async (req, res) => {
   }
 });
 
+/* ================= ADMIN BOOKING STATUS UPDATE ================= */
+// Updates a single booking's status (Pending/Confirmed/Cancelled/etc.)
+app.patch(
+  "/api/admin/bookings/:id/status",
+  verifyToken,
+  requireAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const ALLOWED_STATUSES = [
+      "Pending",
+      "Confirmed",
+      "Completed",
+      "Cancelled",
+      "No-show",
+    ];
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid status. Must be one of: ${ALLOWED_STATUSES.join(", ")}`,
+      });
+    }
+
+    try {
+      const queryText = `
+      UPDATE bookings
+      SET status = $1
+      WHERE id = $2
+      RETURNING *;
+    `;
+      const dbResult = await pool.query(queryText, [status, id]);
+
+      if (dbResult.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Booking not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        booking: dbResult.rows[0],
+      });
+    } catch (error) {
+      console.error(
+        "❌ Database query error (updating booking status):",
+        error,
+      );
+      return res.status(500).json({
+        success: false,
+        error: "Failed to update booking status.",
+      });
+    }
+  },
+);
+
 /* ================= SERVER LISTEN ================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {

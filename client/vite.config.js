@@ -13,5 +13,11 @@ export default defineConfig({
       host: 'localhost',
       port: 5173,
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000', // <-- change to whatever port your Express server actually runs on
+        changeOrigin: true,
+      },
+    },
   },
 })
