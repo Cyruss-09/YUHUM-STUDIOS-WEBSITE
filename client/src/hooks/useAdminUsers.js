@@ -48,11 +48,15 @@ export function useAdminUsers() {
                 },
                 body: JSON.stringify({ role: newRole }),
             });
-            if (!res.ok) throw new Error("Failed to update role");
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.message || `Failed to update role: ${res.statusText}`);
+            }
             setUsers((prev) =>
                 prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
             );
         } catch (err) {
+            console.error("Error updating user role:", err);
             setError(err.message);
         }
     };

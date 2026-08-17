@@ -72,7 +72,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, role: "user" },
+      { id: user.id, role: user.role || "user" },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
@@ -83,6 +83,7 @@ router.post("/login", async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        role: user.role || "user",
       },
     });
   } catch (err) {
@@ -96,10 +97,28 @@ router.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM admins WHERE email = $1", [
+    let result = await pool.query("SELECT * FROM admins WHERE email = $1", [
       email,
     ]);
-    const admin = result.rows[0];
+    let admin = result.rows[0];
+
+    // Fallback: check users table if user is an admin
+    if (!admin) {
+      const userRes = await pool.query(
+        "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
+        [email]
+      );
+      if (userRes.rows.length > 0) {
+        const u = userRes.rows[0];
+        admin = {
+          id: u.id,
+          name: u.username,
+          email: u.email,
+          password_hash: u.password_hash,
+          role: "admin",
+        };
+      }
+    }
 
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -145,24 +164,38 @@ router.get("/me", async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Check if it's an admin or regular user based on token role
-    const tableName = decoded.role === "admin" ? "admins" : "users";
-    const idField = decoded.role === "admin" ? "id" : "id";
-    
-    const result = await pool.query(`SELECT * FROM ${tableName} WHERE ${idField} = $1`, [decoded.id]);
-    const account = result.rows[0];
+    let account = null;
+    let isAdminRole = decoded.role === "admin";
+
+    if (isAdminRole) {
+      const adminResult = await pool.query("SELECT * FROM admins WHERE id = $1", [decoded.id]);
+      if (adminResult.rows.length > 0) {
+        account = adminResult.rows[0];
+      } else {
+        const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [decoded.id]);
+        if (userResult.rows.length > 0) {
+          account = userResult.rows[0];
+          account.name = account.username;
+          account.role = "admin";
+        }
+      }
+    } else {
+      const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [decoded.id]);
+      account = userResult.rows[0];
+    }
 
     if (!account) {
       return res.status(404).json({ message: "Account not found" });
     }
 
     // Return user or admin object matching what your frontend expects
-    if (decoded.role === "admin") {
+    if (isAdminRole) {
       res.json({
         user: {
           id: account.id,
-          name: account.name,
+          name: account.name || account.username,
           email: account.email,
-          role: account.role,
+          role: account.role || "admin",
         }
       });
     } else {
@@ -171,7 +204,7 @@ router.get("/me", async (req, res) => {
           id: account.id,
           username: account.username,
           email: account.email,
-          role: "user",
+          role: account.role || "user",
         }
       });
     }
