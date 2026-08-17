@@ -25,10 +25,12 @@ export default function AdminLogin({ setActiveLink }) {
     }
   };
 
+
+
   return (
     <div className="flex justify-center items-center min-h-[80vh] px-4 py-12 bg-[#fdfbf7]">
       <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-stone-200/80 transition-all">
-        
+
         {/* Brand / Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#2C1810] text-[#fdfbf7] font-bold text-lg tracking-wider mb-3 shadow-md">
@@ -99,7 +101,7 @@ export default function AdminLogin({ setActiveLink }) {
             )}
           </button>
         </form>
-        
+
         <div className="mt-8 text-center text-xs text-stone-400">
           Restricted access. Authorized personnel only.
         </div>
