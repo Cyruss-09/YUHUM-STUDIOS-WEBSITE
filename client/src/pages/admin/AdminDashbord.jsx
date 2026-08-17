@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import BookingsPanel from "../../components/admin/BookingsPanel";
+import UsersPanel from "../../components/admin/UsersPanel";
 // Import other panels when ready:
 // import OverviewPanel from "../../components/admin/OverviewPanel";
 // import UsersPanel from "../../components/admin/UsersPanel";
@@ -125,20 +126,9 @@ export default function AdminDashboard() {
             </p>
           </div>
         );
+
       case "users":
-        return (
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
-              👥
-            </div>
-            <h3 className="text-base font-semibold text-gray-800">
-              Manage Users Panel
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              User role management tools will appear here.
-            </p>
-          </div>
-        );
+        return <UsersPanel />;
       case "settings":
         return (
           <div className="flex flex-col items-center justify-center h-[50vh] text-center">
@@ -186,11 +176,10 @@ export default function AdminDashboard() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-black text-white shadow-md shadow-black/10"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
+                    ? "bg-black text-white shadow-md shadow-black/10"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
                 >
                   <span
                     className={`${isActive ? "text-white" : "text-gray-400"}`}

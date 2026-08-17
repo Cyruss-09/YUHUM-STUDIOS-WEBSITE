@@ -46,4 +46,35 @@ router.post("/login", async (req, res) => {
   }
 });
 
+const { verifyToken, requireAdmin } = require("../middleware/auth");
+
+// GET /api/admin/users - Fetch all users
+router.get("/users", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC"
+    );
+    res.json({ success: true, users: result.rows });
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ success: false, message: "Server error fetching users" });
+  }
+});
+
+// PATCH /api/admin/users/:id/role - Update user role
+router.patch("/users/:id/role", verifyToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE users SET role = $1 WHERE id = $2 RETURNING id, username, email, role",
+      [role, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: "User not found" });
+    res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Error updating user role" });
+  }
+});
+
 module.exports = router;
