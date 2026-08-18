@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
+
 // All backend I/O for the booking flow lives here. Components/hooks never
 // call fetch() directly — they call this function and handle the result.
 // Swapping the endpoint, adding auth headers, retry logic, etc. only
@@ -8,7 +10,7 @@ export async function submitBooking(payload) {
   // returns 401 for every submission (by design — booking requires login).
   const token = localStorage.getItem("yuhum_token");
 
-  const response = await fetch("http://localhost:5000/api/bookings", {
+  const response = await fetch(`${API_BASE}/api/bookings`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

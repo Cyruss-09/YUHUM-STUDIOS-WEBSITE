@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { usePublicSettings } from "../hooks/usePublicSettings";
 
 export const Footer = ({ setActiveLink }) => {
+  const { settings } = usePublicSettings();
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
 
@@ -44,7 +46,7 @@ export const Footer = ({ setActiveLink }) => {
           {/* Column 1: Brand details */}
           <div className="md:col-span-1 space-y-2.5">
             <h3 className="font-serif text-xl font-bold text-white tracking-wide">
-              Yuhum.Studios
+              {settings.general?.studioName || "Yuhum.Studios"}
             </h3>
             <p className="text-xs text-stone-400 leading-relaxed max-w-xs">
               Crafting premium experiences with meticulous attention to detail
@@ -136,11 +138,14 @@ export const Footer = ({ setActiveLink }) => {
           {/* Column 3: Contact/Hours */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
-              Appointments
+              Appointments & Hours
             </h4>
             <ul className="space-y-1.5 text-xs text-stone-400">
-              <li>Mon — Fri: 9:00 AM - 7:00 PM</li>
-              <li>Sat: 10:00 AM - 5:00 PM | Sun: Closed</li>
+              <li>
+                Open Daily: {settings.schedule?.openTime || "10:00 AM"} –{" "}
+                {settings.schedule?.closeTime || "06:00 PM"}
+              </li>
+              <li>Tel: {settings.general?.phone || "+63 912 345 6789"}</li>
               <li className="pt-0.5">
                 <button
                   onClick={() => setActiveLink("book")}

@@ -1,14 +1,67 @@
+// client/src/pages/public/Home.jsx
 import { features } from "../../data/features.js";
 import { useFeatureSelection } from "../../hooks/useFeatureSelection.js";
+import { usePublicSettings } from "../../hooks/usePublicSettings.js";
+
+const BANNER_THEMES = {
+  dark: "bg-stone-900 text-stone-100 border-stone-800",
+  amber: "bg-[#4a2e18] text-amber-100 border-[#3d2412]",
+  emerald: "bg-emerald-950 text-emerald-100 border-emerald-900",
+  blue: "bg-slate-900 text-sky-100 border-slate-800",
+};
 
 export const Home = () => {
   const { selectedFeature, handleCardClick, activeItem } =
     useFeatureSelection(features);
+  const { settings } = usePublicSettings();
+
+  const bannerThemeClass =
+    BANNER_THEMES[settings.cms?.bannerTheme] || BANNER_THEMES.dark;
 
   return (
-    <section className="flex flex-col items-center justify-center min-h-screen bg-stone-50 pt-16 pb-24 w-full gap-24">
+    <section className="flex flex-col items-center justify-center min-h-screen bg-stone-50 pb-24 w-full gap-20">
+      {/* --- CMS ANNOUNCEMENT BANNER (Configured in Admin Settings) --- */}
+      {settings.cms?.bannerEnabled && settings.cms?.bannerText && (
+        <div
+          className={`w-full py-3 shadow-sm border-b transition-all duration-300 overflow-hidden relative ${bannerThemeClass}`}
+        >
+          <div className="flex whitespace-nowrap animate-marquee">
+            <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+              {settings.cms.bannerText}
+            </span>
+            <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+              {settings.cms.bannerText}
+            </span>
+            <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+              {settings.cms.bannerText}
+            </span>
+            <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+              {settings.cms.bannerText}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* --- MAINTENANCE MODE NOTICE (If enabled in Admin Settings) --- */}
+      {settings.cms?.maintenanceMode && (
+        <div className="w-full max-w-4xl mx-auto mt-6 px-6">
+          <div className="bg-amber-50 border border-amber-300/80 rounded-2xl p-4 md:p-5 flex items-center gap-3 text-amber-900 shadow-sm">
+            <span className="text-xl">🛠️</span>
+            <div>
+              <h4 className="text-xs md:text-sm font-bold uppercase tracking-wider">
+                Maintenance Notice
+              </h4>
+              <p className="text-xs md:text-sm text-amber-800/90 mt-0.5">
+                {settings.cms.maintenanceMessage ||
+                  "Our booking system is currently undergoing scheduled maintenance. We will be back shortly!"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- HERO / INTRODUCTION SECTION --- */}
-      <div className="flex flex-col items-center gap-8 w-full px-6">
+      <div className="flex flex-col items-center gap-8 w-full px-6 pt-8">
         <div className="w-full max-w-sm overflow-hidden rounded-xl shadow-lg">
           <video
             src="/9gridsvideos.mp4"
@@ -27,13 +80,28 @@ export const Home = () => {
           </h2>
 
           <p className="text-gray-500 font-sans text-xs md:text-sm font-normal leading-relaxed tracking-widest uppercase">
-            YUHUM STUDIO IS A SELF-PHOTOGRAPHY STUDIO BASED IN SANTA ROSA CITY,
-            LAGUNA PHILIPPINES. IN OUR STUDIO, WE PROVIDE THE BEST SELF-PORTRAIT
-            EXPERIENCE WHICH CELEBRATES YOUR MOST AUTHENTIC SELF.
+            {(settings.general?.studioName || "YUHUM STUDIO").toUpperCase()} IS
+            A SELF-PHOTOGRAPHY STUDIO BASED IN{" "}
+            {(
+              settings.general?.address || "SANTA ROSA CITY, LAGUNA PHILIPPINES"
+            ).toUpperCase()}
+            . IN OUR STUDIO, WE PROVIDE THE BEST SELF-PORTRAIT EXPERIENCE WHICH
+            CELEBRATES YOUR MOST AUTHENTIC SELF.
           </p>
+
+          {/* Operating Hours Info Badge */}
+          {settings.schedule?.openTime && settings.schedule?.closeTime && (
+            <div className="inline-flex items-center gap-2 text-stone-600 bg-stone-200/60 px-4 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase">
+              <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+              <span>
+                Open Daily: {settings.schedule.openTime} –{" "}
+                {settings.schedule.closeTime}
+              </span>
+            </div>
+          )}
         </div>
 
-        <div className="pt-2">
+        <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
           <a
             href="book"
             className="inline-block bg-[#1a1919] hover:bg-black text-white font-sans text-sm md:text-base font-normal tracking-wide px-8 py-4 rounded-full transition-colors duration-200 shadow-sm"
@@ -51,7 +119,10 @@ export const Home = () => {
               key={item.id}
               onClick={() => handleCardClick(item.id)}
               className={`relative w-full h-[450px] sm:h-[500px] rounded-2xl overflow-hidden shadow-sm group cursor-pointer transition-all duration-300
-                ${selectedFeature === item.id ? "ring-4 ring-amber-950/30 scale-[0.98]" : ""}`}
+                ${selectedFeature === item.id
+                  ? "ring-4 ring-amber-950/30 scale-[0.98]"
+                  : ""
+                }`}
             >
               <img
                 src={item.imageUrl}
@@ -85,7 +156,7 @@ export const Home = () => {
         </div>
       </div>
 
-      {/* --- MINIMALIST LOCATION SECTION --- */}
+      {/* --- MINIMALIST LOCATION SECTION (Powered dynamically by Admin Settings) --- */}
       <div className="w-full max-w-5xl mx-auto px-6 flex flex-col gap-8 items-center">
         <div className="w-full flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 pt-4">
           <div className="w-full md:w-1/2 overflow-hidden rounded-xl border border-stone-200 shadow-sm hover:scale-105 transition-transform duration-300">
@@ -118,13 +189,16 @@ export const Home = () => {
                 />
               </svg>
               <span className="font-sans text-sm md:text-base font-medium tracking-wide lowercase">
-                santa rosa city, laguna
+                {settings.general?.address || "santa rosa city, laguna"}
               </span>
             </div>
 
             {/* Custom Directions Action link button */}
             <a
-              href="https://www.google.com/maps/place/The+Yuh%C3%BAm+Studios:+Self-shoot+X+Makeup/@14.2811949,121.1208636,16z/data=!4m6!3m5!1s0x3397d9d64411a5a9:0xe6cb1e3c3a788c04!8m2!3d14.2812036!4d121.1209445!16s%2Fg%2F11s4z97lg_?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D"
+              href={
+                settings.general?.googleMapsUrl ||
+                "https://www.google.com/maps/place/The+Yuh%C3%BAm+Studios:+Self-shoot+X+Makeup/@14.2811949,121.1208636,16z/data=!4m6!3m5!1s0x3397d9d64411a5a9:0xe6cb1e3c3a788c04!8m2!3d14.2812036!4d121.1209445!16s%2Fg%2F11s4z97lg_?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D"
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="text-stone-500 hover:text-black font-sans text-xs font-normal tracking-wider underline underline-offset-4 decoration-stone-300 transition-colors duration-200"

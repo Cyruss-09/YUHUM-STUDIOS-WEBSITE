@@ -5,11 +5,13 @@ import {
   MONTH_NAMES,
   getMonthGrid,
   isPastDate,
+  isBlackoutDate,
+  generateTimeSlots,
 } from "../../utils/dateUtils";
 import { ADD_ONS, TIME_SLOTS } from "../../data/bookingOptions";
 
-// Pure UI: renders a package + its booking wizard, but owns no booking
-// rules itself — everything comes from usePackageBooking().
+// Pure UI: renders a package + its booking wizard, with dynamic studio
+// schedule, add-ons, dynamic slots, and blackout dates from studio settings.
 export const PackageCard = ({
   id,
   title,
@@ -21,6 +23,7 @@ export const PackageCard = ({
   activeBookingId,
   setActiveBookingId,
   onProceedToForm,
+  settings,
 }) => {
   const isBookingOpen = activeBookingId === id;
 
@@ -50,6 +53,55 @@ export const PackageCard = ({
   });
 
   const monthGrid = getMonthGrid(viewYear, viewMonth);
+
+  // Dynamic Studio Room Availability from Admin Settings
+  const studioAActive = settings?.schedule?.studioAActive ?? true;
+  const studioBActive = settings?.schedule?.studioBActive ?? true;
+
+  const studios = [
+    {
+      name: "Studio A",
+      description: "Wheat, Scarlet Red, Marine Blue",
+      active: studioAActive,
+    },
+    {
+      name: "Studio B",
+      description: "White, Blush Pink, Amber Brown",
+      active: studioBActive,
+    },
+  ];
+
+  // Dynamic Add-ons with live prices from Admin Settings
+  const rawAddOns = settings?.packages?.addOns && settings.packages.addOns.length > 0
+    ? settings.packages.addOns
+    : ADD_ONS;
+
+  const addOnsList = rawAddOns.map((item) => {
+    let formattedPrice = item.price;
+    if (typeof item.price === "number") {
+      formattedPrice =
+        item.price === 0
+          ? "Free"
+          : `₱${item.price.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`;
+    }
+    return {
+      ...item,
+      displayPrice: formattedPrice,
+    };
+  });
+
+  // Dynamic Blackout Dates from Admin Settings
+  const blackoutDates = settings?.schedule?.blackoutDates || [];
+
+  // Dynamic Time Slots generated based on opening/closing hours and duration
+  const dynamicTimeSlots = generateTimeSlots(
+    settings?.schedule?.openTime,
+    settings?.schedule?.closeTime,
+    settings?.schedule?.slotDurationMinutes
+  );
 
   return (
     <div className="w-full flex flex-col mb-8">
@@ -149,36 +201,56 @@ export const PackageCard = ({
               <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">
                 Step 1: Choose Your Studio Space
               </span>
+              {!studioAActive && !studioBActive && (
+                <span className="text-xs text-red-600 font-semibold">
+                  All rooms temporarily unavailable
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-stone-100">
-              {["Studio A", "Studio B"].map((studioName) => (
-                <div
-                  key={studioName}
-                  className="flex items-center justify-between p-6 hover:bg-stone-50/50 transition-colors"
-                >
-                  <div>
-                    <span className="font-bold text-lg text-stone-900 block capitalize">
-                      {studioName}
-                    </span>
-                    <span className="text-xs text-stone-500">
-                      {studioName === "Studio A"
-                        ? "Wheat, Scarlet Red, Marine Blue"
-                        : "White, Blush Pink, Amber Brown"}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleStudioSelect(studioName)}
-                    className={`px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${
-                      selectedStudio === studioName
-                        ? "bg-stone-900 text-white shadow-sm"
-                        : "bg-stone-100 text-stone-900 hover:bg-stone-200"
+              {studios.map((studio) => {
+                const isSelected = selectedStudio === studio.name;
+                const isAvailable = studio.active;
+
+                return (
+                  <div
+                    key={studio.name}
+                    className={`flex items-center justify-between p-6 transition-colors ${
+                      isAvailable ? "hover:bg-stone-50/50" : "bg-stone-50/60 opacity-60"
                     }`}
                   >
-                    {selectedStudio === studioName ? "Selected" : "Select"}
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg text-stone-900 block capitalize">
+                          {studio.name}
+                        </span>
+                        {!isAvailable && (
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                            Closed
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-stone-500">
+                        {studio.description}
+                      </span>
+                    </div>
+                    <button
+                      disabled={!isAvailable}
+                      onClick={() => isAvailable && handleStudioSelect(studio.name)}
+                      className={`px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${
+                        !isAvailable
+                          ? "bg-stone-200 text-stone-400 cursor-not-allowed"
+                          : isSelected
+                            ? "bg-stone-900 text-white shadow-sm"
+                            : "bg-stone-100 text-stone-900 hover:bg-stone-200"
+                      }`}
+                    >
+                      {!isAvailable ? "Unavailable" : isSelected ? "Selected" : "Select"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -191,7 +263,7 @@ export const PackageCard = ({
                   Step 2: Customize with Add-ons (Optional)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                  {ADD_ONS.map((addon) => (
+                  {addOnsList.map((addon) => (
                     <label
                       key={addon.key}
                       className="flex items-start gap-3.5 cursor-pointer select-none group p-2.5 rounded-xl hover:bg-stone-50 transition-colors"
@@ -207,7 +279,7 @@ export const PackageCard = ({
                           {addon.label}
                         </span>
                         <span className="text-xs text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-full">
-                          {addon.price === "Free" ? "Free" : `+ ${addon.price}`}
+                          {addon.displayPrice === "Free" ? "Free" : `+ ${addon.displayPrice}`}
                         </span>
                       </div>
                     </label>
@@ -294,6 +366,7 @@ export const PackageCard = ({
                         }
 
                         const past = isPastDate(viewYear, viewMonth, day);
+                        const blackedOut = isBlackoutDate(viewYear, viewMonth, day, blackoutDates);
                         const isSelected =
                           selectedDate === day &&
                           selectedMonth === viewMonth &&
@@ -302,14 +375,23 @@ export const PackageCard = ({
                         return (
                           <button
                             key={`${viewYear}-${viewMonth}-${day}`}
-                            disabled={past}
-                            onClick={() => handleDateSelect(day)}
-                            className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full transition-all text-xs font-semibold ${
+                            disabled={past || blackedOut}
+                            onClick={() => !blackedOut && handleDateSelect(day)}
+                            title={
+                              past
+                                ? "Past date"
+                                : blackedOut
+                                  ? "Studio closed on this date"
+                                  : `${MONTH_NAMES[viewMonth]} ${day}, ${viewYear}`
+                            }
+                            className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full transition-all text-xs font-semibold relative ${
                               past
                                 ? "text-stone-300 cursor-not-allowed bg-transparent"
-                                : isSelected
-                                  ? "bg-stone-900 text-white shadow-md font-bold scale-105"
-                                  : "text-stone-700 hover:bg-stone-200/70"
+                                : blackedOut
+                                  ? "text-red-400 bg-red-50/70 border border-red-200/60 line-through cursor-not-allowed"
+                                  : isSelected
+                                    ? "bg-stone-900 text-white shadow-md font-bold scale-105"
+                                    : "text-stone-700 hover:bg-stone-200/70"
                             }`}
                           >
                             {day}
@@ -337,7 +419,7 @@ export const PackageCard = ({
                     </div>
 
                     <div className="grid grid-cols-3 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
-                      {TIME_SLOTS.map((time) => (
+                      {dynamicTimeSlots.map((time) => (
                         <button
                           key={time}
                           onClick={() => setSelectedTime(time)}
@@ -374,3 +456,4 @@ export const PackageCard = ({
 };
 
 export default PackageCard;
+

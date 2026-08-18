@@ -7,6 +7,7 @@ import { StudioBackdropGuide } from "../../components/booking/StudioBackdropGuid
 import { BookingInformationForm } from "../../components/booking/BookingInformationForm";
 import { ConfirmationModal } from "../../components/booking/ConfirmationModal";
 import { useBookingForm } from "../../hooks/useBookingForm";
+import { usePublicSettings } from "../../hooks/usePublicSettings";
 import { PACKAGES } from "../../data/bookingOptions";
 import { useAuth } from "../../context/AuthContext";
 
@@ -20,7 +21,35 @@ const PENDING_FORM_KEY = "yuhum_pendingForm";
 
 export const Book = ({ setActiveLink, userEmail }) => {
   const { user, loading: authLoading } = useAuth();
+  const { settings } = usePublicSettings();
   const [activeBookingId, setActiveBookingId] = useState(null);
+
+  // Dynamic live pricing configured by Admin
+  const kadlawPriceFormatted =
+    settings?.packages?.kadlawPrice != null
+      ? `₱${Number(settings.packages.kadlawPrice).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`
+      : PACKAGES.kadlaw.price;
+
+  const gugmaPriceFormatted =
+    settings?.packages?.gugmaPrice != null
+      ? `₱${Number(settings.packages.gugmaPrice).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`
+      : PACKAGES.gugma.price;
+
+  const dynamicKadlaw = {
+    ...PACKAGES.kadlaw,
+    price: kadlawPriceFormatted,
+  };
+
+  const dynamicGugma = {
+    ...PACKAGES.gugma,
+    price: gugmaPriceFormatted,
+  };
 
   const [pendingBooking, setPendingBooking] = useState(() => {
     try {
@@ -55,24 +84,16 @@ export const Book = ({ setActiveLink, userEmail }) => {
     }
   }, [pendingBooking]);
 
-  // 🔥 NEW: Auto-submit/trigger confirmation once the user successfully logs in and returns
+  // Auto-submit/trigger confirmation once the user successfully logs in and returns
   const autoSubmittedRef = useRef(false);
   useEffect(() => {
-    // Only fire if auth is done loading, user is logged in, we have a pending booking, 
-    // and we haven't already auto-submitted during this session mount.
     if (!authLoading && user && pendingBooking && !autoSubmittedRef.current) {
-      // Check if we also have saved form data indicating they came back from login
       const savedForm = localStorage.getItem(PENDING_FORM_KEY);
       if (savedForm) {
         autoSubmittedRef.current = true;
-        
-        // Clean up the temporary form key so it doesn't loop
         localStorage.removeItem(PENDING_FORM_KEY);
 
-        // Create a synthetic event object since handleFinalSubmit expects e.preventDefault()
         const syntheticEvent = { preventDefault: () => {} };
-        
-        // Automatically submit the booking payload to the backend
         handleFinalSubmit(syntheticEvent);
       }
     }
@@ -113,15 +134,16 @@ export const Book = ({ setActiveLink, userEmail }) => {
           />
         ) : (
           <>
-            <StudioBackdropGuide />
+            <StudioBackdropGuide settings={settings} />
 
             <div className="w-full max-w-3xl mx-auto px-2 md:px-0">
               <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 mb-6 text-center tracking-wide">
-                {PACKAGES.kadlaw.group}
+                {dynamicKadlaw.group}
               </h2>
               <div className="space-y-4 mb-8">
                 <PackageCard
-                  {...PACKAGES.kadlaw}
+                  {...dynamicKadlaw}
+                  settings={settings}
                   image={PACKAGE_IMAGES.kadlaw}
                   activeBookingId={activeBookingId}
                   setActiveBookingId={setActiveBookingId}
@@ -130,11 +152,12 @@ export const Book = ({ setActiveLink, userEmail }) => {
               </div>
 
               <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 mb-6 text-center tracking-wide mt-12">
-                {PACKAGES.gugma.group}
+                {dynamicGugma.group}
               </h2>
               <div className="space-y-4">
                 <PackageCard
-                  {...PACKAGES.gugma}
+                  {...dynamicGugma}
+                  settings={settings}
                   image={PACKAGE_IMAGES.gugma}
                   activeBookingId={activeBookingId}
                   setActiveBookingId={setActiveBookingId}
@@ -151,4 +174,4 @@ export const Book = ({ setActiveLink, userEmail }) => {
   );
 };
 
-export default Book;
+export default Book;

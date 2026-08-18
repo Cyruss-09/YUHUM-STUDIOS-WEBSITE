@@ -3,10 +3,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import BookingsPanel from "../../components/admin/BookingsPanel";
 import UsersPanel from "../../components/admin/UsersPanel";
+import SettingsPanel from "../../components/admin/SettingsPanel";
 // Import other panels when ready:
 // import OverviewPanel from "../../components/admin/OverviewPanel";
-// import UsersPanel from "../../components/admin/UsersPanel";
-// import SettingsPanel from "../../components/admin/SettingsPanel";
 
 // Standard admin navigation tabs with descriptive icons
 const TABS = [
@@ -130,19 +129,7 @@ export default function AdminDashboard() {
       case "users":
         return <UsersPanel />;
       case "settings":
-        return (
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
-              ⚙️
-            </div>
-            <h3 className="text-base font-semibold text-gray-800">
-              Settings Panel
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Studio configurations and system options will appear here.
-            </p>
-          </div>
-        );
+        return <SettingsPanel />;
       default:
         return null;
     }
