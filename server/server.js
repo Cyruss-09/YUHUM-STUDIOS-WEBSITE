@@ -128,7 +128,7 @@ const SANDBOX_RECIPIENT = ADMIN_EMAIL; // must match your Resend account email
 console.log(
   SANDBOX_MODE
     ? "📦 Email sandbox mode: ON — all emails will be sent to " +
-        SANDBOX_RECIPIENT
+    SANDBOX_RECIPIENT
     : "📤 Email sandbox mode: OFF — emails will be sent to real recipients",
 );
 
