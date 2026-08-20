@@ -298,8 +298,8 @@ router.post("/promo-codes", verifyToken, requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `INSERT INTO promo_codes (code, discount_type, discount_value, min_spend, max_uses, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
+   VALUES ($1, $2, $3, $4, $5, $6)
+   RETURNING *`,
       [
         cleanCode,
         discount_type || "percentage",
