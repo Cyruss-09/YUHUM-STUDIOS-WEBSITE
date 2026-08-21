@@ -28,17 +28,17 @@ export const Book = ({ setActiveLink, userEmail }) => {
   const kadlawPriceFormatted =
     settings?.packages?.kadlawPrice != null
       ? `₱${Number(settings.packages.kadlawPrice).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`
       : PACKAGES.kadlaw.price;
 
   const gugmaPriceFormatted =
     settings?.packages?.gugmaPrice != null
       ? `₱${Number(settings.packages.gugmaPrice).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`
       : PACKAGES.gugma.price;
 
   const dynamicKadlaw = {
@@ -93,7 +93,7 @@ export const Book = ({ setActiveLink, userEmail }) => {
         autoSubmittedRef.current = true;
         localStorage.removeItem(PENDING_FORM_KEY);
 
-        const syntheticEvent = { preventDefault: () => {} };
+        const syntheticEvent = { preventDefault: () => { } };
         handleFinalSubmit(syntheticEvent);
       }
     }
@@ -104,10 +104,34 @@ export const Book = ({ setActiveLink, userEmail }) => {
     closeModal();
   };
 
+  // Check if maintenance mode is enabled in the public settings
+  // (Adjust the property key if your database schema names it differently, e.g. settings.isMaintenanceMode)
+  const isMaintenanceMode = settings?.maintenanceMode || settings?.isMaintenanceMode;
+
   return (
     <div className="w-full min-h-screen bg-[#faf8f5] flex flex-col font-sans text-stone-600 select-none relative">
-      <div className="w-full max-w-7xl mx-auto px-4 py-12 md:px-16 md:py-20 flex flex-col gap-16 flex-grow">
-        {pendingBooking ? (
+      <div className="w-full max-w-7xl mx-auto px-4 py-12 md:px-16 md:py-20 flex flex-col gap-16 flex-grow justify-center">
+
+        {/* Maintenance Mode Guard View */}
+        {isMaintenanceMode ? (
+          <div className="w-full max-w-xl mx-auto text-center bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-stone-200">
+            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-serif">
+              ⚙️
+            </div>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 mb-3 tracking-wide">
+              We'll Be Right Back
+            </h2>
+            <p className="text-stone-500 leading-relaxed mb-8">
+              Our booking system is currently undergoing scheduled maintenance and updates. Please check back again shortly. Thank you for your patience!
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        ) : pendingBooking ? (
           <BookingInformationForm
             pendingBooking={pendingBooking}
             formData={formData}
@@ -174,4 +198,4 @@ export const Book = ({ setActiveLink, userEmail }) => {
   );
 };
 
-export default Book;
+export default Book;
