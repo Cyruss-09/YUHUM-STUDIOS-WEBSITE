@@ -146,8 +146,6 @@ const resolveRecipient = (candidateEmail) => {
 };
 
 /* ================= BOOKINGS ROUTE ================= */
-// CHANGED: added verifyToken — booking now requires a logged-in user.
-// req.user is set by verifyToken (from the JWT) and gives us { id, role }.
 app.post("/api/bookings", verifyToken, async (req, res) => {
   const {
     packageId,
@@ -168,41 +166,65 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
     findUs,
   } = req.body;
 
-  try {
-    const addOnsArray = Array.isArray(addOns) ? addOns : [];
+  const client = await pool.connect();
 
-    // Safe fallback values
+  try {
+    await client.query("BEGIN");
+
+    // --- Validate & consume the promo code, if one was applied ---
+    if (couponCode) {
+      const normalizedCode = couponCode.trim().toUpperCase();
+
+      const promoResult = await client.query(
+        `SELECT id, max_uses, used_count, is_active, expires_at
+         FROM promo_codes
+         WHERE code = $1
+         FOR UPDATE`,
+        [normalizedCode],
+      );
+
+      if (promoResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ success: false, error: "Invalid promo code." });
+      }
+
+      const promo = promoResult.rows[0];
+
+      if (!promo.is_active) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ success: false, error: "This promo code is no longer active." });
+      }
+
+      if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ success: false, error: "This promo code has expired." });
+      }
+
+      if (promo.max_uses !== null && promo.used_count >= promo.max_uses) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ success: false, error: "This promo code has reached its usage limit." });
+      }
+
+      await client.query(
+        `UPDATE promo_codes SET used_count = used_count + 1 WHERE id = $1`,
+        [promo.id],
+      );
+    }
+
+    const addOnsArray = Array.isArray(addOns) ? addOns : [];
     const safePackageTitle = packageTitle || "Studio Session";
     const safeBasePrice = basePrice || "₱0";
     const safeStudio = studio || "Standard Studio";
-
-    // Resolve alternative naming conventions from frontend payload
     const resolvedFindUs = findUs || null;
     const resolvedPaymentMode = paymentMode || null;
     const resolvedTerms =
       termsAccepted === true || termsAccepted === "true" || termsAccepted === 1;
 
-    // CHANGED: added user_id column — ties every booking to the
-    // authenticated user (req.user.id) instead of only a typed-in email.
     const queryText = `
       INSERT INTO bookings (
-        package_id, 
-        package_title, 
-        base_price, 
-        studio, 
-        booking_date, 
-        day_of_week, 
-        booking_time, 
-        add_ons, 
-        "firstName", 
-        "lastName", 
-        phone, 
-        email, 
-        "termsAccepted", 
-        "findUs", 
-        "paymentMode", 
-        "couponCode",
-        user_id
+        package_id, package_title, base_price, studio, booking_date, day_of_week,
+        booking_time, add_ons, "firstName", "lastName", phone, email,
+        "termsAccepted", "findUs", "paymentMode", "couponCode", user_id
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *;
@@ -225,28 +247,25 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       resolvedFindUs,
       resolvedPaymentMode,
       couponCode || null,
-      req.user.id, // CHANGED: attach the logged-in user's id
+      req.user.id,
     ];
 
-    const dbResult = await pool.query(queryText, values);
+    const dbResult = await client.query(queryText, values);
 
-    const formattedAddOns =
-      addOnsArray.length > 0 ? addOnsArray.join(", ") : "None";
+    await client.query("COMMIT");
 
+    // --- Email (best-effort, runs after commit so it can't hold the transaction open) ---
+    const formattedAddOns = addOnsArray.length > 0 ? addOnsArray.join(", ") : "None";
     let emailSent = false;
 
     try {
       if (resend) {
         const recipient = resolveRecipient(email);
-
         const bookingHtml = BookingEmail({
           packageTitle: safePackageTitle,
           basePrice: safeBasePrice,
           studio: safeStudio,
-          date:
-            dayOfWeek && date
-              ? `${dayOfWeek}, ${date}`
-              : date || "Scheduled Date",
+          date: dayOfWeek && date ? `${dayOfWeek}, ${date}` : date || "Scheduled Date",
           time: time || "Scheduled Time",
           addOns: formattedAddOns,
           firstName,
@@ -268,25 +287,23 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
         emailSent = true;
       }
     } catch (emailErr) {
-      console.error(
-        "⚠️ Booking saved, but Resend email dispatch failed:",
-        emailErr.message || emailErr,
-      );
+      console.error("⚠️ Booking saved, but Resend email dispatch failed:", emailErr.message || emailErr);
     }
 
     return res.status(201).json({
       success: true,
-      message: emailSent
-        ? "Booking saved and confirmation email sent!"
-        : "Booking saved successfully!",
+      message: emailSent ? "Booking saved and confirmation email sent!" : "Booking saved successfully!",
       data: dbResult.rows[0],
     });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("❌ Database query error (bookings):", error);
     return res.status(500).json({
       success: false,
       error: "Failed to complete booking processing.",
     });
+  } finally {
+    client.release();
   }
 });
 
