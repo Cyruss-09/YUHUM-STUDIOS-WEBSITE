@@ -104,9 +104,12 @@ export const Book = ({ setActiveLink, userEmail }) => {
     closeModal();
   };
 
-  // Check if maintenance mode is enabled in the public settings
-  // (Adjust the property key if your database schema names it differently, e.g. settings.isMaintenanceMode)
-  const isMaintenanceMode = settings?.maintenanceMode || settings?.isMaintenanceMode;
+  // Maintenance mode lives under settings.cms (see admin SettingsPanel.jsx),
+  // not on the top-level settings object — that mismatch was why this never triggered.
+  const isMaintenanceMode = settings?.cms?.maintenanceMode ?? false;
+  const maintenanceMessage =
+    settings?.cms?.maintenanceMessage ||
+    "Our booking system is currently undergoing scheduled maintenance and updates. Please check back again shortly. Thank you for your patience!";
 
   return (
     <div className="w-full min-h-screen bg-[#faf8f5] flex flex-col font-sans text-stone-600 select-none relative">
@@ -121,8 +124,8 @@ export const Book = ({ setActiveLink, userEmail }) => {
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-900 mb-3 tracking-wide">
               We'll Be Right Back
             </h2>
-            <p className="text-stone-500 leading-relaxed mb-8">
-              Our booking system is currently undergoing scheduled maintenance and updates. Please check back again shortly. Thank you for your patience!
+            <p className="text-stone-500 leading-relaxed mb-8 whitespace-pre-line">
+              {maintenanceMessage}
             </p>
             <button
               onClick={() => window.location.reload()}
