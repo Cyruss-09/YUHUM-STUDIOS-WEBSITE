@@ -2,11 +2,16 @@ import { useState, useMemo } from "react";
 import { useAdminBookings } from "../../hooks/useAdminBookings.js"; // fix typo: "usedAdminBookings" -> "useAdminBookings"
 
 const STATUS_STYLES = {
-  Pending: "bg-amber-50 text-amber-700 border-amber-200",
-  Confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Completed: "bg-blue-50 text-blue-700 border-blue-200",
-  Cancelled: "bg-red-50 text-red-700 border-red-200",
-  "No-show": "bg-gray-100 text-gray-600 border-gray-200",
+  Pending:
+    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50",
+  Confirmed:
+    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50",
+  Completed:
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50",
+  Cancelled:
+    "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50",
+  "No-show":
+    "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600",
 };
 
 const STATUS_FILTERS = [
@@ -35,8 +40,8 @@ export default function BookingsPanel() {
   const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
       const matchesSearch =
-        b.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.id.toLowerCase().includes(searchQuery.toLowerCase());
+        (b.customerName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(b.id).toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || b.status === statusFilter;
       const matchesStudio = studioFilter === "All" || b.studio === studioFilter;
       return matchesSearch && matchesStatus && matchesStudio;
@@ -51,10 +56,14 @@ export default function BookingsPanel() {
   };
 
   if (loading)
-    return <div className="p-6 text-sm text-gray-400">Loading bookings…</div>;
+    return (
+      <div className="p-6 text-sm text-gray-400 dark:text-gray-500">
+        Loading bookings…
+      </div>
+    );
   if (error)
     return (
-      <div className="p-6 text-sm text-red-500">
+      <div className="p-6 text-sm text-red-500 dark:text-red-400">
         Failed to load bookings: {error}
       </div>
     );
@@ -67,17 +76,17 @@ export default function BookingsPanel() {
         <StatCard
           label="Pending"
           value={stats.pending}
-          accent="text-amber-600"
+          accent="text-amber-600 dark:text-amber-400"
         />
         <StatCard
           label="Confirmed"
           value={stats.confirmed}
-          accent="text-emerald-600"
+          accent="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
           label="Completed"
           value={stats.completed}
-          accent="text-blue-600"
+          accent="text-blue-600 dark:text-blue-400"
         />
       </div>
 
@@ -88,13 +97,13 @@ export default function BookingsPanel() {
           placeholder="Search by customer name or booking ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-80 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400"
+          className="w-full sm:w-80 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-gray-400 dark:focus:border-gray-500"
         />
         <div className="flex gap-2 flex-wrap">
           <select
             value={studioFilter}
             onChange={(e) => setStudioFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+            className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
           >
             <option value="All">All Studios</option>
             <option value="Studio A">Studio A</option>
@@ -103,7 +112,7 @@ export default function BookingsPanel() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+            className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
           >
             {STATUS_FILTERS.map((s) => (
               <option key={s} value={s}>
@@ -115,9 +124,9 @@ export default function BookingsPanel() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
+          <thead className="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">
             <tr>
               <th className="text-left px-4 py-3 font-semibold">Customer</th>
               <th className="text-left px-4 py-3 font-semibold">Package</th>
@@ -128,26 +137,26 @@ export default function BookingsPanel() {
               <th className="text-right px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
             {filteredBookings.map((b) => (
               <tr
                 key={b.id}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
+                className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                 onClick={() => setSelectedBooking(b)}
               >
                 <td className="px-4 py-3">
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-gray-900 dark:text-gray-100">
                     {b.customerName}
                   </div>
-                  <div className="text-xs text-gray-400">{b.id}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">{b.id}</div>
                 </td>
-                <td className="px-4 py-3 text-gray-700">{b.packageTitle}</td>
-                <td className="px-4 py-3 text-gray-700">{b.studio}</td>
-                <td className="px-4 py-3 text-gray-700">
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{b.packageTitle}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{b.studio}</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                   <div>{b.date}</div>
-                  <div className="text-xs text-gray-400">{b.time}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">{b.time}</div>
                 </td>
-                <td className="px-4 py-3 text-gray-700 font-medium">
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">
                   {b.total}
                 </td>
                 <td className="px-4 py-3">
@@ -165,13 +174,13 @@ export default function BookingsPanel() {
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => updateStatus(b.id, "Confirmed")}
-                        className="text-xs font-semibold text-emerald-600 hover:text-emerald-800"
+                        className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                       >
                         Confirm
                       </button>
                       <button
                         onClick={() => updateStatus(b.id, "Cancelled")}
-                        className="text-xs font-semibold text-red-500 hover:text-red-700"
+                        className="text-xs font-semibold text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                       >
                         Cancel
                       </button>
@@ -184,7 +193,7 @@ export default function BookingsPanel() {
               <tr>
                 <td
                   colSpan={7}
-                  className="px-4 py-10 text-center text-gray-400 text-sm"
+                  className="px-4 py-10 text-center text-gray-400 dark:text-gray-500 text-sm"
                 >
                   No bookings match your filters.
                 </td>
@@ -197,19 +206,19 @@ export default function BookingsPanel() {
       {/* Detail modal */}
       {selectedBooking && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedBooking(null)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-xl border border-transparent dark:border-gray-700"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   {selectedBooking.customerName}
                 </h3>
-                <p className="text-xs text-gray-400">{selectedBooking.id}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{selectedBooking.id}</p>
               </div>
               <span
                 className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${STATUS_STYLES[selectedBooking.status]}`}
@@ -218,7 +227,7 @@ export default function BookingsPanel() {
               </span>
             </div>
 
-            <div className="space-y-2.5 text-sm text-gray-700 mb-6">
+            <div className="space-y-2.5 text-sm text-gray-700 dark:text-gray-300 mb-6">
               <DetailRow label="Email" value={selectedBooking.customerEmail} />
               <DetailRow label="Package" value={selectedBooking.packageTitle} />
               <DetailRow label="Studio" value={selectedBooking.studio} />
@@ -242,7 +251,7 @@ export default function BookingsPanel() {
                     onClick={() =>
                       updateStatus(selectedBooking.id, "Confirmed")
                     }
-                    className="flex-1 rounded-xl bg-black text-white text-sm font-semibold py-2.5 hover:bg-gray-800"
+                    className="flex-1 rounded-xl bg-black dark:bg-white text-white dark:text-black text-sm font-semibold py-2.5 hover:bg-gray-800 dark:hover:bg-gray-100"
                   >
                     Confirm Booking
                   </button>
@@ -250,7 +259,7 @@ export default function BookingsPanel() {
                     onClick={() =>
                       updateStatus(selectedBooking.id, "Cancelled")
                     }
-                    className="flex-1 rounded-xl border border-red-200 text-red-600 text-sm font-semibold py-2.5 hover:bg-red-50"
+                    className="flex-1 rounded-xl border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 text-sm font-semibold py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     Cancel
                   </button>
@@ -258,7 +267,7 @@ export default function BookingsPanel() {
               )}
               <button
                 onClick={() => setSelectedBooking(null)}
-                className="flex-1 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold py-2.5 hover:bg-gray-50"
+                className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Close
               </button>
@@ -270,10 +279,10 @@ export default function BookingsPanel() {
   );
 }
 
-function StatCard({ label, value, accent = "text-gray-900" }) {
+function StatCard({ label, value, accent = "text-gray-900 dark:text-gray-100" }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5">
-      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-5">
+      <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
         {label}
       </div>
       <div className={`text-2xl font-bold ${accent}`}>{value}</div>
@@ -283,9 +292,9 @@ function StatCard({ label, value, accent = "text-gray-900" }) {
 
 function DetailRow({ label, value }) {
   return (
-    <div className="flex justify-between border-b border-gray-50 pb-2">
-      <span className="text-gray-400">{label}</span>
-      <span className="font-medium text-gray-900 text-right">{value}</span>
+    <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/60 pb-2">
+      <span className="text-gray-400 dark:text-gray-500">{label}</span>
+      <span className="font-medium text-gray-900 dark:text-gray-100 text-right">{value}</span>
     </div>
   );
 }

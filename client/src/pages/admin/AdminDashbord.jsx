@@ -4,10 +4,22 @@ import { useNavigate } from "react-router-dom";
 import BookingsPanel from "../../components/admin/BookingsPanel";
 import UsersPanel from "../../components/admin/UsersPanel";
 import SettingsPanel from "../../components/admin/SettingsPanel";
-// Import other panels when ready:
-// import OverviewPanel from "../../components/admin/OverviewPanel";
+import { useTheme } from "../../context/ThemeContext";
+import { Sun, Moon } from 'lucide-react';
 
-// Standard admin navigation tabs with descriptive icons
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+      aria-label="Toggle theme"
+    >
+      {theme === 'dark' ? <Sun size={18} className="text-gray-300" /> : <Moon size={18} className="text-gray-600" />}
+    </button>
+  )
+}
+
 const TABS = [
   {
     key: "overview",
@@ -114,13 +126,13 @@ export default function AdminDashboard() {
       case "overview":
         return (
           <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+            <div className="h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-3">
               📊
             </div>
-            <h3 className="text-base font-semibold text-gray-800">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">
               Overview Panel
             </h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Analytics metrics and recent charts will appear here.
             </p>
           </div>
@@ -136,20 +148,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-950 overflow-hidden">
       {/* Sidebar */}
-      <aside className="flex w-72 flex-col justify-between border-r border-gray-200 bg-white p-6 shadow-sm">
+      <aside className="flex w-72 flex-col justify-between border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
         <div>
           {/* Logo / Brand Header */}
           <div className="mb-8 flex items-center gap-3 px-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white font-bold tracking-wider shadow-md">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold tracking-wider shadow-md">
               YS
             </div>
             <div>
-              <span className="block text-base font-bold text-gray-900 leading-tight">
+              <span className="block text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
                 Yuhum Studios
               </span>
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Admin Portal
               </span>
             </div>
@@ -164,12 +176,12 @@ export default function AdminDashboard() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
-                    ? "bg-black text-white shadow-md shadow-black/10"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    ? "bg-black dark:bg-white text-white dark:text-black shadow-md shadow-black/10 dark:shadow-none"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
                     }`}
                 >
                   <span
-                    className={`${isActive ? "text-white" : "text-gray-400"}`}
+                    className={`${isActive ? "text-white dark:text-black" : "text-gray-400 dark:text-gray-500"}`}
                   >
                     {tab.icon}
                   </span>
@@ -181,23 +193,23 @@ export default function AdminDashboard() {
         </div>
 
         {/* User Profile & Logout Box */}
-        <div className="border-t border-gray-100 pt-4">
+        <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-semibold text-sm">
+            <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 font-semibold text-sm">
               {user?.name?.[0] || user?.username?.[0] || "A"}
             </div>
             <div className="overflow-hidden">
-              <div className="text-sm font-semibold text-gray-900 truncate">
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {user?.name || user?.username || "Admin User"}
               </div>
-              <div className="text-xs text-gray-500 truncate">
+              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 {user?.email || "admin@yuhum.com"}
               </div>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200 active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition-all hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 active:scale-[0.98]"
           >
             <svg
               className="w-4 h-4"
@@ -220,21 +232,22 @@ export default function AdminDashboard() {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-md px-8">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+        <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-8">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
             {currentTabLabel}
           </h1>
           <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
               System Live
             </span>
+            <ThemeToggle />
           </div>
         </header>
 
         {/* Dynamic Panel Content */}
         <main className="p-8">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm min-h-[70vh]">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm min-h-[70vh]">
             {renderActivePanel()}
           </div>
         </main>
