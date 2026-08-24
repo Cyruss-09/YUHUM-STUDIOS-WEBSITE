@@ -354,40 +354,52 @@ app.post("/api/reviews", async (req, res) => {
     let adminEmailSent = false;
     let customerEmailSent = false;
 
-    // --- 1. Admin notification: always goes to the studio inbox ---
-    try {
-      if (resend) {
-        await resend.emails.send({
-          from: FROM_EMAIL,
-          to: [ADMIN_EMAIL],
-          subject: `New Review Submitted (${overallRating || "N/A"} ⭐)`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
-              <h2 style="color: #2D1B18;">New Customer Feedback Received</h2>
-              <p><strong>Reviewer Email:</strong> ${userEmail || "Not provided"}</p>
-              <hr style="border: none; border-top: 1px solid #eee;" />
-              <ul style="line-height: 1.8;">
-                <li><strong>Overall Rating:</strong> ${overallRating || "N/A"} / 5</li>
-                <li><strong>Equipment Ease:</strong> ${equipmentEase || "N/A"} / 5</li>
-                <li><strong>Room Privacy:</strong> ${roomPrivacy || "N/A"} / 5</li>
-                <li><strong>Props Selection:</strong> ${propsSelection || "N/A"} / 5</li>
-                <li><strong>Favorite Backdrop:</strong> ${favoriteBackdrop || "None selected"}</li>
-                <li><strong>Recommends Us:</strong> ${safeRecommend === true ? "Yes" : safeRecommend === false ? "No" : "N/A"}</li>
-              </ul>
-              <p><strong>Comments:</strong></p>
-              <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #2D1B18; margin: 0;">
-                ${comments || "No additional comments"}
-              </blockquote>
-            </div>
-          `,
-        });
-        adminEmailSent = true;
-      }
-    } catch (adminEmailErr) {
-      console.error(
-        "⚠️ Review saved, but admin notification email failed:",
-        adminEmailErr.message || adminEmailErr,
+    // --- 1. Admin notification ---
+    // SANDBOX FIX: When sandbox mode is ON, resolveRecipient() redirects the
+    // customer thank-you (email #2) to ADMIN_EMAIL anyway. Sending the admin
+    // notification on top of that means two emails land in the same inbox for
+    // every single review — which is what caused the "double email" bug.
+    // Skip the admin notification in sandbox mode; it will be sent in production
+    // when emails route to real recipients.
+    if (SANDBOX_MODE) {
+      console.log(
+        "📦 [Sandbox] Skipping admin notification — customer thank-you is already routed to ADMIN_EMAIL."
       );
+    } else {
+      try {
+        if (resend) {
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [ADMIN_EMAIL],
+            subject: `New Review Submitted (${overallRating || "N/A"} ⭐)`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
+                <h2 style="color: #2D1B18;">New Customer Feedback Received</h2>
+                <p><strong>Reviewer Email:</strong> ${userEmail || "Not provided"}</p>
+                <hr style="border: none; border-top: 1px solid #eee;" />
+                <ul style="line-height: 1.8;">
+                  <li><strong>Overall Rating:</strong> ${overallRating || "N/A"} / 5</li>
+                  <li><strong>Equipment Ease:</strong> ${equipmentEase || "N/A"} / 5</li>
+                  <li><strong>Room Privacy:</strong> ${roomPrivacy || "N/A"} / 5</li>
+                  <li><strong>Props Selection:</strong> ${propsSelection || "N/A"} / 5</li>
+                  <li><strong>Favorite Backdrop:</strong> ${favoriteBackdrop || "None selected"}</li>
+                  <li><strong>Recommends Us:</strong> ${safeRecommend === true ? "Yes" : safeRecommend === false ? "No" : "N/A"}</li>
+                </ul>
+                <p><strong>Comments:</strong></p>
+                <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #2D1B18; margin: 0;">
+                  ${comments || "No additional comments"}
+                </blockquote>
+              </div>
+            `,
+          });
+          adminEmailSent = true;
+        }
+      } catch (adminEmailErr) {
+        console.error(
+          "⚠️ Review saved, but admin notification email failed:",
+          adminEmailErr.message || adminEmailErr,
+        );
+      }
     }
 
     // --- 2. Customer thank-you: routed through resolveRecipient so sandbox
@@ -426,8 +438,8 @@ app.post("/api/reviews", async (req, res) => {
       message:
         adminEmailSent && customerEmailSent
           ? "Review submitted! Admin notified and thank-you email sent."
-          : adminEmailSent
-            ? "Review submitted and admin notified! (Thank-you email not sent.)"
+          : customerEmailSent
+            ? "Review submitted! Thank-you email sent."
             : "Review submitted successfully!",
       data: result.rows[0],
     });
@@ -438,6 +450,7 @@ app.post("/api/reviews", async (req, res) => {
       .json({ success: false, error: "Failed to submit review." });
   }
 });
+
 
 /* ================= SUBSCRIBER EMAIL RESENDER ROUTE ================= */
 app.post("/api/resend-campaign", async (req, res) => {

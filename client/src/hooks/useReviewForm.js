@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { submitReview } from "../services/reviewApi";
 
 const initialFormData = {
@@ -19,6 +19,12 @@ export function useReviewForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState(initialFormData);
 
+  // useRef guard: unlike useState, a ref mutation is synchronous and visible
+  // immediately — even inside the same event-loop tick. This means a rapid
+  // double-click cannot sneak a second request through before the first
+  // setLoading(true) re-render has had a chance to disable the button.
+  const isSubmittingRef = useRef(false);
+
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -35,6 +41,11 @@ export function useReviewForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Synchronous guard — blocks any concurrent call before React re-renders
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setLoading(true);
     setErrorMessage("");
 
@@ -46,6 +57,7 @@ export function useReviewForm() {
       setErrorMessage("Something went wrong on the server. Please try again.");
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -61,4 +73,4 @@ export function useReviewForm() {
     handleReset,
     handleSubmit,
   };
-}
+}
