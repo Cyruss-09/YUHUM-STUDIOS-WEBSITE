@@ -172,8 +172,32 @@ const initSettingsTables = async () => {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subscribers (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        overall_rating INTEGER NOT NULL,
+        equipment_ease INTEGER NOT NULL,
+        room_privacy INTEGER NOT NULL,
+        props_selection INTEGER NOT NULL,
+        favorite_backdrop VARCHAR(50),
+        comments TEXT,
+        recommend BOOLEAN,
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        user_email VARCHAR(255)
+      );
+    `);
   } catch (err) {
-    console.error("Error initializing settings/promo tables:", err.message);
+    console.error("Error initializing settings/promo/subscriber/review tables:", err.message);
   }
 };
 initSettingsTables();
@@ -412,6 +436,113 @@ router.post("/change-password", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
+/* ================= REVIEWS MANAGEMENT ================= */
+
+// GET /api/admin/reviews - Fetch all reviews
+router.get("/reviews", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, overall_rating, equipment_ease, room_privacy, props_selection,
+              favorite_backdrop, comments, recommend, user_email, created_at
+       FROM reviews
+       ORDER BY created_at DESC, id DESC`
+    );
+    res.json({ success: true, reviews: result.rows });
+  } catch (err) {
+    console.error("Error fetching reviews:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch reviews" });
+  }
+});
+
+// DELETE /api/admin/reviews/:id - Delete a review
+router.delete("/reviews/:id", verifyToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query("DELETE FROM reviews WHERE id = $1 RETURNING id", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Review not found" });
+    }
+    res.json({ success: true, message: "Review deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting review:", err);
+    res.status(500).json({ success: false, message: "Failed to delete review" });
+  }
+});
+
+/* ================= SUBSCRIBERS MANAGEMENT ================= */
+
+// GET /api/admin/subscribers - Fetch all subscribers
+router.get("/subscribers", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, email, COALESCE(status, 'active') as status, created_at
+       FROM subscribers
+       ORDER BY created_at DESC, id DESC`
+    );
+    res.json({ success: true, subscribers: result.rows });
+  } catch (err) {
+    console.error("Error fetching subscribers:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch subscribers" });
+  }
+});
+
+// POST /api/admin/subscribers - Manually add a subscriber
+router.post("/subscribers", verifyToken, requireAdmin, async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({ success: false, message: "Valid email address is required" });
+  }
+  const cleanEmail = email.toLowerCase().trim();
+  try {
+    const result = await pool.query(
+      `INSERT INTO subscribers (email, status, created_at)
+       VALUES ($1, 'active', NOW())
+       ON CONFLICT (email) DO UPDATE SET status = 'active'
+       RETURNING id, email, status, created_at`,
+      [cleanEmail]
+    );
+    res.status(201).json({ success: true, subscriber: result.rows[0] });
+  } catch (err) {
+    console.error("Error adding subscriber:", err);
+    res.status(500).json({ success: false, message: "Failed to add subscriber" });
+  }
+});
+
+// PATCH /api/admin/subscribers/:id/status - Update subscriber status (active/unsubscribed)
+router.patch("/subscribers/:id/status", verifyToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const newStatus = status === "unsubscribed" ? "unsubscribed" : "active";
+    const result = await pool.query(
+      "UPDATE subscribers SET status = $1 WHERE id = $2 RETURNING id, email, status, created_at",
+      [newStatus, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Subscriber not found" });
+    }
+    res.json({ success: true, subscriber: result.rows[0] });
+  } catch (err) {
+    console.error("Error updating subscriber status:", err);
+    res.status(500).json({ success: false, message: "Failed to update subscriber status" });
+  }
+});
+
+// DELETE /api/admin/subscribers/:id - Delete a subscriber
+router.delete("/subscribers/:id", verifyToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query("DELETE FROM subscribers WHERE id = $1 RETURNING id", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Subscriber not found" });
+    }
+    res.json({ success: true, message: "Subscriber removed successfully" });
+  } catch (err) {
+    console.error("Error deleting subscriber:", err);
+    res.status(500).json({ success: false, message: "Failed to delete subscriber" });
+  }
+});
+
 /* ================= DATA EXPORT ================= */
 
 // GET /api/admin/export/bookings - Export bookings in JSON / CSV format
@@ -426,6 +557,34 @@ router.get("/export/bookings", verifyToken, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("Error exporting bookings:", err);
     res.status(500).json({ success: false, message: "Failed to export bookings" });
+  }
+});
+
+// GET /api/admin/export/subscribers - Export subscribers in JSON
+router.get("/export/subscribers", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, email, COALESCE(status, 'active') as status, created_at FROM subscribers ORDER BY created_at DESC"
+    );
+    res.json({ success: true, subscribers: result.rows });
+  } catch (err) {
+    console.error("Error exporting subscribers:", err);
+    res.status(500).json({ success: false, message: "Failed to export subscribers" });
+  }
+});
+
+// GET /api/admin/export/reviews - Export reviews in JSON
+router.get("/export/reviews", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, overall_rating, equipment_ease, room_privacy, props_selection,
+              favorite_backdrop, comments, recommend, user_email, created_at
+       FROM reviews ORDER BY created_at DESC`
+    );
+    res.json({ success: true, reviews: result.rows });
+  } catch (err) {
+    console.error("Error exporting reviews:", err);
+    res.status(500).json({ success: false, message: "Failed to export reviews" });
   }
 });
 

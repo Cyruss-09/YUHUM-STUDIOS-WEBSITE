@@ -4,8 +4,22 @@ import { useNavigate } from "react-router-dom";
 import BookingsPanel from "../../components/admin/BookingsPanel";
 import UsersPanel from "../../components/admin/UsersPanel";
 import SettingsPanel from "../../components/admin/SettingsPanel";
+import ReviewsPanel from "../../components/admin/ReviewsPanel";
+import SubscribersPanel from "../../components/admin/SubscribersPanel";
 import { useTheme } from "../../context/ThemeContext";
-import { Sun, Moon, Menu, X } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  Menu,
+  X,
+  LayoutDashboard,
+  CalendarCheck,
+  Star,
+  Mail,
+  Users,
+  Settings,
+  ArrowRight,
+} from "lucide-react";
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -15,93 +29,45 @@ function ThemeToggle() {
       className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
       aria-label="Toggle theme"
     >
-      {theme === 'dark' ? <Sun size={18} className="text-gray-300" /> : <Moon size={18} className="text-gray-600" />}
+      {theme === "dark" ? (
+        <Sun size={18} className="text-gray-300" />
+      ) : (
+        <Moon size={18} className="text-gray-600" />
+      )}
     </button>
-  )
+  );
 }
 
 const TABS = [
   {
     key: "overview",
     label: "Overview",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-        />
-      </svg>
-    ),
+    icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
     key: "bookings",
     label: "Bookings",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      </svg>
-    ),
+    icon: <CalendarCheck className="w-5 h-5" />,
+  },
+  {
+    key: "reviews",
+    label: "Reviews",
+    icon: <Star className="w-5 h-5" />,
+  },
+  {
+    key: "subscribers",
+    label: "Subscribers",
+    icon: <Mail className="w-5 h-5" />,
   },
   {
     key: "users",
     label: "Manage Users",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-        />
-      </svg>
-    ),
+    icon: <Users className="w-5 h-5" />,
   },
   {
     key: "settings",
     label: "Settings",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-      </svg>
-    ),
+    icon: <Settings className="w-5 h-5" />,
   },
 ];
 
@@ -129,7 +95,9 @@ export default function AdminDashboard() {
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileMenuOpen]);
 
   const handleLogout = () => {
@@ -150,27 +118,134 @@ export default function AdminDashboard() {
     switch (activeTab) {
       case "bookings":
         return <BookingsPanel />;
-      case "overview":
-        return (
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-            <div className="h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-3">
-              📊
-            </div>
-            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">
-              Overview Panel
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Analytics metrics and recent charts will appear here.
-            </p>
-          </div>
-        );
-
+      case "reviews":
+        return <ReviewsPanel />;
+      case "subscribers":
+        return <SubscribersPanel />;
       case "users":
         return <UsersPanel />;
       case "settings":
         return <SettingsPanel />;
+      case "overview":
       default:
-        return null;
+        return (
+          <div className="flex flex-col gap-6">
+            <div className="rounded-2xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-850 dark:to-gray-900 text-white p-6 lg:p-8 shadow-md">
+              <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-gray-200 backdrop-blur-sm mb-3">
+                Yuhum Studios • Admin Center
+              </span>
+              <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
+                Welcome back, {user?.name || user?.username || "Admin"} 👋
+              </h2>
+              <p className="text-gray-300 text-sm mt-1 max-w-xl">
+                Manage your studio bookings, inspect customer ratings and feedback, grow your newsletter audience, and configure studio operations.
+              </p>
+            </div>
+
+            {/* Quick Action Navigation Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                onClick={() => handleTabChange("bookings")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                    <CalendarCheck size={20} />
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Bookings Schedule
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    View upcoming client shoots, confirm slots, and manage reservations.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTabChange("reviews")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                    <Star size={20} className="fill-amber-400" />
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Customer Reviews
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Check client ratings, feedback comments, privacy, and props ratings.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTabChange("subscribers")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                    <Mail size={20} />
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Newsletter Subscribers
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Manage client subscribers, export audience list, and copy active emails.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTabChange("users")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400">
+                    <Users size={20} />
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    User Accounts
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    View registered clients and manage administrator permissions.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTabChange("settings")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group sm:col-span-2 lg:col-span-2"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <Settings size={20} />
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Studio & System Settings
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Configure package rates, studio schedule hours, payment details, promo codes, and announcement banner.
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        );
     }
   };
 
