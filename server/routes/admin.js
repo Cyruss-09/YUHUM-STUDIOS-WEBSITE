@@ -181,6 +181,12 @@ const initSettingsTables = async () => {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    await pool.query(`
+      ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+    `);
+    await pool.query(`
+      ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
@@ -195,6 +201,12 @@ const initSettingsTables = async () => {
         created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         user_email VARCHAR(255)
       );
+    `);
+    await pool.query(`
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
+    `);
+    await pool.query(`
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     `);
   } catch (err) {
     console.error("Error initializing settings/promo/subscriber/review tables:", err.message);
@@ -449,8 +461,8 @@ router.get("/reviews", verifyToken, requireAdmin, async (req, res) => {
     );
     res.json({ success: true, reviews: result.rows });
   } catch (err) {
-    console.error("Error fetching reviews:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch reviews" });
+    console.error("Error fetching reviews:", err.message || err);
+    res.status(500).json({ success: false, message: err.message || "Failed to fetch reviews" });
   }
 });
 
@@ -464,8 +476,8 @@ router.delete("/reviews/:id", verifyToken, requireAdmin, async (req, res) => {
     }
     res.json({ success: true, message: "Review deleted successfully" });
   } catch (err) {
-    console.error("Error deleting review:", err);
-    res.status(500).json({ success: false, message: "Failed to delete review" });
+    console.error("Error deleting review:", err.message || err);
+    res.status(500).json({ success: false, message: err.message || "Failed to delete review" });
   }
 });
 
@@ -474,6 +486,18 @@ router.delete("/reviews/:id", verifyToken, requireAdmin, async (req, res) => {
 // GET /api/admin/subscribers - Fetch all subscribers
 router.get("/subscribers", verifyToken, requireAdmin, async (req, res) => {
   try {
+    // Ensure table & columns exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subscribers (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+      ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
     const result = await pool.query(
       `SELECT id, email, COALESCE(status, 'active') as status, created_at
        FROM subscribers
@@ -481,8 +505,8 @@ router.get("/subscribers", verifyToken, requireAdmin, async (req, res) => {
     );
     res.json({ success: true, subscribers: result.rows });
   } catch (err) {
-    console.error("Error fetching subscribers:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch subscribers" });
+    console.error("Error fetching subscribers:", err.message || err);
+    res.status(500).json({ success: false, message: err.message || "Failed to fetch subscribers" });
   }
 });
 
