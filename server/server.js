@@ -137,11 +137,13 @@ const isValidEmail = (value) =>
   typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
 // Decides where an email actually gets sent:
-// - In sandbox mode, everything goes to SANDBOX_RECIPIENT (avoids Resend 403s).
-// - Otherwise, sends to the real candidate email if it's valid, falling back
-//   to ADMIN_EMAIL only when no usable address was provided.
+// - In sandbox mode or when using the default resend.dev testing domain (no custom domain),
+//   everything safely goes to SANDBOX_RECIPIENT (yuhumstudios22@gmail.com).
+// - When a custom domain is verified in the future, it routes to the real candidate email.
 const resolveRecipient = (candidateEmail) => {
-  if (SANDBOX_MODE) return SANDBOX_RECIPIENT;
+  if (SANDBOX_MODE || FROM_EMAIL.includes("resend.dev")) {
+    return SANDBOX_RECIPIENT;
+  }
   return isValidEmail(candidateEmail) ? candidateEmail.trim() : ADMIN_EMAIL;
 };
 
