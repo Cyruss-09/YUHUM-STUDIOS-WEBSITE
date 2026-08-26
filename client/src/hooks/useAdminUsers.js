@@ -48,18 +48,40 @@ export function useAdminUsers() {
                 },
                 body: JSON.stringify({ role: newRole }),
             });
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
                 throw new Error(data.message || `Failed to update role: ${res.statusText}`);
             }
             setUsers((prev) =>
                 prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
             );
+            return { success: true, user: data.user };
         } catch (err) {
             console.error("Error updating user role:", err);
             setError(err.message);
+            return { success: false, error: err.message };
         }
     };
 
-    return { users, loading, error, refetch: fetchUsers, updateUserRole };
+    const deleteUser = async (userId) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.message || `Failed to delete user: ${res.statusText}`);
+            }
+            setUsers((prev) => prev.filter((u) => u.id !== userId));
+            return { success: true, message: data.message };
+        } catch (err) {
+            console.error("Error deleting user:", err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    return { users, loading, error, refetch: fetchUsers, updateUserRole, deleteUser };
 }

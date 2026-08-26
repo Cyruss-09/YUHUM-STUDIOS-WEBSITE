@@ -146,6 +146,55 @@ router.patch("/users/:id/role", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/users/:id - Delete a user account and clean up associated records
+router.delete("/users/:id", verifyToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const userResult = await pool.query(
+      "SELECT id, username, email, role FROM users WHERE id = $1",
+      [id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const targetUser = userResult.rows[0];
+
+    // Prevent deleting the currently authenticated admin's own account
+    if (
+      (req.user?.id && (req.user.id === targetUser.id || req.user.id === parseInt(id, 10))) ||
+      (req.user?.email && req.user.email.toLowerCase() === targetUser.email.toLowerCase())
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own active administrator account.",
+      });
+    }
+
+    // Remove from admins table if synced
+    if (targetUser.email) {
+      await pool.query("DELETE FROM admins WHERE email = $1", [targetUser.email]);
+    }
+
+    // Delete user from users table
+    await pool.query("DELETE FROM users WHERE id = $1", [id]);
+
+    console.log(`✅ Deleted user: ${targetUser.username} (${targetUser.email})`);
+    res.json({
+      success: true,
+      message: `User "${targetUser.username || targetUser.email}" was successfully deleted.`,
+    });
+  } catch (err) {
+    console.error("❌ Error deleting user:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to delete user.",
+    });
+  }
+});
+
 /* ================= AUTO-INITIALIZE SETTINGS & PROMO TABLES ================= */
 const initSettingsTables = async () => {
   try {
