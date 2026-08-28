@@ -2,7 +2,9 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
-
+const crypto = require("crypto");
+const { resend, FROM_EMAIL, resolveRecipient } = require("../config/mailer");
+const { PasswordResetEmail } = require("../emails/PasswordResetEmail");
 const router = express.Router();
 
 /* ================= REGISTER ================= */
@@ -92,6 +94,102 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+/* ================= FORGOT PASSWORD ================= */
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required." });
+  }
+
+  try {
+    const result = await pool.query("SELECT id, email FROM users WHERE email = $1", [email]);
+
+    if (result.rows.length === 0) {
+      return res.json({ message: "If that email exists, a reset link has been sent." });
+    }
+
+    const user = result.rows[0];
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await pool.query(
+      "UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3",
+      [hashedToken, expires, user.id],
+    );
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
+
+    if (resend) {
+      const recipient = resolveRecipient(user.email);
+
+      // Capture and log the response from Resend
+      const { data, error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: [recipient],
+        subject: "Reset your Yuhum Studio password",
+        html: PasswordResetEmail({ resetUrl }),
+      });
+
+      if (error) {
+        console.error("❌ Resend API Error:", error);
+        return res.status(500).json({ message: "Failed to send email.", details: error });
+      }
+
+      console.log("✅ Email sent successfully:", data);
+    } else {
+      console.warn("⚠️ Resend instance is not initialized. Check your RESEND_API_KEY.");
+    }
+
+    return res.json({ message: "If that email exists, a reset link has been sent." });
+  } catch (err) {
+    console.error("❌ Forgot-password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ================= RESET PASSWORD ================= */
+router.post("/reset-password", async (req, res) => {
+  const { email, token, newPassword } = req.body;
+
+  if (!email || !token || !newPassword) {
+    return res.status(400).json({ message: "Email, token, and new password are required." });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters." });
+  }
+
+  try {
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const result = await pool.query(
+      `SELECT id FROM users
+       WHERE email = $1 AND reset_password_token = $2 AND reset_password_expires > NOW()`,
+      [email, hashedToken],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ message: "Invalid or expired reset link." });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      `UPDATE users
+       SET password_hash = $1, reset_password_token = NULL, reset_password_expires = NULL
+       WHERE id = $2`,
+      [passwordHash, result.rows[0].id],
+    );
+
+    return res.json({ message: "Password reset successful." });
+  } catch (err) {
+    console.error("❌ Reset-password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 /* ================= ADMIN LOGIN ================= */
 router.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
@@ -153,7 +251,7 @@ router.post("/admin/login", async (req, res) => {
 /* ================= GET CURRENT USER (ME) ================= */
 router.get("/me", async (req, res) => {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "No token provided" });
   }
@@ -162,7 +260,7 @@ router.get("/me", async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Check if it's an admin or regular user based on token role
     let account = null;
     let isAdminRole = decoded.role === "admin";

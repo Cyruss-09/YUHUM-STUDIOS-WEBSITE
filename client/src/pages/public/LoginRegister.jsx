@@ -12,6 +12,13 @@ export default function LoginRegister({ setActiveLink }) {
   const [showRegConfirm, setShowRegConfirm] = useState(false);
   const [touched, setTouched] = useState({});
 
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSubmitted, setForgotSubmitted] = useState(false);
+
   const firstFieldRef = useRef(null);
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
@@ -24,7 +31,7 @@ export default function LoginRegister({ setActiveLink }) {
 
   useEffect(() => {
     firstFieldRef.current?.focus();
-  }, [isRegistering]);
+  }, [isRegistering, showForgotPassword]);
 
   const handleLoginChange = (e) =>
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
@@ -90,27 +97,55 @@ export default function LoginRegister({ setActiveLink }) {
     }
   };
 
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setForgotError("");
+    setForgotLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || ""}/api/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail }),
+        },
+      );
+      if (!res.ok) throw new Error("Something went wrong. Please try again.");
+      setForgotSubmitted(true);
+    } catch (err) {
+      setForgotError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const backToLogin = () => {
+    setShowForgotPassword(false);
+    setForgotSubmitted(false);
+    setForgotEmail("");
+    setForgotError("");
+  };
+
   const switchTo = (registering) => {
     if (registering === isRegistering) return;
     setError("");
     setTouched({});
     setIsRegistering(registering);
+    setShowForgotPassword(false);
   };
 
   const inputClass = (invalid) =>
-    `w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-[#2C221E] placeholder-[#7A6B63]/40 focus:outline-none focus:ring-2 transition-all duration-300 ${
-      invalid
-        ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
-        : "border-[#E8DFD1] focus:border-[#A3704C] focus:ring-[#A3704C]/20"
+    `w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-[#2C221E] placeholder-[#7A6B63]/40 focus:outline-none focus:ring-2 transition-all duration-300 ${invalid
+      ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+      : "border-[#E8DFD1] focus:border-[#A3704C] focus:ring-[#A3704C]/20"
     }`;
 
   return (
     <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-12 bg-[#FBF9F5] relative overflow-hidden">
       {/* Ambient Backdrop Glows */}
       <div
-        className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none transition-all duration-700 ${
-          isRegistering ? "bg-[#A3704C]/10" : "bg-[#8C5A35]/10"
-        }`}
+        className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none transition-all duration-700 ${isRegistering ? "bg-[#A3704C]/10" : "bg-[#8C5A35]/10"
+          }`}
       />
 
       {/* Main Container Card */}
@@ -129,9 +164,8 @@ export default function LoginRegister({ setActiveLink }) {
           className="relative grid grid-cols-2 mb-8 bg-[#F4EFEA] border border-[#E8DFD1] rounded-xl p-1.5 text-xs font-semibold uppercase tracking-wider"
         >
           <div
-            className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-lg bg-gradient-to-r from-[#A3704C] to-[#8C5A35] shadow-sm transition-transform duration-300 ease-out ${
-              isRegistering ? "translate-x-[calc(100%+6px)]" : "translate-x-0"
-            }`}
+            className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-lg bg-gradient-to-r from-[#A3704C] to-[#8C5A35] shadow-sm transition-transform duration-300 ease-out ${isRegistering ? "translate-x-[calc(100%+6px)]" : "translate-x-0"
+              }`}
             aria-hidden="true"
           />
           <button
@@ -139,11 +173,10 @@ export default function LoginRegister({ setActiveLink }) {
             role="tab"
             aria-selected={!isRegistering}
             onClick={() => switchTo(false)}
-            className={`relative z-10 py-3 rounded-lg transition-colors ${
-              !isRegistering
-                ? "text-white font-bold"
-                : "text-[#7A6B63] hover:text-[#2C221E]"
-            }`}
+            className={`relative z-10 py-3 rounded-lg transition-colors ${!isRegistering
+              ? "text-white font-bold"
+              : "text-[#7A6B63] hover:text-[#2C221E]"
+              }`}
           >
             Sign in
           </button>
@@ -152,125 +185,228 @@ export default function LoginRegister({ setActiveLink }) {
             role="tab"
             aria-selected={isRegistering}
             onClick={() => switchTo(true)}
-            className={`relative z-10 py-3 rounded-lg transition-colors ${
-              isRegistering
-                ? "text-white font-bold"
-                : "text-[#7A6B63] hover:text-[#2C221E]"
-            }`}
+            className={`relative z-10 py-3 rounded-lg transition-colors ${isRegistering
+              ? "text-white font-bold"
+              : "text-[#7A6B63] hover:text-[#2C221E]"
+              }`}
           >
             Create account
           </button>
         </div>
 
         <div
-          key={isRegistering ? "register" : "login"}
+          key={isRegistering ? "register" : showForgotPassword ? "forgot" : "login"}
           className="animate-[fadeSlideIn_0.3s_ease-out]"
         >
           {!isRegistering ? (
-            /* ==================== LOGIN FORM ==================== */
-            <div>
-              <div className="text-center mb-8">
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#A3704C]">
-                  Welcome Back
-                </span>
-                <h1 className="font-serif text-3xl text-[#2C221E] mt-2 mb-1.5">
-                  Sign in to your account
-                </h1>
-                <p className="text-xs text-[#7A6B63]">
-                  Access your bookings, saved sessions, and studio preferences
-                </p>
-              </div>
-
-              {error && (
-                <div
-                  role="alert"
-                  className="mb-6 p-3.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl text-center shadow-sm"
-                >
-                  {error}
-                </div>
-              )}
-
-              <form
-                onSubmit={handleLoginSubmit}
-                className="space-y-5"
-                noValidate
-              >
-                <div>
-                  <label
-                    htmlFor="login-email"
-                    className="block text-xs font-semibold uppercase tracking-wider text-[#7A6B63] mb-2"
-                  >
-                    Email Address
-                  </label>
-                  <input
-                    ref={firstFieldRef}
-                    id="login-email"
-                    type="email"
-                    name="email"
-                    required
-                    autoComplete="email"
-                    value={loginData.email}
-                    onChange={handleLoginChange}
-                    placeholder="you@example.com"
-                    className={inputClass(false)}
-                  />
+            showForgotPassword ? (
+              /* ==================== FORGOT PASSWORD FORM ==================== */
+              <div>
+                <div className="text-center mb-8">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#A3704C]">
+                    Reset Access
+                  </span>
+                  <h1 className="font-serif text-3xl text-[#2C221E] mt-2 mb-1.5">
+                    Forgot your password?
+                  </h1>
+                  <p className="text-xs text-[#7A6B63]">
+                    Enter your email and we'll send you a reset link
+                  </p>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="login-password"
-                    className="block text-xs font-semibold uppercase tracking-wider text-[#7A6B63] mb-2"
-                  >
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="login-password"
-                      type={showLoginPw ? "text" : "password"}
-                      name="password"
-                      required
-                      autoComplete="current-password"
-                      value={loginData.password}
-                      onChange={handleLoginChange}
-                      placeholder="••••••••"
-                      className={`${inputClass(false)} pr-11`}
-                    />
+                {forgotSubmitted ? (
+                  <div className="text-center py-4">
+                    <div className="mb-4 p-4 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      If that email exists, a reset link has been sent. Check
+                      your inbox.
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setShowLoginPw((s) => !s)}
-                      aria-label={
-                        showLoginPw ? "Hide password" : "Show password"
-                      }
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#7A6B63] hover:text-[#A3704C] transition-colors"
+                      onClick={backToLogin}
+                      className="text-[#A3704C] hover:text-[#8C5A35] font-semibold text-xs underline underline-offset-4 transition-colors"
                     >
-                      {showLoginPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                      Back to Sign In
                     </button>
                   </div>
+                ) : (
+                  <form
+                    onSubmit={handleForgotSubmit}
+                    className="space-y-5"
+                    noValidate
+                  >
+                    {forgotError && (
+                      <div
+                        role="alert"
+                        className="mb-2 p-3.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl text-center shadow-sm"
+                      >
+                        {forgotError}
+                      </div>
+                    )}
+
+                    <div>
+                      <label
+                        htmlFor="forgot-email"
+                        className="block text-xs font-semibold uppercase tracking-wider text-[#7A6B63] mb-2"
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        ref={firstFieldRef}
+                        id="forgot-email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className={inputClass(false)}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-full mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-[#A3704C] to-[#8C5A35] hover:from-[#8C5A35] hover:to-[#754829] text-white font-medium text-xs tracking-[0.2em] uppercase py-3.5 rounded-xl shadow-[0_4px_16px_rgba(163,112,76,0.25)] hover:shadow-[0_6px_20px_rgba(163,112,76,0.35)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+                    >
+                      {forgotLoading && (
+                        <Loader2 size={16} className="animate-spin" />
+                      )}
+                      {forgotLoading ? "Sending…" : "Send Reset Link"}
+                    </button>
+
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={backToLogin}
+                        className="text-xs text-[#7A6B63] hover:text-[#A3704C] transition-colors"
+                      >
+                        ← Back to Sign In
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ) : (
+              /* ==================== LOGIN FORM ==================== */
+              <div>
+                <div className="text-center mb-8">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#A3704C]">
+                    Welcome Back
+                  </span>
+                  <h1 className="font-serif text-3xl text-[#2C221E] mt-2 mb-1.5">
+                    Sign in to your account
+                  </h1>
+                  <p className="text-xs text-[#7A6B63]">
+                    Access your bookings, saved sessions, and studio
+                    preferences
+                  </p>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-[#A3704C] to-[#8C5A35] hover:from-[#8C5A35] hover:to-[#754829] text-white font-medium text-xs tracking-[0.2em] uppercase py-3.5 rounded-xl shadow-[0_4px_16px_rgba(163,112,76,0.25)] hover:shadow-[0_6px_20px_rgba(163,112,76,0.35)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
-                >
-                  {loading && <Loader2 size={16} className="animate-spin" />}
-                  {loading ? "Signing in…" : "Sign In"}
-                </button>
-              </form>
-
-              <div className="mt-8 text-center border-t border-[#E8DFD1] pt-6">
-                <p className="text-xs text-[#7A6B63]">
-                  Don't have an account yet?{" "}
-                  <button
-                    type="button"
-                    onClick={() => switchTo(true)}
-                    className="text-[#A3704C] hover:text-[#8C5A35] font-semibold underline underline-offset-4 transition-colors"
+                {error && (
+                  <div
+                    role="alert"
+                    className="mb-6 p-3.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl text-center shadow-sm"
                   >
-                    Create an account
+                    {error}
+                  </div>
+                )}
+
+                <form
+                  onSubmit={handleLoginSubmit}
+                  className="space-y-5"
+                  noValidate
+                >
+                  <div>
+                    <label
+                      htmlFor="login-email"
+                      className="block text-xs font-semibold uppercase tracking-wider text-[#7A6B63] mb-2"
+                    >
+                      Email Address
+                    </label>
+                    <input
+                      ref={firstFieldRef}
+                      id="login-email"
+                      type="email"
+                      name="email"
+                      required
+                      autoComplete="email"
+                      value={loginData.email}
+                      onChange={handleLoginChange}
+                      placeholder="you@example.com"
+                      className={inputClass(false)}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="login-password"
+                      className="block text-xs font-semibold uppercase tracking-wider text-[#7A6B63] mb-2"
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="login-password"
+                        type={showLoginPw ? "text" : "password"}
+                        name="password"
+                        required
+                        autoComplete="current-password"
+                        value={loginData.password}
+                        onChange={handleLoginChange}
+                        placeholder="••••••••"
+                        className={`${inputClass(false)} pr-11`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPw((s) => !s)}
+                        aria-label={
+                          showLoginPw ? "Hide password" : "Show password"
+                        }
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#7A6B63] hover:text-[#A3704C] transition-colors"
+                      >
+                        {showLoginPw ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end -mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-[11px] text-[#A3704C] hover:text-[#8C5A35] font-medium underline underline-offset-2 transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-[#A3704C] to-[#8C5A35] hover:from-[#8C5A35] hover:to-[#754829] text-white font-medium text-xs tracking-[0.2em] uppercase py-3.5 rounded-xl shadow-[0_4px_16px_rgba(163,112,76,0.25)] hover:shadow-[0_6px_20px_rgba(163,112,76,0.35)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+                  >
+                    {loading && <Loader2 size={16} className="animate-spin" />}
+                    {loading ? "Signing in…" : "Sign In"}
                   </button>
-                </p>
+                </form>
+
+                <div className="mt-8 text-center border-t border-[#E8DFD1] pt-6">
+                  <p className="text-xs text-[#7A6B63]">
+                    Don't have an account yet?{" "}
+                    <button
+                      type="button"
+                      onClick={() => switchTo(true)}
+                      className="text-[#A3704C] hover:text-[#8C5A35] font-semibold underline underline-offset-4 transition-colors"
+                    >
+                      Create an account
+                    </button>
+                  </p>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             /* ==================== REGISTER FORM ==================== */
             <div>
@@ -362,8 +498,8 @@ export default function LoginRegister({ setActiveLink }) {
                       placeholder="At least 8 characters"
                       className={`${inputClass(
                         touched.password &&
-                          registerData.password.length > 0 &&
-                          registerData.password.length < 8,
+                        registerData.password.length > 0 &&
+                        registerData.password.length < 8,
                       )} pr-11`}
                     />
                     <button
