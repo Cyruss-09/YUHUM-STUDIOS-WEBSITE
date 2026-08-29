@@ -3,7 +3,6 @@ require("dotenv").config();
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
-const { Resend } = require("resend");
 const { BookingEmail } = require("./emails/BookingEmail");
 const { ReviewEmail } = require("./emails/ReviewEmail");
 const { SubscriberEmail } = require("./emails/SubscriberEmail");
@@ -12,6 +11,13 @@ const pool = require("./config/db");
 const { verifyToken, requireAdmin } = require("./middleware/auth");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
+const {
+  getResend,
+  FROM_EMAIL,
+  ADMIN_EMAIL,
+  SANDBOX_MODE,
+  resolveRecipient,
+} = require("./config/mailer");
 
 const app = express();
 app.use(cors());
@@ -28,7 +34,6 @@ pool.connect((err, client, release) => {
 });
 
 // --- AUTH + ADMIN ROUTES ---
-// /api/auth/register and /api/auth/login — open to anyone
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
@@ -84,7 +89,6 @@ const DEFAULT_SETTINGS = {
   },
 };
 
-// Public settings route (for banner & public contact info)
 app.get("/api/public/settings", async (req, res) => {
   try {
     const result = await pool.query("SELECT setting_key, setting_value FROM studio_settings");
@@ -98,54 +102,8 @@ app.get("/api/public/settings", async (req, res) => {
   }
 });
 
-// --- RESEND INITIALIZATION & DIAGNOSTICS ---
-const rawKey = (process.env.RESEND_API_KEY || "").trim();
-const resend = rawKey ? new Resend(rawKey) : null;
-
-console.log("--- Resend Env Diagnostics ---");
-console.log("Resend API Key Loaded:", rawKey ? "✅ Yes" : "❌ Missing");
-if (rawKey) {
-  console.log("Key Preview:", `${rawKey.substring(0, 6)}...`);
-}
-console.log("------------------------------");
-
-const FROM_EMAIL =
-  process.env.FROM_EMAIL || "Yuhum Studio <onboarding@resend.dev>";
-const ADMIN_EMAIL =
-  process.env.STUDIO_RECEIVER_EMAIL || "yuhumstudios22@gmail.com";
-
-// --- EMAIL SANDBOX MODE ---
-// While using Resend's shared sandbox domain (onboarding@resend.dev) without
-// a verified domain, Resend only allows sending to the email address on your
-// own Resend account. Set DEV_EMAIL_SANDBOX=true in .env during local
-// development so every email safely routes to ADMIN_EMAIL instead of
-// triggering a 403. Once you verify a domain (resend.com/domains) and set a
-// custom FROM_EMAIL on that domain, set DEV_EMAIL_SANDBOX=false (or remove it)
-// to start sending to real customer addresses.
-const SANDBOX_MODE = process.env.DEV_EMAIL_SANDBOX === "true";
-const SANDBOX_RECIPIENT = ADMIN_EMAIL; // must match your Resend account email
-
-console.log(
-  SANDBOX_MODE
-    ? "📦 Email sandbox mode: ON — all emails will be sent to " +
-    SANDBOX_RECIPIENT
-    : "📤 Email sandbox mode: OFF — emails will be sent to real recipients",
-);
-
-// Simple email format check, reused wherever we need to validate a customer email.
 const isValidEmail = (value) =>
   typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-
-// Decides where an email actually gets sent:
-// - In sandbox mode or when using the default resend.dev testing domain (no custom domain),
-//   everything safely goes to SANDBOX_RECIPIENT (yuhumstudios22@gmail.com).
-// - When a custom domain is verified in the future, it routes to the real candidate email.
-const resolveRecipient = (candidateEmail) => {
-  if (SANDBOX_MODE || FROM_EMAIL.includes("resend.dev")) {
-    return SANDBOX_RECIPIENT;
-  }
-  return isValidEmail(candidateEmail) ? candidateEmail.trim() : ADMIN_EMAIL;
-};
 
 /* ================= BOOKINGS ROUTE ================= */
 app.post("/api/bookings", verifyToken, async (req, res) => {
@@ -173,7 +131,6 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // --- Validate & consume the promo code, if one was applied ---
     if (couponCode) {
       const normalizedCode = couponCode.trim().toUpperCase();
 
@@ -256,11 +213,11 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
 
     await client.query("COMMIT");
 
-    // --- Email (best-effort, runs after commit so it can't hold the transaction open) ---
     const formattedAddOns = addOnsArray.length > 0 ? addOnsArray.join(", ") : "None";
     let emailSent = false;
 
     try {
+      const resend = getResend();
       if (resend) {
         const recipient = resolveRecipient(email);
         const bookingHtml = BookingEmail({
@@ -329,10 +286,6 @@ app.post("/api/reviews", async (req, res) => {
       RETURNING *;
     `;
 
-    // FIX: `recommend` had no fallback. If the frontend didn't send it (e.g. an
-    // untouched yes/no toggle), it arrives as `undefined`, and node-postgres
-    // throws on undefined query parameters — which crashed this entire route
-    // (500) before the review was ever saved or an email ever attempted.
     const safeRecommend =
       recommend === true || recommend === "true" || recommend === 1
         ? true
@@ -355,14 +308,8 @@ app.post("/api/reviews", async (req, res) => {
 
     let adminEmailSent = false;
     let customerEmailSent = false;
+    const resend = getResend();
 
-    // --- 1. Admin notification ---
-    // SANDBOX FIX: When sandbox mode is ON, resolveRecipient() redirects the
-    // customer thank-you (email #2) to ADMIN_EMAIL anyway. Sending the admin
-    // notification on top of that means two emails land in the same inbox for
-    // every single review — which is what caused the "double email" bug.
-    // Skip the admin notification in sandbox mode; it will be sent in production
-    // when emails route to real recipients.
     if (SANDBOX_MODE) {
       console.log(
         "📦 [Sandbox] Skipping admin notification — customer thank-you is already routed to ADMIN_EMAIL."
@@ -404,8 +351,6 @@ app.post("/api/reviews", async (req, res) => {
       }
     }
 
-    // --- 2. Customer thank-you: routed through resolveRecipient so sandbox
-    //        mode and the "valid email" fallback are both handled in one place ---
     try {
       if (resend) {
         const customerRecipient = resolveRecipient(userEmail);
@@ -453,7 +398,6 @@ app.post("/api/reviews", async (req, res) => {
   }
 });
 
-
 /* ================= SUBSCRIBER EMAIL RESENDER ROUTE ================= */
 app.post("/api/resend-campaign", async (req, res) => {
   const { campaignId } = req.body;
@@ -488,6 +432,7 @@ app.post("/api/resend-campaign", async (req, res) => {
       });
     }
 
+    const resend = getResend();
     if (!resend) {
       return res
         .status(500)
@@ -571,11 +516,9 @@ app.post("/api/subscribers", async (req, res) => {
       return res.status(200).json({ message: "You are already subscribed!" });
     }
 
-    // FIX: this route never sent anything through Resend — SubscriberEmail
-    // was imported but unused. Send a welcome email now, same pattern as the
-    // other routes (best-effort: subscription still succeeds if mail fails).
     let welcomeEmailSent = false;
     try {
+      const resend = getResend();
       if (resend) {
         const recipient = resolveRecipient(cleanEmail);
 
@@ -614,7 +557,6 @@ app.post("/api/subscribers", async (req, res) => {
 });
 
 /* ================= ADMIN BOOKINGS ROUTE ================= */
-// Fetches all bookings for the Admin Dashboard
 app.get("/api/admin/bookings", verifyToken, async (req, res) => {
   try {
     const queryText = `
@@ -638,7 +580,6 @@ app.get("/api/admin/bookings", verifyToken, async (req, res) => {
 });
 
 /* ================= ADMIN BOOKING STATUS UPDATE ================= */
-// Updates a single booking's status (Pending/Confirmed/Cancelled/etc.)
 app.patch(
   "/api/admin/bookings/:id/status",
   verifyToken,
