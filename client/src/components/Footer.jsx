@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { usePublicSettings } from "../hooks/usePublicSettings";
 import {
   MapPin,
@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Heart,
+  ChevronDown,
+  HelpCircle,
 } from "lucide-react";
 
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
@@ -32,16 +34,39 @@ function parseTimeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
+const FAQ_ITEMS = [
+  {
+    q: "Do I need to book in advance?",
+    a: "Yes, we recommend booking at least 1–2 days ahead to secure your preferred time slot and studio suite.",
+  },
+  {
+    q: "Can I bring my pet to the shoot?",
+    a: "Absolutely! Both Studio A and Studio B are pet-friendly. Just let us know beforehand so we can prep the space.",
+  },
+  {
+    q: "How do I get my photos afterward?",
+    a: "Instant digital copies are sent to your email right after your session, plus printed copies are available on request.",
+  },
+];
+
 export const Footer = ({ setActiveLink }) => {
   const { settings } = usePublicSettings();
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState("idle"); // 'idle' | 'loading' | 'success' | 'error'
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [copiedType, setCopiedType] = useState(null); // 'address' | 'phone' | 'email'
+  const [openFaq, setOpenFaq] = useState(null); // index of open FAQ item
+  const [showFaqPanel, setShowFaqPanel] = useState(false); // collapsed by default to keep footer compact
+  const [now, setNow] = useState(new Date());
+
+  // Live-ticking clock for the studio schedule card
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Calculate live availability based on studio schedule
   const availability = useMemo(() => {
-    const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const openMinutes = parseTimeToMinutes(settings.schedule?.openTime) ?? 10 * 60; // 10:00 AM
     const closeMinutes = parseTimeToMinutes(settings.schedule?.closeTime) ?? 18 * 60; // 6:00 PM
@@ -61,7 +86,17 @@ export const Footer = ({ setActiveLink }) => {
       studioAActive: settings.schedule?.studioAActive !== false,
       studioBActive: settings.schedule?.studioBActive !== false,
     };
-  }, [settings.schedule]);
+  }, [settings.schedule, now]);
+
+  const liveTimeLabel = useMemo(
+    () =>
+      now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+    [now]
+  );
 
   const handleNavigate = (pageKey) => {
     if (setActiveLink) {
@@ -78,6 +113,10 @@ export const Footer = ({ setActiveLink }) => {
     navigator.clipboard.writeText(text);
     setCopiedType(type);
     setTimeout(() => setCopiedType(null), 2200);
+  };
+
+  const toggleFaq = (index) => {
+    setOpenFaq((prev) => (prev === index ? null : index));
   };
 
   const handleNewsletterSubmit = async (e) => {
@@ -128,79 +167,82 @@ export const Footer = ({ setActiveLink }) => {
     "https://maps.google.com/?q=The+Yuhum+Studios+Self-shoot+Santa+Rosa";
 
   return (
-    <section className="w-full mt-auto relative overflow-hidden bg-[#241913] text-[#e8dfd8] font-sans border-t border-[#3d2b20]">
+    <section className="w-full mt-auto relative overflow-hidden bg-[#fdfaf5] text-[#4a3a2c] font-sans border-t border-[#eadfd1]">
       {/* Subtle Warm Ambient Glow */}
       <div
-        className="absolute -top-36 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#a3704c]/10 rounded-full blur-3xl pointer-events-none"
+        className="absolute -top-36 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#A3704C]/10 rounded-full blur-3xl pointer-events-none"
         aria-hidden="true"
       />
 
       {/* ── TOP AVAILABILITY & CTA BANNER ── */}
-      <div className="border-b border-[#3d2b20] bg-gradient-to-r from-[#2e1f18] via-[#241913] to-[#2e1f18] px-6 py-5 md:px-12">
+      <div className="border-b border-[#eadfd1] bg-gradient-to-r from-[#fbf3e8] via-[#fdfaf5] to-[#fbf3e8] px-6 py-3 md:px-12">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
           {/* Availability Status Card */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <div
-              className={`inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-xs transition-all duration-300 ${
-                availability.isOpenNow
-                  ? "bg-emerald-950/60 text-emerald-300 border-emerald-600/40"
+              className={`inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-xs transition-all duration-300 ${availability.isOpenNow
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                   : availability.isBlackout
-                  ? "bg-[#3d2412] text-amber-200 border-amber-600/40"
-                  : "bg-[#381812] text-rose-200 border-rose-600/30"
-              }`}
+                    ? "bg-amber-50 text-amber-700 border-amber-300"
+                    : "bg-rose-50 text-rose-700 border-rose-300"
+                }`}
             >
               <span className="relative flex h-2 w-2">
                 <span
-                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    availability.isOpenNow
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${availability.isOpenNow
                       ? "bg-emerald-400"
                       : availability.isBlackout
-                      ? "bg-amber-400"
-                      : "bg-rose-400"
-                  }`}
+                        ? "bg-amber-400"
+                        : "bg-rose-400"
+                    }`}
                 ></span>
                 <span
-                  className={`relative inline-flex rounded-full h-2 w-2 ${
-                    availability.isOpenNow
-                      ? "bg-emerald-400"
+                  className={`relative inline-flex rounded-full h-2 w-2 ${availability.isOpenNow
+                      ? "bg-emerald-500"
                       : availability.isBlackout
-                      ? "bg-amber-400"
-                      : "bg-rose-400"
-                  }`}
+                        ? "bg-amber-500"
+                        : "bg-rose-500"
+                    }`}
                 ></span>
               </span>
               <span>
                 {availability.isOpenNow
                   ? `Studio Open Today • ${availability.openTime} – ${availability.closeTime}`
                   : availability.isBlackout
-                  ? "Studio Closed Today • Special Schedule"
-                  : `Currently Closed • Reopens ${availability.openTime}`}
+                    ? "Studio Closed Today • Special Schedule"
+                    : `Currently Closed • Reopens ${availability.openTime}`}
               </span>
             </div>
 
             {/* Studio Active Suites Pill */}
-            <div className="hidden sm:inline-flex items-center gap-2 text-xs text-[#c4b5ab] bg-[#31221a] border border-[#443024] px-3 py-1.5 rounded-full">
-              <Camera size={13} className="text-[#c68a5c]" />
+            <div className="hidden sm:inline-flex items-center gap-2 text-xs text-[#7a6b5c] bg-white border border-[#eadfd1] px-3 py-1.5 rounded-full shadow-sm">
+              <Camera size={13} className="text-[#A3704C]" />
               <span>
                 {availability.studioAActive && availability.studioBActive
                   ? "Studio A & Studio B Ready"
                   : availability.studioAActive
-                  ? "Studio A Suite Ready"
-                  : "Studio B Suite Ready"}
+                    ? "Studio A Suite Ready"
+                    : "Studio B Suite Ready"}
               </span>
+            </div>
+
+            {/* Live clock pill */}
+            <div className="hidden md:inline-flex items-center gap-2 text-xs text-[#7a6b5c] bg-white border border-[#eadfd1] px-3 py-1.5 rounded-full shadow-sm tabular-nums">
+              <Clock size={13} className="text-[#A3704C]" />
+              <span>{liveTimeLabel}</span>
             </div>
           </div>
 
           {/* Quick Booking CTA Action */}
           <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <span className="text-xs text-[#c4b5ab] hidden sm:inline">
+            <span className="text-xs text-[#7a6b5c] hidden sm:inline">
               Instant reservations & self-shoot slots available
             </span>
             <button
               onClick={() => handleNavigate("book")}
-              className="inline-flex items-center gap-2 bg-[#A3704C] hover:bg-[#8B5E3C] text-[#fdfbf7] font-semibold px-5 py-2 rounded-xl text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] group"
+              className="inline-flex items-center gap-2 bg-[#A3704C] hover:bg-[#8B5E3C] text-white font-semibold px-5 py-2 rounded-xl text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] group"
             >
-              <Sparkles size={14} className="text-[#fdfbf7]" />
+              <Sparkles size={14} className="text-white" />
               <span>Book a Session</span>
               <ArrowRight
                 size={14}
@@ -212,48 +254,48 @@ export const Footer = ({ setActiveLink }) => {
       </div>
 
       {/* ── MAIN FOOTER CONTENT GRID ── */}
-      <footer className="w-full py-10 px-6 md:px-12">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          
+      <footer className="w-full py-6 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
+
           {/* Column 1: Brand & Studio Info */}
-          <div className="space-y-3.5">
+          <div className="space-y-2.5">
             <div className="space-y-1">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-[#A3704C] flex items-center justify-center text-[#fdfbf7] font-bold text-xs shadow-sm">
+                <div className="h-8 w-8 rounded-lg bg-[#A3704C] flex items-center justify-center text-white font-bold text-xs shadow-sm">
                   YS
                 </div>
-                <h3 className="font-serif text-xl font-bold text-[#fdfbf7] tracking-wide">
+                <h3 className="font-serif text-xl font-bold text-[#3a2c20] tracking-wide">
                   {studioName}
                 </h3>
               </div>
-              <p className="text-[11px] font-medium text-[#c68a5c] tracking-wider uppercase">
+              <p className="text-[11px] font-medium text-[#A3704C] tracking-wider uppercase">
                 Self-Shoot Studio & Creative Space
               </p>
             </div>
 
-            <p className="text-xs text-[#c4b5ab] leading-relaxed max-w-sm">
+            <p className="text-xs text-[#7a6b5c] leading-relaxed max-w-sm">
               Crafting authentic, joyful photo memories in complete privacy with studio lighting, wireless clickers, and timeless backdrops.
             </p>
 
             {/* Studio Feature Highlight Tags */}
-            <div className="flex flex-wrap gap-2 pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#31221a] border border-[#443024] text-[11px] text-[#e0d4cc]">
-                <Camera size={11} className="text-[#c68a5c]" />
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#eadfd1] text-[11px] text-[#5a4a3a] shadow-sm hover:border-[#A3704C]/50 transition-colors">
+                <Camera size={11} className="text-[#A3704C]" />
                 Pro Lighting
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#31221a] border border-[#443024] text-[11px] text-[#e0d4cc]">
-                <Heart size={11} className="text-[#c68a5c]" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#eadfd1] text-[11px] text-[#5a4a3a] shadow-sm hover:border-[#A3704C]/50 transition-colors">
+                <Heart size={11} className="text-[#A3704C]" />
                 Pet-Friendly
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#31221a] border border-[#443024] text-[11px] text-[#e0d4cc]">
-                <Sparkles size={11} className="text-[#c68a5c]" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-[#eadfd1] text-[11px] text-[#5a4a3a] shadow-sm hover:border-[#A3704C]/50 transition-colors">
+                <Sparkles size={11} className="text-[#A3704C]" />
                 Instant Copies
               </span>
             </div>
 
             {/* Social Media Links */}
-            <div className="pt-2">
-              <div className="text-[11px] font-semibold text-[#a89589] uppercase tracking-wider mb-2">
+            <div className="pt-1">
+              <div className="text-[11px] font-semibold text-[#a89589] uppercase tracking-wider mb-1.5">
                 Follow Our Stories
               </div>
               <div className="flex items-center gap-2.5">
@@ -262,7 +304,7 @@ export const Footer = ({ setActiveLink }) => {
                   href="https://www.instagram.com/yuhum.studios/"
                   target="_blank"
                   rel="noreferrer"
-                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-[#31221a] border border-[#443024] hover:border-[#A3704C] text-[#c4b5ab] hover:text-[#fdfbf7] hover:bg-[#A3704C]/30 transition-all duration-200"
+                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-[#eadfd1] hover:border-[#A3704C] text-[#7a6b5c] hover:text-white hover:bg-[#A3704C] shadow-sm transition-all duration-200"
                   aria-label="Instagram"
                 >
                   <svg className="w-3.5 h-3.5 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
@@ -275,7 +317,7 @@ export const Footer = ({ setActiveLink }) => {
                   href="https://www.facebook.com/yuhum.studiosph"
                   target="_blank"
                   rel="noreferrer"
-                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-[#31221a] border border-[#443024] hover:border-[#A3704C] text-[#c4b5ab] hover:text-[#fdfbf7] hover:bg-[#A3704C]/30 transition-all duration-200"
+                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-[#eadfd1] hover:border-[#A3704C] text-[#7a6b5c] hover:text-white hover:bg-[#A3704C] shadow-sm transition-all duration-200"
                   aria-label="Facebook"
                 >
                   <svg className="w-3.5 h-3.5 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
@@ -288,7 +330,7 @@ export const Footer = ({ setActiveLink }) => {
                   href="https://www.tiktok.com/@yuhumstudios"
                   target="_blank"
                   rel="noreferrer"
-                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-[#31221a] border border-[#443024] hover:border-[#A3704C] text-[#c4b5ab] hover:text-[#fdfbf7] hover:bg-[#A3704C]/30 transition-all duration-200"
+                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-[#eadfd1] hover:border-[#A3704C] text-[#7a6b5c] hover:text-white hover:bg-[#A3704C] shadow-sm transition-all duration-200"
                   aria-label="TikTok"
                 >
                   <svg className="w-3.5 h-3.5 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
@@ -300,22 +342,22 @@ export const Footer = ({ setActiveLink }) => {
           </div>
 
           {/* Column 2: Hours & Studio Contact */}
-          <div className="space-y-3.5">
-            <h4 className="text-xs font-bold text-[#fdfbf7] uppercase tracking-wider flex items-center gap-2">
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold text-[#3a2c20] uppercase tracking-wider flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[#A3704C]"></span>
               Studio Schedule & Info
             </h4>
 
             {/* Operating Schedule Box */}
-            <div className="rounded-xl bg-[#31221a] border border-[#443024] p-3 space-y-1.5">
+            <div className="rounded-xl bg-white border border-[#eadfd1] shadow-sm p-2.5 space-y-1.5">
               <div className="flex items-start gap-2.5 text-xs">
-                <Clock size={14} className="text-[#c68a5c] shrink-0 mt-0.5" />
+                <Clock size={14} className="text-[#A3704C] shrink-0 mt-0.5" />
                 <div>
-                  <div className="text-[#fdfbf7] font-semibold">Operating Hours</div>
-                  <div className="text-[#c4b5ab] text-[11px]">
+                  <div className="text-[#3a2c20] font-semibold">Operating Hours</div>
+                  <div className="text-[#7a6b5c] text-[11px]">
                     Open Daily (Mon – Sun)
                   </div>
-                  <div className="text-[#c68a5c] font-medium text-xs mt-0.5">
+                  <div className="text-[#A3704C] font-medium text-xs mt-0.5">
                     {availability.openTime} – {availability.closeTime}
                   </div>
                 </div>
@@ -323,12 +365,12 @@ export const Footer = ({ setActiveLink }) => {
             </div>
 
             {/* Interactive Contact Actions */}
-            <div className="space-y-2 text-xs text-[#c4b5ab]">
+            <div className="space-y-2 text-xs text-[#7a6b5c]">
               {/* Address with Map Link & Copy */}
               <div className="flex items-start gap-2 pt-0.5">
-                <MapPin size={13} className="text-[#c68a5c] shrink-0 mt-0.5" />
+                <MapPin size={13} className="text-[#A3704C] shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-[#e0d4cc] text-[11px] leading-relaxed">
+                  <p className="line-clamp-2 text-[#5a4a3a] text-[11px] leading-relaxed">
                     {address}
                   </p>
                   <div className="flex items-center gap-2.5 mt-1">
@@ -336,19 +378,19 @@ export const Footer = ({ setActiveLink }) => {
                       href={mapsUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-[#c68a5c] hover:text-[#e0b28e] inline-flex items-center gap-1 font-medium transition-colors"
+                      className="text-[11px] text-[#A3704C] hover:text-[#8B5E3C] inline-flex items-center gap-1 font-medium transition-colors"
                     >
                       <span>Google Maps</span>
                       <ExternalLink size={10} />
                     </a>
                     <button
                       onClick={() => handleCopy(address, "address")}
-                      className="text-[11px] text-[#a89589] hover:text-[#fdfbf7] inline-flex items-center gap-1 transition-colors"
+                      className="text-[11px] text-[#a89589] hover:text-[#3a2c20] inline-flex items-center gap-1 transition-colors"
                     >
                       {copiedType === "address" ? (
                         <>
-                          <Check size={11} className="text-emerald-400" />
-                          <span className="text-emerald-400">Copied!</span>
+                          <Check size={11} className="text-emerald-600" />
+                          <span className="text-emerald-600">Copied!</span>
                         </>
                       ) : (
                         <>
@@ -363,35 +405,113 @@ export const Footer = ({ setActiveLink }) => {
 
               {/* Phone */}
               <div className="flex items-center gap-2 pt-1 text-[11px]">
-                <Phone size={12} className="text-[#c68a5c] shrink-0" />
+                <Phone size={12} className="text-[#A3704C] shrink-0" />
                 <a
                   href={`tel:${phone.replace(/\s+/g, "")}`}
-                  className="text-[#e0d4cc] hover:text-[#fdfbf7] transition-colors truncate"
+                  className="text-[#5a4a3a] hover:text-[#3a2c20] transition-colors truncate"
                 >
                   {phone}
                 </a>
+                <button
+                  onClick={() => handleCopy(phone, "phone")}
+                  className="text-[#a89589] hover:text-[#3a2c20] inline-flex items-center gap-1 transition-colors ml-auto"
+                >
+                  {copiedType === "phone" ? (
+                    <Check size={11} className="text-emerald-600" />
+                  ) : (
+                    <Copy size={11} />
+                  )}
+                </button>
               </div>
 
               {/* Email */}
               <div className="flex items-center gap-2 text-[11px]">
-                <Mail size={12} className="text-[#c68a5c] shrink-0" />
+                <Mail size={12} className="text-[#A3704C] shrink-0" />
                 <a
                   href={`mailto:${email}`}
-                  className="text-[#e0d4cc] hover:text-[#fdfbf7] transition-colors truncate"
+                  className="text-[#5a4a3a] hover:text-[#3a2c20] transition-colors truncate"
                 >
                   {email}
                 </a>
+                <button
+                  onClick={() => handleCopy(email, "email")}
+                  className="text-[#a89589] hover:text-[#3a2c20] inline-flex items-center gap-1 transition-colors ml-auto"
+                >
+                  {copiedType === "email" ? (
+                    <Check size={11} className="text-emerald-600" />
+                  ) : (
+                    <Copy size={11} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Expandable FAQ Panel — collapsed by default to keep the footer compact */}
+            <div>
+              <button
+                onClick={() => setShowFaqPanel((prev) => !prev)}
+                className="w-full flex items-center justify-between gap-2 rounded-xl border border-[#eadfd1] bg-white shadow-sm px-3 py-2 text-[11px] font-semibold text-[#5a4a3a] hover:bg-[#fbf3e8] transition-colors"
+                aria-expanded={showFaqPanel}
+              >
+                <span className="flex items-center gap-1.5">
+                  <HelpCircle size={12} className="text-[#A3704C]" />
+                  Quick Answers
+                </span>
+                <ChevronDown
+                  size={13}
+                  className={`text-[#A3704C] shrink-0 transition-transform duration-200 ${showFaqPanel ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
+
+              <div
+                className={`grid transition-all duration-200 ease-in-out ${showFaqPanel ? "grid-rows-[1fr] opacity-100 mt-1.5" : "grid-rows-[0fr] opacity-0"
+                  }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="rounded-xl border border-[#eadfd1] bg-white shadow-sm divide-y divide-[#f0e8db] overflow-hidden">
+                    {FAQ_ITEMS.map((item, index) => {
+                      const isOpen = openFaq === index;
+                      return (
+                        <div key={item.q}>
+                          <button
+                            onClick={() => toggleFaq(index)}
+                            className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[11px] font-medium text-[#5a4a3a] hover:bg-[#fbf3e8] transition-colors"
+                            aria-expanded={isOpen}
+                          >
+                            <span>{item.q}</span>
+                            <ChevronDown
+                              size={12}
+                              className={`text-[#A3704C] shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                                }`}
+                            />
+                          </button>
+                          <div
+                            className={`grid transition-all duration-200 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                              }`}
+                          >
+                            <div className="overflow-hidden">
+                              <p className="px-3 pb-2 text-[11px] text-[#7a6b5c] leading-relaxed">
+                                {item.a}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Column 3: Newsletter Sign-up */}
-          <div className="space-y-3.5">
-            <h4 className="text-xs font-bold text-[#fdfbf7] uppercase tracking-wider flex items-center gap-2">
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold text-[#3a2c20] uppercase tracking-wider flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[#A3704C]"></span>
               Stay Connected
             </h4>
-            <p className="text-xs text-[#c4b5ab] leading-relaxed">
+            <p className="text-xs text-[#7a6b5c] leading-relaxed">
               Subscribe for exclusive studio promotions, flash discounts, and studio announcements.
             </p>
 
@@ -406,18 +526,18 @@ export const Footer = ({ setActiveLink }) => {
                     if (newsletterStatus !== "idle") setNewsletterStatus("idle");
                   }}
                   placeholder="Enter your email address"
-                  className="w-full bg-[#31221a] text-[#fdfbf7] border border-[#443024] focus:border-[#A3704C] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#A3704C] placeholder-[#8a776c] transition-all"
+                  className="w-full bg-white text-[#3a2c20] border border-[#eadfd1] focus:border-[#A3704C] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#A3704C] placeholder-[#b3a495] shadow-sm transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={newsletterStatus === "loading"}
-                className="w-full bg-[#fdfbf7] hover:bg-[#f3eee6] text-[#241913] font-bold px-4 py-2 rounded-xl text-xs transition-all duration-200 shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="w-full bg-[#A3704C] hover:bg-[#8B5E3C] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all duration-200 shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {newsletterStatus === "loading" ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-[#241913] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Subscribing...</span>
                   </>
                 ) : (
@@ -431,15 +551,15 @@ export const Footer = ({ setActiveLink }) => {
 
             {/* Newsletter Status Alerts */}
             {newsletterStatus === "success" && (
-              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-600/40 text-emerald-200 text-[11px] leading-tight">
-                <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-emerald-400" />
+              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-700 text-[11px] leading-tight">
+                <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-emerald-500" />
                 <span>{newsletterMessage}</span>
               </div>
             )}
 
             {newsletterStatus === "error" && (
-              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-rose-950/60 border border-rose-600/40 text-rose-200 text-[11px] leading-tight">
-                <AlertCircle size={13} className="shrink-0 mt-0.5 text-rose-400" />
+              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-700 text-[11px] leading-tight">
+                <AlertCircle size={13} className="shrink-0 mt-0.5 text-rose-500" />
                 <span>{newsletterMessage}</span>
               </div>
             )}
@@ -447,19 +567,19 @@ export const Footer = ({ setActiveLink }) => {
         </div>
 
         {/* ── BOTTOM BAR: COPYRIGHT & BACK TO TOP ── */}
-        <div className="max-w-7xl mx-auto border-t border-[#3d2b20] mt-10 pt-5 flex flex-col sm:flex-row justify-between items-center text-xs text-[#a89589] gap-3">
+        <div className="max-w-7xl mx-auto border-t border-[#eadfd1] mt-6 pt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-[#a89589] gap-3">
           <div className="flex items-center gap-2 sm:gap-3 text-center sm:text-left text-[11px]">
             <p>
               &copy; {new Date().getFullYear()} {studioName}. All rights reserved.
             </p>
-            <span className="hidden sm:inline text-[#553c2d]">•</span>
-            <span className="text-[11px] text-[#c4b5ab]">Self-Shoot Experience</span>
+            <span className="hidden sm:inline text-[#d8c9b8]">•</span>
+            <span className="text-[11px] text-[#7a6b5c]">Self-Shoot Experience</span>
           </div>
 
           {/* Interactive Back To Top Button */}
           <button
             onClick={handleScrollToTop}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#31221a] hover:bg-[#3d2a20] border border-[#443024] text-[#c4b5ab] hover:text-[#fdfbf7] text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#fbf3e8] border border-[#eadfd1] text-[#7a6b5c] hover:text-[#3a2c20] text-xs font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
             aria-label="Scroll back to top of the page"
           >
             <span>Back to top</span>
@@ -470,5 +590,3 @@ export const Footer = ({ setActiveLink }) => {
     </section>
   );
 };
-
-

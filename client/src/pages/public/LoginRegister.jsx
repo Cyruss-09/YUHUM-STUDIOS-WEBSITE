@@ -4,7 +4,7 @@ import { Eye, EyeOff, Check, X, Loader2, Sparkles } from "lucide-react";
 
 export default function LoginRegister({ setActiveLink }) {
   const { login, register } = useAuth();
-  const [isRegistering, setIsRegistering] = useState(false); // false = Login, true = Register
+  const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showLoginPw, setShowLoginPw] = useState(false);
