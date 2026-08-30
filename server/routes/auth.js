@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { getResend, FROM_EMAIL, resolveRecipient } = require('../config/mailer');
 console.log('DEBUG mailer import:', { getResend, FROM_EMAIL, resolveRecipient });
-const PasswordResetEmail = require('../emails/PasswordResetEmail');
+const { PasswordResetEmail } = require('../emails/PasswordResetEmail');
 
 
 
@@ -116,7 +116,7 @@ router.post('/forgot-password', async (req, res) => {
       from: FROM_EMAIL,
       to: resolveRecipient(user.email),
       subject: 'Reset your password',
-      html: PasswordResetEmail({ resetLink }),
+      html: PasswordResetEmail({ resetUrl: resetLink }),
     });
   }
 
