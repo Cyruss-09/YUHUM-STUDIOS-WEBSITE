@@ -79,7 +79,9 @@ function AppContent() {
         {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
       </main>
 
-      {!isAdminPage && <Footer setActiveLink={handlePageChange} />}
+      {!isAdminPage && !isResetPasswordPage && (
+        <Footer setActiveLink={handlePageChange} />
+      )}
     </div>
   );
 }
