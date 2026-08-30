@@ -376,8 +376,8 @@ export default function LoginRegister({ setActiveLink }) {
                   <div className="flex justify-end -mt-2">
                     <button
                       type="button"
-                      onClick={() => setShowForgotPassword(true)}
-                      className="text-[11px] text-[#A3704C] hover:text-[#8C5A35] font-medium underline underline-offset-2 transition-colors"
+                      onClick={() => setActiveLink("forgot-password")}
+                      className="text-sm text-[#8C5A35] hover:underline"
                     >
                       Forgot password?
                     </button>

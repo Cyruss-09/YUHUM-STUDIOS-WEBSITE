@@ -10,6 +10,8 @@ import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminLogin from "./pages/admin/AdminLogin";
+import ForgotPassword from "./pages/public/ForgotPassword";
+import ResetPassword from "./pages/public/ResetPassword";
 
 function AppContent() {
   const { user } = useAuth();
@@ -36,23 +38,19 @@ function AppContent() {
   };
 
   const validPages = [
-    "home",
-    "book",
-    "our-story",
-    "rate-us",
-    "login",
-    "admin-login",
-    "admin-dashboard",
-    "register",
+    "home", "book", "our-story", "rate-us", "login",
+    "admin-login", "admin-dashboard", "register", "forgot-password",
   ];
-  const isInvalidPage = !validPages.includes(activeLink);
 
-  // 🔹 ADDED: Check if we are currently looking at any admin screen
+  // reset-password carries a dynamic token, so match by prefix
+  const isResetPasswordPage = activeLink.startsWith("reset-password/");
+  const resetToken = isResetPasswordPage ? activeLink.split("/")[1] : null;
+
+  const isInvalidPage = !validPages.includes(activeLink) && !isResetPasswordPage;
   const isAdminPage = activeLink.startsWith("admin");
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fdfbf7]">
-      {/* 🔹 CHANGED: Hide public Navbar when on admin pages */}
       {!isAdminPage && (
         <Navbar activeLink={activeLink} setActiveLink={handlePageChange} />
       )}
@@ -60,20 +58,17 @@ function AppContent() {
       <main className="w-full flex-grow">
         {activeLink === "home" && <Home />}
         {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
-        {activeLink === "our-story" && (
-          <OurStory setActiveLink={handlePageChange} />
+        {activeLink === "our-story" && <OurStory setActiveLink={handlePageChange} />}
+        {activeLink === "rate-us" && <Rateus setActiveLink={handlePageChange} />}
+        {activeLink === "register" && <Register setActiveLink={handlePageChange} />}
+        {activeLink === "forgot-password" && (
+          <ForgotPassword setActiveLink={handlePageChange} />
         )}
-        {activeLink === "rate-us" && (
-          <Rateus setActiveLink={handlePageChange} />
-        )}
-        {activeLink === "register" && (
-          <Register setActiveLink={handlePageChange} />
-        )}
-
-        {activeLink === "admin-login" && (
-          <AdminLogin setActiveLink={handlePageChange} />
+        {isResetPasswordPage && (
+          <ResetPassword token={resetToken} setActiveLink={handlePageChange} />
         )}
 
+        {activeLink === "admin-login" && <AdminLogin setActiveLink={handlePageChange} />}
         {activeLink === "admin-dashboard" &&
           (isAdmin ? (
             <AdminDashboard setActiveLink={handlePageChange} />
@@ -84,7 +79,6 @@ function AppContent() {
         {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
       </main>
 
-      {/* 🔹 CHANGED: Hide public Footer when on admin pages */}
       {!isAdminPage && <Footer setActiveLink={handlePageChange} />}
     </div>
   );
