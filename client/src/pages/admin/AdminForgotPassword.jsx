@@ -1,4 +1,3 @@
-// src/pages/admin/AdminForgotPassword.jsx
 import { useState } from "react";
 
 export default function AdminForgotPassword({ setActiveLink }) {
@@ -14,7 +13,8 @@ export default function AdminForgotPassword({ setActiveLink }) {
         setError(null);
 
         try {
-            const response = await fetch("http://localhost:5000/api/admin/forgot-password", {
+            const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+            const response = await fetch(`${apiUrl}/api/admin/forgot-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
