@@ -16,7 +16,7 @@ import ForgotPassword from "./pages/public/ForgotPassword";
 import ResetPassword from "./pages/public/ResetPassword";
 
 // Admin Auth Pages
-import AdminForgotPassword from "./pages/admin/AdminForgotPassword";
+import AdminForgotPassword from "./pages/admin/";
 import AdminResetPassword from "./pages/admin/ResetPassword";
 
 function AppContent() {
