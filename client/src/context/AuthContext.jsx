@@ -48,14 +48,22 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = async (email, password) => {
+    // Debug: Check if fields are non-empty before sending
+    console.log("Attempting login payload:", { email, password });
+
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
+
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.message || "Login failed.");
+    if (!res.ok) {
+      // Console log the detailed backend error response
+      console.error("Backend returned 400 error detail:", data);
+      throw new Error(data.message || data.error || "Login failed.");
+    }
 
     localStorage.setItem("yuhum_token", data.token);
     setToken(data.token);

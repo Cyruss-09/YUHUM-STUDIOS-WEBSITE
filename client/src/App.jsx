@@ -10,8 +10,14 @@ import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminLogin from "./pages/admin/AdminLogin";
+
+// Public Auth Pages
 import ForgotPassword from "./pages/public/ForgotPassword";
 import ResetPassword from "./pages/public/ResetPassword";
+
+// Admin Auth Pages
+import AdminForgotPassword from "./pages/admin/AdminForgotPassword";
+import AdminResetPassword from "./pages/admin/ResetPassword";
 
 function AppContent() {
   const { user } = useAuth();
@@ -38,15 +44,31 @@ function AppContent() {
   };
 
   const validPages = [
-    "home", "book", "our-story", "rate-us", "login",
-    "admin-login", "admin-dashboard", "register", "forgot-password",
+    "home",
+    "book",
+    "our-story",
+    "rate-us",
+    "login",
+    "register",
+    "forgot-password",
+    "admin-login",
+    "admin-forgot-password", // Added admin forgot password route
+    "admin-dashboard",
   ];
 
-  // reset-password carries a dynamic token, so match by prefix
+  // Client Reset Password Route matching
   const isResetPasswordPage = activeLink.startsWith("reset-password/");
   const resetToken = isResetPasswordPage ? activeLink.split("/")[1] : null;
 
-  const isInvalidPage = !validPages.includes(activeLink) && !isResetPasswordPage;
+  // Admin Reset Password Route matching
+  const isAdminResetPasswordPage = activeLink.startsWith("admin-reset-password/");
+  const adminResetToken = isAdminResetPasswordPage ? activeLink.split("/")[1] : null;
+
+  const isInvalidPage =
+    !validPages.includes(activeLink) &&
+    !isResetPasswordPage &&
+    !isAdminResetPasswordPage;
+
   const isAdminPage = activeLink.startsWith("admin");
 
   return (
@@ -56,6 +78,7 @@ function AppContent() {
       )}
 
       <main className="w-full flex-grow">
+        {/* Public Pages */}
         {activeLink === "home" && <Home />}
         {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
         {activeLink === "our-story" && <OurStory setActiveLink={handlePageChange} />}
@@ -68,7 +91,14 @@ function AppContent() {
           <ResetPassword token={resetToken} setActiveLink={handlePageChange} />
         )}
 
+        {/* Admin Pages */}
         {activeLink === "admin-login" && <AdminLogin setActiveLink={handlePageChange} />}
+        {activeLink === "admin-forgot-password" && (
+          <AdminForgotPassword setActiveLink={handlePageChange} />
+        )}
+        {isAdminResetPasswordPage && (
+          <AdminResetPassword token={adminResetToken} setActiveLink={handlePageChange} />
+        )}
         {activeLink === "admin-dashboard" &&
           (isAdmin ? (
             <AdminDashboard setActiveLink={handlePageChange} />
@@ -76,6 +106,7 @@ function AppContent() {
             <AdminLogin setActiveLink={handlePageChange} />
           ))}
 
+        {/* 404 Page */}
         {isInvalidPage && <NotFound setActiveLink={handlePageChange} />}
       </main>
 
