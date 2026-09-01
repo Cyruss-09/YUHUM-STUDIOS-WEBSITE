@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Eye, EyeOff, Check, X, Loader2, Sparkles } from "lucide-react";
 
 export default function LoginRegister({ setActiveLink }) {
-  const { login, register } = useAuth();
+  const { login, register, forgotPassword } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,25 +46,19 @@ export default function LoginRegister({ setActiveLink }) {
     setError("");
     setLoading(true);
     try {
-      const user = await login(loginData.email, loginData.password);
+      const loggedUser = await login(loginData.email, loginData.password);
+      const pending = localStorage.getItem("yuhum_pendingBooking");
       if (setActiveLink) {
-        setActiveLink(user?.role === "admin" ? "admin-dashboard" : "book");
+        if (loggedUser?.role === "admin") {
+          setActiveLink("admin-dashboard");
+        } else if (pending) {
+          setActiveLink("book");
+        } else {
+          setActiveLink("home");
+        }
       }
     } catch (err) {
-      // Check if backend error indicates user not found / doesn't exist
-      const errMessage = err?.message?.toLowerCase() || "";
-      if (
-        errMessage.includes("not found") ||
-        errMessage.includes("no account") ||
-        errMessage.includes("does not exist") ||
-        errMessage.includes("user not registered")
-      ) {
-        setError(
-          "No account found with this email. Please check or create an account.",
-        );
-      } else {
-        setError("The email or password you entered is incorrect.");
-      }
+      setError(err.message || "The email/username or password you entered is incorrect.");
     } finally {
       setLoading(false);
     }
@@ -82,14 +76,28 @@ export default function LoginRegister({ setActiveLink }) {
       setTouched((t) => ({ ...t, confirmPassword: true }));
       return;
     }
+    if (registerData.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      setTouched((t) => ({ ...t, password: true }));
+      return;
+    }
     setLoading(true);
     try {
-      await register({
+      const newUser = await register({
         username: registerData.username,
         email: registerData.email,
         password: registerData.password,
       });
-      if (setActiveLink) setActiveLink("home");
+      const pending = localStorage.getItem("yuhum_pendingBooking");
+      if (setActiveLink) {
+        if (newUser?.role === "admin") {
+          setActiveLink("admin-dashboard");
+        } else if (pending) {
+          setActiveLink("book");
+        } else {
+          setActiveLink("home");
+        }
+      }
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -102,15 +110,16 @@ export default function LoginRegister({ setActiveLink }) {
     setForgotError("");
     setForgotLoading(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL || ""}/api/auth/forgot-password`,
-        {
+      if (forgotPassword) {
+        await forgotPassword(forgotEmail);
+      } else {
+        const res = await fetch("/api/auth/forgot-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: forgotEmail }),
-        },
-      );
-      if (!res.ok) throw new Error("Something went wrong. Please try again.");
+        });
+        if (!res.ok) throw new Error("Something went wrong. Please try again.");
+      }
       setForgotSubmitted(true);
     } catch (err) {
       setForgotError(err.message || "Something went wrong. Please try again.");
@@ -321,18 +330,18 @@ export default function LoginRegister({ setActiveLink }) {
                       htmlFor="login-email"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#7A6B63] mb-2"
                     >
-                      Email Address
+                      Email Address or Username
                     </label>
                     <input
                       ref={firstFieldRef}
                       id="login-email"
-                      type="email"
+                      type="text"
                       name="email"
                       required
-                      autoComplete="email"
+                      autoComplete="username email"
                       value={loginData.email}
                       onChange={handleLoginChange}
-                      placeholder="you@example.com"
+                      placeholder="you@example.com or username"
                       className={inputClass(false)}
                     />
                   </div>

@@ -83,5 +83,29 @@ export function useAdminUsers() {
         }
     };
 
-    return { users, loading, error, refetch: fetchUsers, updateUserRole, deleteUser };
+    const createUser = async (userData) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/users`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(userData),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.message || `Failed to create user: ${res.statusText}`);
+            }
+            if (data.user) {
+                setUsers((prev) => [data.user, ...prev]);
+            }
+            return { success: true, user: data.user, message: data.message };
+        } catch (err) {
+            console.error("Error creating user:", err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    return { users, loading, error, refetch: fetchUsers, updateUserRole, deleteUser, createUser };
 }

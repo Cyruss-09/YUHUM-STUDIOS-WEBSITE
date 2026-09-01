@@ -8,7 +8,7 @@ import Register from "./pages/public/LoginRegister";
 import AdminDashboard from "./pages/admin/AdminDashbord";
 import NotFound from "./pages/public/NotFound";
 import { Footer } from "./components/Footer";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import AdminLogin from "./pages/admin/AdminLogin";
 
 // Public Auth Pages
@@ -19,18 +19,18 @@ import ResetPassword from "./pages/public/ResetPassword";
 import AdminForgotPassword from "./pages/admin/AdminForgotPassword";
 import AdminResetPassword from "./pages/admin/ResetPassword";
 
-function AppContent() {
+export default function App() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
   const [activeLink, setActiveLink] = useState(() => {
-    const path = window.location.pathname.replace("/", "");
+    const path = window.location.pathname.replace(/^\//, "");
     return path || "home";
   });
 
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname.replace("/", "");
+      const path = window.location.pathname.replace(/^\//, "");
       setActiveLink(path || "home");
     };
     window.addEventListener("popstate", handlePopState);
@@ -52,7 +52,7 @@ function AppContent() {
     "register",
     "forgot-password",
     "admin-login",
-    "admin-forgot-password", // Added admin forgot password route
+    "admin-forgot-password",
     "admin-dashboard",
   ];
 
@@ -83,7 +83,9 @@ function AppContent() {
         {activeLink === "book" && <Book setActiveLink={handlePageChange} />}
         {activeLink === "our-story" && <OurStory setActiveLink={handlePageChange} />}
         {activeLink === "rate-us" && <Rateus setActiveLink={handlePageChange} />}
-        {activeLink === "register" && <Register setActiveLink={handlePageChange} />}
+        {(activeLink === "register" || activeLink === "login") && (
+          <Register setActiveLink={handlePageChange} />
+        )}
         {activeLink === "forgot-password" && (
           <ForgotPassword setActiveLink={handlePageChange} />
         )}
@@ -92,7 +94,9 @@ function AppContent() {
         )}
 
         {/* Admin Pages */}
-        {activeLink === "admin-login" && <AdminLogin setActiveLink={handlePageChange} />}
+        {activeLink === "admin-login" && (
+          <AdminLogin setActiveLink={handlePageChange} />
+        )}
         {activeLink === "admin-forgot-password" && (
           <AdminForgotPassword setActiveLink={handlePageChange} />
         )}
@@ -114,13 +118,5 @@ function AppContent() {
         <Footer setActiveLink={handlePageChange} />
       )}
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }

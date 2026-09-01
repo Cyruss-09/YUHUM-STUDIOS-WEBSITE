@@ -1,11 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 const AuthContext = createContext(null);
 
-// CHANGED: was `|| ""`, which made every request a relative URL resolved
-// against the frontend's own origin (localhost:5173) instead of the
-// backend (localhost:5000) — causing a 404 on an empty body, which then
-// broke response.json() with "Unexpected end of JSON input".
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 export const AuthProvider = ({ children }) => {
@@ -13,105 +9,203 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("yuhum_token"));
   const [loading, setLoading] = useState(true);
 
+  // Bootstrap session from token on mount
+  const refreshUser = useCallback(async () => {
+    const currentToken = localStorage.getItem("yuhum_token");
+    if (!currentToken) {
+      setUser(null);
+      setLoading(false);
+      return null;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Session expired");
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user || data.admin || null);
+        return data.user || data.admin;
+      } else {
+        throw new Error("Failed to fetch profile");
+      }
+    } catch (err) {
+      if (err.message === "Session expired") {
+        localStorage.removeItem("yuhum_token");
+        setToken(null);
+        setUser(null);
+      }
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const bootstrap = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    refreshUser();
+  }, [refreshUser]);
 
-        // Only force logout if explicitly unauthorized
-        if (res.status === 401 || res.status === 403) {
-          throw new Error("Session expired");
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        }
-      } catch (err) {
-        // Only clear token on explicit expiration, not random network drops
-        if (err.message === "Session expired") {
-          localStorage.removeItem("yuhum_token");
-          setToken(null);
-          setUser(null);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    bootstrap();
-  }, [token]);
-
-  const login = async (email, password) => {
-    // Debug: Check if fields are non-empty before sending
-    console.log("Attempting login payload:", { email, password });
-
+  /**
+   * User login with Email or Username + Password
+   */
+  const login = async (identifier, password) => {
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      // Console log the detailed backend error response
-      console.error("Backend returned 400 error detail:", data);
-      throw new Error(data.message || data.error || "Login failed.");
+      throw new Error(data.message || data.error || "Login failed. Please check your credentials.");
     }
 
-    localStorage.setItem("yuhum_token", data.token);
-    setToken(data.token);
-    setUser(data.user);
+    if (data.token) {
+      localStorage.setItem("yuhum_token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+    }
     return data.user;
   };
 
+  /**
+   * Admin login
+   */
   const loginAdmin = async (email, password) => {
-    // Added "/auth" so it matches your backend route mount point
     const res = await fetch(`${API_BASE}/api/auth/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Login failed.");
 
-    localStorage.setItem("yuhum_token", data.token);
-    setToken(data.token);
-    setUser(data.admin);
-    return data.admin;
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || "Admin authentication failed.");
+    }
+
+    const adminUser = data.admin || data.user;
+    if (data.token) {
+      localStorage.setItem("yuhum_token", data.token);
+      setToken(data.token);
+      setUser(adminUser);
+    }
+    return adminUser;
   };
 
+  /**
+   * User registration
+   */
   const register = async ({ username, email, password }) => {
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
     });
-    const data = await res.json();
-    // CHANGED: data.message instead of data.error, same reason as login().
-    if (!res.ok) throw new Error(data.message || "Registration failed.");
 
-    localStorage.setItem("yuhum_token", data.token);
-    setToken(data.token);
-    setUser(data.user);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || "Registration failed. Please try again.");
+    }
+
+    if (data.token) {
+      localStorage.setItem("yuhum_token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+    }
     return data.user;
   };
 
+  /**
+   * Trigger client forgot password email
+   */
+  const forgotPassword = async (email) => {
+    const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to process forgot password request.");
+    }
+    return data;
+  };
+
+  /**
+   * Trigger admin security forgot password email
+   */
+  const adminForgotPassword = async (email) => {
+    const res = await fetch(`${API_BASE}/api/auth/admin/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to process admin forgot password request.");
+    }
+    return data;
+  };
+
+  /**
+   * Complete password reset
+   */
+  const resetPassword = async (resetToken, newPassword) => {
+    const res = await fetch(`${API_BASE}/api/auth/reset-password/${encodeURIComponent(resetToken)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: newPassword }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || "Failed to reset password.");
+    }
+    return data;
+  };
+
+  /**
+   * Logout current session
+   */
   const logout = () => {
     localStorage.removeItem("yuhum_token");
     setToken(null);
     setUser(null);
   };
 
+  const isAuthenticated = Boolean(user && token);
+  const isAdmin = Boolean(user?.role === "admin");
+
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, loginAdmin, register, logout }}
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated,
+        isAdmin,
+        login,
+        loginAdmin,
+        register,
+        logout,
+        forgotPassword,
+        adminForgotPassword,
+        resetPassword,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

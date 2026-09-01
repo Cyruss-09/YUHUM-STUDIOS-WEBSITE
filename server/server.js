@@ -23,15 +23,48 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Test DB connection on startup
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error("❌ Database Connection Failed:", err.message);
-  } else {
-    console.log("✅ Successfully connected to PostgreSQL Database!");
-    release();
+// Test DB connection and verify auth schema on startup
+const initAuthAndCmsTables = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        role VARCHAR(20) NOT NULL DEFAULT 'user',
+        reset_token VARCHAR(255),
+        reset_token_expiry TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user';`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP;`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(150) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'admin',
+        reset_token VARCHAR(255),
+        reset_token_expiry TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    await pool.query(`ALTER TABLE admins ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);`);
+    await pool.query(`ALTER TABLE admins ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP;`);
+
+    console.log("✅ Successfully connected to PostgreSQL Database & verified Auth Schema!");
+  } catch (err) {
+    console.error("⚠️ Database connection / verification note:", err.message);
   }
-});
+};
+
+initAuthAndCmsTables();
 
 // --- AUTH + ADMIN ROUTES ---
 app.use("/api/auth", authRoutes);

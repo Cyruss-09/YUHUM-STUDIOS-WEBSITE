@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 export default function AdminLogin({ setActiveLink }) {
-  const { loginAdmin, forgotPassword } = useAuth(); // add forgotPassword to AuthContext, or use the fetch fallback below
+  const { loginAdmin, adminForgotPassword, forgotPassword } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [touched, setTouched] = useState({ email: false, password: false });
@@ -89,12 +89,12 @@ export default function AdminLogin({ setActiveLink }) {
     setResetError("");
     setResetLoading(true);
     try {
-      if (forgotPassword) {
-        // Preferred: AuthContext method, matching your existing login/register pattern
+      if (adminForgotPassword) {
+        await adminForgotPassword(resetEmail);
+      } else if (forgotPassword) {
         await forgotPassword(resetEmail);
       } else {
-        // Fallback: direct call to your backend route (adjust path to match auth.js)
-        const res = await fetch("/api/auth/forgot-password", {
+        const res = await fetch("/api/auth/admin/forgot-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: resetEmail }),
@@ -106,11 +106,7 @@ export default function AdminLogin({ setActiveLink }) {
       }
       setResetSent(true);
     } catch (err) {
-      // Note: for admin portals it's common to show the same "sent" message
-      // regardless of whether the email exists, to avoid leaking which
-      // addresses are valid admin accounts. Adjust if your backend already
-      // handles that and always returns 200.
-      setResetError(err.message || "Couldn't send reset email. Try again.");
+      setResetError(err.message || "Couldn't send admin reset email. Try again.");
     } finally {
       setResetLoading(false);
     }

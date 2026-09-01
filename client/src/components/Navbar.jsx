@@ -207,18 +207,36 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                 </button>
 
                 <div
-                  className={`yh-profile-menu absolute right-0 mt-3 w-52 bg-white border border-[#E8DFD1] rounded-xl shadow-[0_12px_30px_rgba(163,112,76,0.12)] py-2 ${
+                  className={`yh-profile-menu absolute right-0 mt-3 w-56 bg-white border border-[#E8DFD1] rounded-xl shadow-[0_12px_30px_rgba(163,112,76,0.12)] py-2 ${
                     profileOpen ? "is-open" : ""
                   }`}
                 >
                   <div className="px-4 py-2.5 border-b border-[#E8DFD1]">
-                    <p className="text-sm font-semibold text-[#2C221E] truncate">
-                      {user.username}
-                    </p>
-                    <p className="text-xs text-[#7A6B63] truncate">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[#2C221E] truncate">
+                        {user.username || user.name}
+                      </p>
+                      {user.role === "admin" && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#7A6B63] truncate mt-0.5">
                       {user.email}
                     </p>
                   </div>
+                  {user.role === "admin" && (
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        setActiveLink("admin-dashboard");
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold uppercase tracking-wider text-purple-700 hover:bg-purple-50 transition-colors border-b border-[#E8DFD1]/50"
+                    >
+                      Admin Dashboard
+                    </button>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#A3704C] hover:bg-[#F4EFEA] transition-colors"
@@ -327,15 +345,26 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                 <div className="flex flex-col items-center gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A3704C] to-[#8C5A35] text-white text-sm font-semibold flex items-center justify-center shadow-sm">
-                      {getInitials(user.username)}
+                      {getInitials(user.username || user.name)}
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-semibold text-[#2C221E]">
-                        {user.username}
+                        {user.username || user.name}
                       </p>
                       <p className="text-xs text-[#7A6B63]">{user.email}</p>
                     </div>
                   </div>
+                  {user.role === "admin" && (
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setActiveLink("admin-dashboard");
+                      }}
+                      className="w-full py-2.5 text-xs tracking-widest uppercase font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors rounded-lg"
+                    >
+                      Admin Dashboard
+                    </button>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="w-full py-3 text-sm tracking-widest uppercase font-bold text-[#A3704C] hover:text-[#8C5A35] transition-colors rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"

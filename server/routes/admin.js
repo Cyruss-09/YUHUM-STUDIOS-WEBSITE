@@ -88,6 +88,62 @@ router.get("/users", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/users - Create a new user or admin account directly
+router.post("/users", verifyToken, requireAdmin, async (req, res) => {
+  const { username, email, password, role = "user" } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ success: false, message: "Username, email, and password are required." });
+  }
+
+  const cleanUsername = String(username).trim();
+  const cleanEmail = String(email).trim().toLowerCase();
+  const targetRole = role === "admin" ? "admin" : "user";
+
+  try {
+    const existingEmail = await pool.query(
+      "SELECT id FROM users WHERE LOWER(email) = LOWER($1)",
+      [cleanEmail]
+    );
+    if (existingEmail.rows.length > 0) {
+      return res.status(400).json({ success: false, message: "Email is already registered." });
+    }
+
+    const existingUsername = await pool.query(
+      "SELECT id FROM users WHERE LOWER(username) = LOWER($1)",
+      [cleanUsername]
+    );
+    if (existingUsername.rows.length > 0) {
+      return res.status(400).json({ success: false, message: "Username is already taken." });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      "INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at",
+      [cleanUsername, cleanEmail, password_hash, targetRole]
+    );
+
+    const newUser = result.rows[0];
+
+    // If created as admin, also sync to admins table
+    if (targetRole === "admin") {
+      await pool.query(
+        "INSERT INTO admins (name, email, password_hash, role) VALUES ($1, $2, $3, 'admin') ON CONFLICT (email) DO UPDATE SET password_hash = $3",
+        [cleanUsername, cleanEmail, password_hash]
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Account for "${cleanUsername}" created successfully as ${targetRole}.`,
+      user: newUser,
+    });
+  } catch (err) {
+    console.error("Error creating user account:", err);
+    res.status(500).json({ success: false, message: "Server error creating user account" });
+  }
+});
+
 // PATCH /api/admin/users/:id/role - Update user role & sync with admins table
 router.patch("/users/:id/role", verifyToken, requireAdmin, async (req, res) => {
   const { id } = req.params;

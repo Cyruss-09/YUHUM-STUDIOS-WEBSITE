@@ -1,231 +1,314 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { Shield, Lock, Eye, EyeOff, Check, X, AlertCircle, ArrowRight, Loader2, KeyRound } from "lucide-react";
 
-export default function AdminResetPassword({ setActiveLink }) {
-    const [token, setToken] = useState(null);
-    const [checkingToken, setCheckingToken] = useState(true);
+export default function AdminResetPassword({ token: propToken, setActiveLink }) {
+  const { resetPassword } = useAuth();
+  const [token, setToken] = useState(propToken || null);
+  const [checkingToken, setCheckingToken] = useState(!propToken);
 
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [touched, setTouched] = useState({ password: false, confirm: false });
-    const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [done, setDone] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [touched, setTouched] = useState({ password: false, confirm: false });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
 
-    const passwordRef = useRef(null);
+  const passwordRef = useRef(null);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const t = params.get("token");
-        setToken(t);
-        setCheckingToken(false);
-    }, []);
-
-    useEffect(() => {
-        if (!checkingToken && token) passwordRef.current?.focus();
-    }, [checkingToken, token]);
-
-    const passwordIsValid = password.length >= 6;
-    const passwordsMatch = password === confirmPassword;
-    const canSubmit = passwordIsValid && passwordsMatch && confirmPassword.length > 0 && !loading;
-
-    const passwordError = touched.password && password.length > 0 && !passwordIsValid;
-    const confirmError = touched.confirm && confirmPassword.length > 0 && !passwordsMatch;
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setTouched({ password: true, confirm: true });
-        if (!passwordIsValid || !passwordsMatch) return;
-
-        setError("");
-        setLoading(true);
-        try {
-            const res = await fetch("/api/auth/admin/reset-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, newPassword: password }),
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.message || "Couldn't reset password.");
-            setDone(true);
-        } catch (err) {
-            setError(err.message || "Reset link is invalid or expired.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // --- No token in URL at all ---
-    if (checkingToken) return null;
-
-    if (!token) {
-        return (
-            <div className="flex justify-center items-center min-h-[80vh] px-4 py-12 bg-[#fdfbf7]">
-                <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-stone-200/80 text-center">
-                    <p className="text-sm text-stone-600 mb-6">
-                        This reset link is missing or invalid. Request a new one from the admin login page.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setActiveLink("admin-login")}
-                        className="text-xs font-medium text-[#2C1810] hover:underline underline-offset-2"
-                    >
-                        Back to sign in
-                    </button>
-                </div>
-            </div>
-        );
+  useEffect(() => {
+    if (propToken) {
+      setToken(propToken);
+      setCheckingToken(false);
+      return;
     }
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("token");
+    setToken(t);
+    setCheckingToken(false);
+  }, [propToken]);
 
-    return (
-        <div className="flex justify-center items-center min-h-[80vh] px-4 py-12 bg-[#fdfbf7]">
-            <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-stone-200/80 transition-all">
+  useEffect(() => {
+    if (!checkingToken && token) passwordRef.current?.focus();
+  }, [checkingToken, token]);
 
-                {/* Brand / Header Section */}
-                <div className="text-center mb-8">
-                    <div
-                        className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#2C1810] text-[#fdfbf7] font-bold text-lg tracking-wider mb-3 shadow-md transition-transform duration-500 ${done ? "scale-110" : ""}`}
-                    >
-                        YS
-                    </div>
-                    <h1 className="text-2xl font-serif font-bold text-[#2C1810] tracking-tight">
-                        Yuhum Studios
-                    </h1>
-                    <p className="text-xs uppercase tracking-widest text-stone-500 mt-1">
-                        Reset Admin Password
-                    </p>
-                </div>
+  // Strict Admin Validation Criteria
+  const rules = useMemo(() => ({
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+  }), [password]);
 
-                {error && (
-                    <div
-                        role="alert"
-                        className="mb-6 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center font-medium animate-shake"
-                    >
-                        {error}
-                    </div>
-                )}
+  const strengthScore = Object.values(rules).filter(Boolean).length;
+  const strengthLabel = ["Insecure", "Weak", "Acceptable", "Strong"][strengthScore];
+  const strengthColor = [
+    "bg-red-500",
+    "bg-amber-500",
+    "bg-yellow-400",
+    "bg-emerald-400",
+  ][strengthScore];
 
-                {done ? (
-                    <div className="text-center">
-                        <div className="mb-6 p-3.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium flex items-center justify-center gap-2">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Password updated
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setActiveLink("admin-login")}
-                            className="w-full rounded-xl bg-[#2C1810] text-[#fdfbf7] font-medium py-3 px-4 text-sm tracking-wide shadow-lg shadow-stone-900/10 hover:bg-[#1a0e09] active:scale-[0.99] transition-all duration-200"
-                        >
-                            Sign in
-                        </button>
-                    </div>
-                ) : (
-                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                        {/* New password */}
-                        <div>
-                            <label
-                                htmlFor="new-password"
-                                className="block text-xs font-semibold uppercase tracking-wider mb-2 text-stone-600"
-                            >
-                                New Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    ref={passwordRef}
-                                    id="new-password"
-                                    type={showPassword ? "text" : "password"}
-                                    autoComplete="new-password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => {
-                                        setPassword(e.target.value);
-                                        if (error) setError("");
-                                    }}
-                                    onBlur={() => setTouched((t) => ({ ...t, password: true }))}
-                                    aria-invalid={passwordError}
-                                    aria-describedby={passwordError ? "password-error" : undefined}
-                                    className={`w-full rounded-xl border bg-stone-50/50 px-4 py-3 pr-10 text-sm text-stone-800 placeholder-stone-400 focus:bg-white outline-none transition-all ${passwordError
-                                        ? "border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400"
-                                        : "border-stone-300 focus:border-[#2C1810] focus:ring-1 focus:ring-[#2C1810]"
-                                        }`}
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((s) => !s)}
-                                    tabIndex={-1}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#2C1810] transition-colors"
-                                >
-                                    {showPassword ? (
-                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
-                            {passwordError && (
-                                <p id="password-error" className="mt-1.5 text-xs text-red-500">
-                                    Password must be at least 6 characters
-                                </p>
-                            )}
-                        </div>
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const canSubmit = rules.length && passwordsMatch && confirmPassword.length > 0 && !loading;
 
-                        {/* Confirm password */}
-                        <div>
-                            <label
-                                htmlFor="confirm-password"
-                                className="block text-xs font-semibold uppercase tracking-wider mb-2 text-stone-600"
-                            >
-                                Confirm Password
-                            </label>
-                            <input
-                                id="confirm-password"
-                                type={showPassword ? "text" : "password"}
-                                autoComplete="new-password"
-                                placeholder="••••••••"
-                                value={confirmPassword}
-                                onChange={(e) => {
-                                    setConfirmPassword(e.target.value);
-                                    if (error) setError("");
-                                }}
-                                onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
-                                aria-invalid={confirmError}
-                                aria-describedby={confirmError ? "confirm-error" : undefined}
-                                className={`w-full rounded-xl border bg-stone-50/50 px-4 py-3 text-sm text-stone-800 placeholder-stone-400 focus:bg-white outline-none transition-all ${confirmError
-                                    ? "border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400"
-                                    : "border-stone-300 focus:border-[#2C1810] focus:ring-1 focus:ring-[#2C1810]"
-                                    }`}
-                                required
-                            />
-                            {confirmError && (
-                                <p id="confirm-error" className="mt-1.5 text-xs text-red-500">
-                                    Passwords don't match
-                                </p>
-                            )}
-                        </div>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setTouched({ password: true, confirm: true });
+    if (!rules.length || !passwordsMatch) return;
 
-                        <button
-                            type="submit"
-                            disabled={!canSubmit}
-                            className="w-full rounded-xl bg-[#2C1810] text-[#fdfbf7] font-medium py-3 px-4 text-sm tracking-wide shadow-lg shadow-stone-900/10 hover:bg-[#1a0e09] active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100 transition-all duration-200 mt-2"
-                        >
-                            {loading ? "Updating..." : "Reset Password"}
-                        </button>
-                    </form>
-                )}
+    setError("");
+    setLoading(true);
+    try {
+      if (resetPassword && token) {
+        await resetPassword(token, password);
+      } else {
+        const res = await fetch("/api/auth/admin/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || data.error || "Couldn't reset admin password.");
+      }
+      setDone(true);
+    } catch (err) {
+      setError(err.message || "Reset link is invalid or has expired.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                <div className="mt-8 text-center text-xs text-stone-400">
-                    Restricted access. Authorized personnel only.
-                </div>
-            </div>
+  if (checkingToken) return null;
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-12 relative overflow-hidden font-sans text-slate-100 selection:bg-amber-500 selection:text-slate-950">
+      {/* Grid Pattern & Glow */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-amber-600/10 to-orange-600/5 blur-[140px] pointer-events-none" />
+
+      <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.6)] relative z-10">
+        
+        {/* Security Header Badge */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <Shield size={12} className="text-amber-400" />
+            <span>Admin Credential Reset</span>
+          </div>
         </div>
-    );
+
+        {done ? (
+          /* ================= SUCCESS STATE ================= */
+          <div className="text-center py-4 animate-[fadeIn_0.3s_ease-out]">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-5 shadow-inner">
+              <Check size={32} />
+            </div>
+
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-400">
+              Credentials Updated
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-2 mb-2">
+              Admin Password Set
+            </h2>
+            <p className="text-xs text-slate-400 leading-relaxed mb-8 max-w-xs mx-auto">
+              Your administrator credentials have been securely updated. You may now authenticate into the management portal.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setActiveLink("admin-login")}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs tracking-[0.18em] uppercase shadow-[0_6px_20px_rgba(245,158,11,0.25)] hover:shadow-[0_8px_25px_rgba(245,158,11,0.35)] transition-all flex items-center justify-center gap-2"
+            >
+              <span>Sign In to Admin Portal</span>
+              <ArrowRight size={15} />
+            </button>
+          </div>
+        ) : !token ? (
+          /* ================= MISSING TOKEN STATE ================= */
+          <div className="text-center py-4">
+            <div className="w-14 h-14 rounded-2xl bg-red-950/50 border border-red-800 text-red-400 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={28} />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Invalid or Missing Token</h2>
+            <p className="text-xs text-slate-400 mb-6">
+              This security reset link appears to be invalid or expired. Please initiate a new password reset request.
+            </p>
+            <button
+              type="button"
+              onClick={() => setActiveLink("admin-forgot-password")}
+              className="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-white text-xs font-bold uppercase tracking-[0.15em] transition-all"
+            >
+              Request New Admin Reset Link
+            </button>
+          </div>
+        ) : (
+          /* ================= ADMIN RESET FORM ================= */
+          <div>
+            <div className="text-center mb-7">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
+                Set Admin Password
+              </h1>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
+                Configure a secure new password for your administrative profile.
+              </p>
+            </div>
+
+            {error && (
+              <div
+                role="alert"
+                className="mb-5 p-3.5 rounded-2xl bg-red-950/40 border border-red-800/80 text-red-300 text-xs flex items-start gap-2"
+              >
+                <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              {/* New Password */}
+              <div>
+                <label
+                  htmlFor="admin-new-pw"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2"
+                >
+                  New Admin Password
+                </label>
+                <div className="relative">
+                  <input
+                    ref={passwordRef}
+                    id="admin-new-pw"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+                    placeholder="Minimum 8 characters"
+                    className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl pl-4 pr-12 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    tabIndex={-1}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-amber-400 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+
+                {/* Strength Meter */}
+                {password.length > 0 && (
+                  <div className="mt-2.5 bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                    <div className="flex items-center justify-between text-[11px] mb-1.5">
+                      <span className="text-slate-400">Security rating:</span>
+                      <span className="text-white font-semibold">{strengthLabel}</span>
+                    </div>
+                    <div className="flex gap-1.5 mb-2">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                            i < strengthScore ? strengthColor : "bg-slate-800"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                      <AdminRuleHint met={rules.length} label="8+ chars" />
+                      <AdminRuleHint met={rules.upper} label="Uppercase" />
+                      <AdminRuleHint met={rules.number} label="Number" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label
+                  htmlFor="admin-confirm-pw"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2"
+                >
+                  Confirm Admin Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="admin-confirm-pw"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
+                    placeholder="Repeat new password"
+                    className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl pl-4 pr-12 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((s) => !s)}
+                    tabIndex={-1}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-amber-400 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+
+                {touched.confirm && confirmPassword.length > 0 && (
+                  <p
+                    className={`mt-2 text-xs flex items-center gap-1.5 ${
+                      passwordsMatch ? "text-emerald-400 font-medium" : "text-red-400"
+                    }`}
+                  >
+                    {passwordsMatch ? <Check size={14} /> : <X size={14} />}
+                    <span>{passwordsMatch ? "Passwords match" : "Passwords do not match"}</span>
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs tracking-[0.2em] uppercase py-4 rounded-2xl shadow-[0_6px_20px_rgba(245,158,11,0.25)] hover:shadow-[0_8px_25px_rgba(245,158,11,0.35)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Updating Admin Password…</span>
+                  </>
+                ) : (
+                  <>
+                    <KeyRound size={15} />
+                    <span>Save Admin Password</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-7 text-center border-t border-slate-800/80 pt-5">
+              <button
+                type="button"
+                onClick={() => setActiveLink("admin-login")}
+                className="text-xs text-slate-400 hover:text-amber-400 font-medium transition-colors"
+              >
+                ← Back to Admin Sign In
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+function AdminRuleHint({ met, label }) {
+  return (
+    <span
+      className={`text-[10px] flex items-center gap-1 transition-colors ${
+        met ? "text-emerald-400 font-semibold" : "text-slate-500"
+      }`}
+    >
+      {met ? <Check size={11} strokeWidth={3} /> : <X size={11} />}
+      {label}
+    </span>
+  );
 }

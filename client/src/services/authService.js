@@ -1,78 +1,132 @@
-// Replace this with your actual backend API base URL or environment variable
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 /**
- * Log in an existing user
- * @param {Object} credentials - Contains email/username and password
+ * Get current token from storage
+ */
+export const getAuthToken = () => {
+  return localStorage.getItem("yuhum_token");
+};
+
+/**
+ * Log in an existing user with email/username and password
  */
 export const loginUser = async (credentials) => {
-  try {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(credentials),
-    });
+  const response = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to log in");
-    }
-
-    // Save token to localStorage if returned by backend
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-    }
-    if (data.user) {
-      localStorage.setItem("user", JSON.stringify(data.user));
-    }
-
-    return data;
-  } catch (error) {
-    throw error;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to log in");
   }
+
+  if (data.token) {
+    localStorage.setItem("yuhum_token", data.token);
+  }
+  return data;
 };
 
 /**
- * Register a new user
- * @param {Object} userData - Contains user registration details
+ * Log in an administrator
+ */
+export const loginAdmin = async (credentials) => {
+  const response = await fetch(`${API_BASE}/api/auth/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to log in as administrator");
+  }
+
+  if (data.token) {
+    localStorage.setItem("yuhum_token", data.token);
+  }
+  return data;
+};
+
+/**
+ * Register a new user account
  */
 export const registerUser = async (userData) => {
+  const response = await fetch(`${API_BASE}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to create account");
+  }
+
+  if (data.token) {
+    localStorage.setItem("yuhum_token", data.token);
+  }
+  return data;
+};
+
+/**
+ * Fetch current authenticated user session
+ */
+export const getCurrentUser = async () => {
+  const token = getAuthToken();
+  if (!token) return null;
+
   try {
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
+    const response = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
+    if (!response.ok) return null;
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to register");
-    }
-
-    return data;
-  } catch (error) {
-    throw error;
+    return data.user || data.admin || null;
+  } catch (e) {
+    return null;
   }
 };
 
 /**
- * Log out the current user
+ * Send password reset link
  */
-export const logoutUser = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+export const requestPasswordReset = async (email) => {
+  const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to request password reset");
+  }
+  return data;
 };
 
 /**
- * Get the currently stored user session data
+ * Reset password with token
  */
-export const getCurrentUser = () => {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
+export const confirmPasswordReset = async (token, newPassword) => {
+  const response = await fetch(`${API_BASE}/api/auth/reset-password/${encodeURIComponent(token)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: newPassword }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to reset password");
+  }
+  return data;
+};
+
+/**
+ * Log out user
+ */
+export const logoutUser = () => {
+  localStorage.removeItem("yuhum_token");
 };
