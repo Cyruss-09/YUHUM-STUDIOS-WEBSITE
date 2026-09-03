@@ -65,8 +65,8 @@ export const Rateus = () => {
                     >
                       <Star
                         className={`w-7 h-7 transition-colors ${star <= (hoveredRating || formData.overallRating)
-                            ? "fill-[#A3704C] text-[#A3704C]"
-                            : "text-[#E8DFD1]"
+                          ? "fill-[#A3704C] text-[#A3704C]"
+                          : "text-[#E8DFD1]"
                           }`}
                         strokeWidth={1.5}
                       />
@@ -146,8 +146,8 @@ export const Rateus = () => {
                     type="button"
                     onClick={() => updateField("recommend", true)}
                     className={`flex-1 py-2 text-sm rounded-md border transition-colors ${formData.recommend === true
-                        ? "border-[#A3704C] bg-[#A3704C] text-white"
-                        : "border-[#E8DFD1] bg-white text-[#5a4a3a] hover:border-[#c9b8a5]"
+                      ? "border-[#A3704C] bg-[#A3704C] text-white"
+                      : "border-[#E8DFD1] bg-white text-[#5a4a3a] hover:border-[#c9b8a5]"
                       }`}
                   >
                     Yes, absolutely
@@ -156,8 +156,8 @@ export const Rateus = () => {
                     type="button"
                     onClick={() => updateField("recommend", false)}
                     className={`flex-1 py-2 text-sm rounded-md border transition-colors ${formData.recommend === false
-                        ? "border-[#A3704C] bg-[#A3704C] text-white"
-                        : "border-[#E8DFD1] bg-white text-[#5a4a3a] hover:border-[#c9b8a5]"
+                      ? "border-[#A3704C] bg-[#A3704C] text-white"
+                      : "border-[#E8DFD1] bg-white text-[#5a4a3a] hover:border-[#c9b8a5]"
                       }`}
                   >
                     Maybe next time
@@ -206,8 +206,8 @@ const MetricRow = ({ label, category, currentValue, onRatingChange }) => {
             type="button"
             onClick={() => onRatingChange(category, val)}
             className={`w-7 h-7 text-xs rounded-md border transition-colors ${currentValue === val
-                ? "bg-[#A3704C] border-[#A3704C] text-white"
-                : "bg-white border-[#E8DFD1] text-[#7A6B63] hover:border-[#c9b8a5]"
+              ? "bg-[#A3704C] border-[#A3704C] text-white"
+              : "bg-white border-[#E8DFD1] text-[#7A6B63] hover:border-[#c9b8a5]"
               }`}
           >
             {val}
