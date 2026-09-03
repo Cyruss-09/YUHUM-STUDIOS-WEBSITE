@@ -46,7 +46,6 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
   ];
 
   const loginItem = { id: "register", label: "Log in", path: "/register" };
-  const isLoginActive = activeLink === loginItem.id;
 
   const handleLinkClick = (e, id, path) => {
     e.preventDefault();
@@ -114,8 +113,8 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
 
       <header
         className={`sticky top-0 z-50 w-full bg-[#FBF9F5]/95 backdrop-blur-md px-6 md:px-12 border-b transition-[padding,box-shadow] duration-300 ${scrolled
-          ? "border-[#E8DFD1] shadow-[0_8px_24px_rgba(163,112,76,0.06)] py-3.5"
-          : "border-[#E8DFD1]/70 py-5"
+            ? "border-[#E8DFD1] shadow-[0_8px_24px_rgba(163,112,76,0.06)] py-3.5"
+            : "border-[#E8DFD1]/70 py-5"
           }`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -272,7 +271,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="w-full py-3 text-sm tracking-widest uppercase font-bold text-[#A3704C] hover:text-[#8C5A35] transition-colors rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
+                      className="w-full py-3 text-sm tracking-widest uppercase font-bold text-white bg-[#A3704C] hover:bg-[#8C5A35] transition-colors rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
                     >
                       Logout
                     </button>
@@ -283,10 +282,7 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                     onClick={(e) =>
                       handleLinkClick(e, loginItem.id, loginItem.path)
                     }
-                    className={`block py-3 text-sm tracking-widest uppercase transition-colors duration-200 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] ${isLoginActive
-                      ? "text-[#A3704C] font-bold"
-                      : "text-[#7A6B63] hover:text-[#2C221E] font-medium"
-                      }`}
+                    className="block w-full py-3 text-center text-sm tracking-widest uppercase font-bold text-white bg-[#A3704C] hover:bg-[#8C5A35] transition-colors duration-200 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
                   >
                     {loginItem.label}
                   </a>
