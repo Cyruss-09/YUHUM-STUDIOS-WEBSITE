@@ -589,6 +589,68 @@ app.post("/api/subscribers", async (req, res) => {
   }
 });
 
+/* ================= CLIENT: MY BOOKINGS ROUTE ================= */
+app.get("/api/bookings/my", verifyToken, async (req, res) => {
+  try {
+    const queryText = `
+      SELECT id, package_title, base_price, studio, booking_date, day_of_week,
+             booking_time, add_ons, "firstName", "lastName", email, phone,
+             "paymentMode", "couponCode", status, created_at
+      FROM bookings
+      WHERE user_id = $1
+      ORDER BY created_at DESC;
+    `;
+    const dbResult = await pool.query(queryText, [req.user.id]);
+    return res.status(200).json({ success: true, bookings: dbResult.rows });
+  } catch (error) {
+    console.error("❌ Error fetching user bookings:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch your bookings." });
+  }
+});
+
+/* ================= CLIENT: CANCEL BOOKING ROUTE ================= */
+app.patch("/api/bookings/:id/cancel", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch the booking and verify ownership
+    const fetchResult = await pool.query(
+      "SELECT id, user_id, status FROM bookings WHERE id = $1",
+      [id]
+    );
+
+    if (fetchResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Booking not found." });
+    }
+
+    const booking = fetchResult.rows[0];
+
+    // Ownership check
+    if (booking.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: "You are not authorized to cancel this booking." });
+    }
+
+    // Only Pending or Confirmed bookings can be cancelled
+    const cancellableStatuses = ["Pending", "Confirmed"];
+    if (!cancellableStatuses.includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        error: `This booking cannot be cancelled because its status is "${booking.status}".`,
+      });
+    }
+
+    const updateResult = await pool.query(
+      "UPDATE bookings SET status = 'Cancelled' WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    return res.status(200).json({ success: true, booking: updateResult.rows[0] });
+  } catch (error) {
+    console.error("❌ Error cancelling booking:", error);
+    return res.status(500).json({ success: false, error: "Failed to cancel booking." });
+  }
+});
+
 /* ================= ADMIN BOOKINGS ROUTE ================= */
 app.get("/api/admin/bookings", verifyToken, async (req, res) => {
   try {

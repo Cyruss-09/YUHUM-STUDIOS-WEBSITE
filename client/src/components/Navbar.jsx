@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { MyBookingsModal } from "./MyBookingsModal";
 
 export const Navbar = ({ activeLink, setActiveLink }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [bookingsOpen, setBookingsOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const profileRef = useRef(null);
@@ -113,8 +115,8 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
 
       <header
         className={`sticky top-0 z-50 w-full bg-[#FBF9F5]/95 backdrop-blur-md px-6 md:px-12 border-b transition-[padding,box-shadow] duration-300 ${scrolled
-            ? "border-[#E8DFD1] shadow-[0_8px_24px_rgba(163,112,76,0.06)] py-3.5"
-            : "border-[#E8DFD1]/70 py-5"
+          ? "border-[#E8DFD1] shadow-[0_8px_24px_rgba(163,112,76,0.06)] py-3.5"
+          : "border-[#E8DFD1]/70 py-5"
           }`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -189,6 +191,19 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                       Admin Dashboard
                     </button>
                   )}
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      setBookingsOpen(true);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-[#5C5049] hover:bg-[#F4EFEA] transition-colors flex items-center gap-2 border-b border-[#E8DFD1]/50"
+                  >
+                    <svg className="w-4 h-4 text-[#A3704C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    My Bookings
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2.5 text-sm font-medium text-[#A3704C] hover:bg-[#F4EFEA] transition-colors"
@@ -270,6 +285,19 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                       </div>
                     </div>
                     <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setBookingsOpen(true);
+                      }}
+                      className="w-full py-2.5 text-sm font-semibold text-[#5C5049] border border-[#E8DFD1] bg-white hover:bg-[#F4EFEA] transition-colors rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4 text-[#A3704C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      My Bookings
+                    </button>
+                    <button
                       onClick={handleLogout}
                       className="w-full py-3 text-sm tracking-widest uppercase font-bold text-white bg-[#A3704C] hover:bg-[#8C5A35] transition-colors rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C]"
                     >
@@ -292,6 +320,9 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
           </nav>
         </div>
       </header>
+
+      {/* My Bookings Modal — rendered at Navbar level so it's always accessible */}
+      <MyBookingsModal isOpen={bookingsOpen} onClose={() => setBookingsOpen(false)} />
     </>
   );
 };
