@@ -27,3 +27,10 @@ dist-ssr
 
 #Env
 .env
+
+#Database
+server/database/*.sql
+*.sql
+*.db
+*.sqlite
+.env
