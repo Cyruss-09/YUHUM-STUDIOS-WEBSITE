@@ -219,6 +219,217 @@ router.post('/admin/login', async (req, res) => {
 });
 
 /**
+ * Helper to find or create a user signed in via social authentication (Google or Facebook)
+ */
+async function findOrCreateSocialUser({ email, name, provider, providerId, avatarUrl }) {
+  const cleanEmail = String(email).trim().toLowerCase();
+
+  // 1. Check if user with this email already exists
+  const existingUserRes = await pool.query(
+    'SELECT * FROM users WHERE LOWER(email) = LOWER($1)',
+    [cleanEmail]
+  );
+  let user = existingUserRes.rows[0];
+
+  if (user) {
+    // Update provider_id, auth_provider, avatar_url if needed
+    const updatedRes = await pool.query(
+      `UPDATE users 
+       SET provider_id = COALESCE($1, provider_id),
+           auth_provider = COALESCE(auth_provider, $2),
+           avatar_url = COALESCE($3, avatar_url)
+       WHERE id = $4
+       RETURNING id, username, email, role, avatar_url, auth_provider, created_at`,
+      [providerId, provider, avatarUrl, user.id]
+    );
+    return updatedRes.rows[0] || user;
+  }
+
+  // 2. Generate a clean unique username
+  let baseUsername = (name || cleanEmail.split('@')[0])
+    .replace(/[^a-zA-Z0-9_]/g, '')
+    .toLowerCase()
+    .slice(0, 25);
+  if (!baseUsername || baseUsername.length < 3) baseUsername = 'guest';
+
+  let candidateUsername = baseUsername;
+  let counter = 1;
+  while (true) {
+    const checkUsername = await pool.query(
+      'SELECT id FROM users WHERE LOWER(username) = LOWER($1)',
+      [candidateUsername]
+    );
+    if (checkUsername.rows.length === 0) break;
+    candidateUsername = `${baseUsername}${counter++}`;
+  }
+
+  // 3. Insert new user
+  const insertRes = await pool.query(
+    `INSERT INTO users (username, email, role, auth_provider, provider_id, avatar_url)
+     VALUES ($1, $2, 'user', $3, $4, $5)
+     RETURNING id, username, email, role, avatar_url, auth_provider, created_at`,
+    [candidateUsername, cleanEmail, provider, providerId, avatarUrl]
+  );
+  return insertRes.rows[0];
+}
+
+/**
+ * POST /api/auth/google
+ * Authenticate with Google (verifies Google token or demo profile)
+ */
+router.post('/google', async (req, res) => {
+  const { credential, accessToken, email, name, picture, sub, mode } = req.body;
+
+  try {
+    let socialEmail = email;
+    let socialName = name;
+    let socialPicture = picture;
+    let socialSub = sub;
+
+    // If Google ID token credential was provided, verify with Google
+    if (credential) {
+      const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+      if (!verifyRes.ok) {
+        return res.status(400).json({ success: false, message: 'Google authentication token could not be verified.' });
+      }
+      const payload = await verifyRes.json();
+      socialEmail = payload.email;
+      socialName = payload.name || payload.given_name;
+      socialPicture = payload.picture;
+      socialSub = payload.sub;
+    } else if (accessToken) {
+      // If Google OAuth2 access token was provided, fetch from userinfo
+      const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!userinfoRes.ok) {
+        return res.status(400).json({ success: false, message: 'Google access token could not be verified.' });
+      }
+      const payload = await userinfoRes.json();
+      socialEmail = payload.email;
+      socialName = payload.name || payload.given_name;
+      socialPicture = payload.picture;
+      socialSub = payload.sub;
+    } else if (mode === 'demo' || mode === 'mock') {
+      if (!socialEmail) {
+        return res.status(400).json({ success: false, message: 'Email is required for demo authentication.' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Google credential or access token is required.' });
+    }
+
+    if (!socialEmail) {
+      return res.status(400).json({ success: false, message: 'No email associated with this Google account.' });
+    }
+
+    const user = await findOrCreateSocialUser({
+      email: socialEmail,
+      name: socialName,
+      provider: 'google',
+      providerId: socialSub,
+      avatarUrl: socialPicture,
+    });
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRY }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Successfully signed in with Google!',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.username,
+        email: user.email,
+        role: user.role || 'user',
+        avatar_url: user.avatar_url,
+        auth_provider: user.auth_provider || 'google',
+        created_at: user.created_at,
+      },
+    });
+  } catch (err) {
+    console.error('Google auth error:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error during Google sign in.' });
+  }
+});
+
+/**
+ * POST /api/auth/facebook
+ * Authenticate with Facebook (verifies Facebook access token or demo profile)
+ */
+router.post('/facebook', async (req, res) => {
+  const { accessToken, email, name, picture, id, mode } = req.body;
+
+  try {
+    let socialEmail = email;
+    let socialName = name;
+    let socialPicture = picture;
+    let socialId = id;
+
+    if (accessToken) {
+      const fbRes = await fetch(
+        `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${encodeURIComponent(accessToken)}`
+      );
+      if (!fbRes.ok) {
+        return res.status(400).json({ success: false, message: 'Facebook authentication token could not be verified.' });
+      }
+      const payload = await fbRes.json();
+      socialId = payload.id;
+      socialName = payload.name;
+      socialEmail = payload.email || `${socialId}@facebook.yuhumstudio.com`;
+      socialPicture = payload.picture?.data?.url;
+    } else if (mode === 'demo' || mode === 'mock') {
+      if (!socialEmail) {
+        return res.status(400).json({ success: false, message: 'Email is required for demo authentication.' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Facebook access token is required.' });
+    }
+
+    if (!socialEmail) {
+      return res.status(400).json({ success: false, message: 'No email found for this Facebook account.' });
+    }
+
+    const user = await findOrCreateSocialUser({
+      email: socialEmail,
+      name: socialName,
+      provider: 'facebook',
+      providerId: socialId,
+      avatarUrl: socialPicture,
+    });
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRY }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Successfully signed in with Facebook!',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.username,
+        email: user.email,
+        role: user.role || 'user',
+        avatar_url: user.avatar_url,
+        auth_provider: user.auth_provider || 'facebook',
+        created_at: user.created_at,
+      },
+    });
+  } catch (err) {
+    console.error('Facebook auth error:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error during Facebook sign in.' });
+  }
+});
+
+/**
  * GET /api/auth/me
  * Validate current session and retrieve profile
  */
@@ -261,7 +472,7 @@ router.get('/me', async (req, res) => {
 
     // Standard User lookup
     const result = await pool.query(
-      'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, role, avatar_url, auth_provider, created_at FROM users WHERE id = $1',
       [decoded.id]
     );
     const user = result.rows[0];
@@ -278,6 +489,8 @@ router.get('/me', async (req, res) => {
         name: user.username,
         email: user.email,
         role: user.role || 'user',
+        avatar_url: user.avatar_url,
+        auth_provider: user.auth_provider || 'local',
         created_at: user.created_at
       }
     });

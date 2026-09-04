@@ -100,6 +100,54 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
+   * User login with Google
+   */
+  const loginWithGoogle = async (payload) => {
+    const res = await fetch(`${API_BASE}/api/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || "Google authentication failed.");
+    }
+
+    if (data.token) {
+      localStorage.setItem("yuhum_token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+    }
+    return data.user;
+  };
+
+  /**
+   * User login with Facebook
+   */
+  const loginWithFacebook = async (payload) => {
+    const res = await fetch(`${API_BASE}/api/auth/facebook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || "Facebook authentication failed.");
+    }
+
+    if (data.token) {
+      localStorage.setItem("yuhum_token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+    }
+    return data.user;
+  };
+
+  /**
    * User registration
    */
   const register = async ({ username, email, password }) => {
@@ -199,6 +247,8 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         login,
         loginAdmin,
+        loginWithGoogle,
+        loginWithFacebook,
         register,
         logout,
         forgotPassword,

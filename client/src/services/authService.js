@@ -29,6 +29,48 @@ export const loginUser = async (credentials) => {
 };
 
 /**
+ * Authenticate with Google
+ */
+export const loginWithGoogle = async (payload) => {
+  const response = await fetch(`${API_BASE}/api/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Google authentication failed");
+  }
+
+  if (data.token) {
+    localStorage.setItem("yuhum_token", data.token);
+  }
+  return data;
+};
+
+/**
+ * Authenticate with Facebook
+ */
+export const loginWithFacebook = async (payload) => {
+  const response = await fetch(`${API_BASE}/api/auth/facebook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Facebook authentication failed");
+  }
+
+  if (data.token) {
+    localStorage.setItem("yuhum_token", data.token);
+  }
+  return data;
+};
+
+/**
  * Log in an administrator
  */
 export const loginAdmin = async (credentials) => {

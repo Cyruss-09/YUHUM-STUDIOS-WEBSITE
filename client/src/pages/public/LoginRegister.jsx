@@ -1,11 +1,46 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Eye, EyeOff, Check, X, Loader2, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Check, X, Loader2, Sparkles, KeyRound } from "lucide-react";
+
+function GoogleIcon() {
+  return (
+    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 24 24">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+}
 
 export default function LoginRegister({ setActiveLink }) {
-  const { login, register, forgotPassword } = useAuth();
+  const { login, register, forgotPassword, loginWithGoogle, loginWithFacebook } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(null); // 'google' | 'facebook' | null
+  const [socialDemoModal, setSocialDemoModal] = useState(null);
+  const [demoCustomEmail, setDemoCustomEmail] = useState("");
+  const [demoCustomName, setDemoCustomName] = useState("");
   const [error, setError] = useState("");
   const [showLoginPw, setShowLoginPw] = useState(false);
   const [showRegPw, setShowRegPw] = useState(false);
@@ -41,28 +76,258 @@ export default function LoginRegister({ setActiveLink }) {
 
   const markTouched = (field) => setTouched((t) => ({ ...t, [field]: true }));
 
+  const handleAuthSuccess = (loggedUser) => {
+    const pending = localStorage.getItem("yuhum_pendingBooking");
+    if (setActiveLink) {
+      if (loggedUser?.role === "admin") {
+        setActiveLink("admin-dashboard");
+      } else if (pending) {
+        setActiveLink("book");
+      } else {
+        setActiveLink("home");
+      }
+    }
+  };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
       const loggedUser = await login(loginData.email, loginData.password);
-      const pending = localStorage.getItem("yuhum_pendingBooking");
-      if (setActiveLink) {
-        if (loggedUser?.role === "admin") {
-          setActiveLink("admin-dashboard");
-        } else if (pending) {
-          setActiveLink("book");
-        } else {
-          setActiveLink("home");
-        }
-      }
+      handleAuthSuccess(loggedUser);
     } catch (err) {
       setError(err.message || "The email/username or password you entered is incorrect.");
     } finally {
       setLoading(false);
     }
   };
+
+  // Google Social Login Trigger
+  const handleGoogleLogin = async () => {
+    setError("");
+    const googleClientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
+
+    if (googleClientId && googleClientId !== "YOUR_GOOGLE_CLIENT_ID") {
+      setSocialLoading("google");
+      try {
+        if (!window.google?.accounts) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://accounts.google.com/gsi/client";
+            script.async = true;
+            script.defer = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+          });
+        }
+
+        // Use Google's standard OAuth2 popup client (preferred for button clicks)
+        if (window.google?.accounts?.oauth2) {
+          const client = window.google.accounts.oauth2.initTokenClient({
+            client_id: googleClientId,
+            scope: "openid profile email",
+            callback: async (tokenResponse) => {
+              if (tokenResponse?.access_token) {
+                try {
+                  const loggedUser = await loginWithGoogle({
+                    accessToken: tokenResponse.access_token,
+                  });
+                  handleAuthSuccess(loggedUser);
+                } catch (err) {
+                  setError(err.message || "Google sign-in failed.");
+                } finally {
+                  setSocialLoading(null);
+                }
+              } else {
+                setSocialLoading(null);
+              }
+            },
+            error_callback: (err) => {
+              setSocialLoading(null);
+              console.error("Google OAuth error:", err);
+              setError(
+                "Google Origin Error: Please ensure 'http://localhost:5173' is added to 'Authorized JavaScript origins' in Google Cloud Console."
+              );
+            },
+          });
+
+          client.requestAccessToken();
+        } else if (window.google?.accounts?.id) {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: async (response) => {
+              try {
+                const loggedUser = await loginWithGoogle({ credential: response.credential });
+                handleAuthSuccess(loggedUser);
+              } catch (err) {
+                setError(err.message || "Google sign-in failed.");
+              } finally {
+                setSocialLoading(null);
+              }
+            },
+          });
+
+          window.google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              setSocialLoading(null);
+            }
+          });
+        }
+      } catch (err) {
+        setSocialLoading(null);
+        setError("Could not initialize Google authentication service.");
+      }
+    } else {
+      // Open instant demo testing modal
+      setDemoCustomEmail("camille.santos@gmail.com");
+      setDemoCustomName("Camille Santos");
+      setSocialDemoModal({
+        provider: "Google",
+        defaultName: "Camille Santos",
+        defaultEmail: "camille.santos@gmail.com",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      });
+    }
+  };
+
+  // Facebook Social Login Trigger
+  const handleFacebookLogin = async () => {
+    setError("");
+    const fbAppId = import.meta.env?.VITE_FACEBOOK_APP_ID;
+
+    if (fbAppId && fbAppId !== "YOUR_FACEBOOK_APP_ID") {
+      setSocialLoading("facebook");
+      try {
+        if (!window.FB) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://connect.facebook.net/en_US/sdk.js";
+            script.async = true;
+            script.defer = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+          });
+          window.FB.init({
+            appId: fbAppId,
+            cookie: true,
+            xfbml: true,
+            version: "v18.0",
+          });
+        }
+
+        window.FB.login(
+          async (response) => {
+            if (response.authResponse?.accessToken) {
+              try {
+                const loggedUser = await loginWithFacebook({
+                  accessToken: response.authResponse.accessToken,
+                });
+                handleAuthSuccess(loggedUser);
+              } catch (err) {
+                setError(err.message || "Facebook sign-in failed.");
+              } finally {
+                setSocialLoading(null);
+              }
+            } else {
+              setSocialLoading(null);
+            }
+          },
+          { scope: "public_profile,email" }
+        );
+      } catch (err) {
+        setSocialLoading(null);
+        setError("Could not initialize Facebook authentication service.");
+      }
+    } else {
+      // Open instant demo testing modal
+      setDemoCustomEmail("mark.devera@gmail.com");
+      setDemoCustomName("Mark De Vera");
+      setSocialDemoModal({
+        provider: "Facebook",
+        defaultName: "Mark De Vera",
+        defaultEmail: "mark.devera@gmail.com",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      });
+    }
+  };
+
+  const handleDemoSocialSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!socialDemoModal) return;
+    setSocialLoading(socialDemoModal.provider.toLowerCase());
+    setError("");
+    try {
+      let loggedUser;
+      if (socialDemoModal.provider === "Google") {
+        loggedUser = await loginWithGoogle({
+          email: demoCustomEmail || socialDemoModal.defaultEmail,
+          name: demoCustomName || socialDemoModal.defaultName,
+          picture: socialDemoModal.avatar,
+          sub: `google_demo_${Date.now()}`,
+          mode: "demo",
+        });
+      } else {
+        loggedUser = await loginWithFacebook({
+          email: demoCustomEmail || socialDemoModal.defaultEmail,
+          name: demoCustomName || socialDemoModal.defaultName,
+          picture: socialDemoModal.avatar,
+          id: `fb_demo_${Date.now()}`,
+          mode: "demo",
+        });
+      }
+      setSocialDemoModal(null);
+      handleAuthSuccess(loggedUser);
+    } catch (err) {
+      setError(err.message || "Social authentication failed.");
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
+  const renderSocialButtons = (actionLabel = "sign in") => (
+    <div className="mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={loading || Boolean(socialLoading)}
+          className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-[#FAF7F2] text-[#2C221E] border border-[#E8DFD1] hover:border-[#A3704C]/50 font-medium text-xs tracking-wider uppercase py-2.5 px-3 rounded-xl shadow-xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 cursor-pointer"
+        >
+          {socialLoading === "google" ? (
+            <Loader2 size={16} className="animate-spin text-[#A3704C]" />
+          ) : (
+            <GoogleIcon />
+          )}
+          <span>Google</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleFacebookLogin}
+          disabled={loading || Boolean(socialLoading)}
+          className="w-full flex items-center justify-center gap-2.5 bg-[#1877F2] hover:bg-[#166FE5] text-white font-medium text-xs tracking-wider uppercase py-2.5 px-3 rounded-xl shadow-xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 cursor-pointer"
+        >
+          {socialLoading === "facebook" ? (
+            <Loader2 size={16} className="animate-spin text-white" />
+          ) : (
+            <FacebookIcon />
+          )}
+          <span>Facebook</span>
+        </button>
+      </div>
+
+      <div className="relative flex items-center justify-center my-5">
+        <div className="border-t border-[#E8DFD1] w-full" />
+        <span className="bg-white/90 px-3 text-[10px] font-bold uppercase tracking-widest text-[#9E9189] whitespace-nowrap">
+          or with email
+        </span>
+        <div className="border-t border-[#E8DFD1] w-full" />
+      </div>
+    </div>
+  );
 
   const passwordsMismatched =
     registerData.confirmPassword.length > 0 &&
@@ -320,6 +585,8 @@ export default function LoginRegister({ setActiveLink }) {
                   </div>
                 )}
 
+                {renderSocialButtons("sign in")}
+
                 <form
                   onSubmit={handleLoginSubmit}
                   className="space-y-5"
@@ -439,6 +706,8 @@ export default function LoginRegister({ setActiveLink }) {
                   {error}
                 </div>
               )}
+
+              {renderSocialButtons("create account")}
 
               <form
                 onSubmit={handleRegisterSubmit}
@@ -615,6 +884,99 @@ export default function LoginRegister({ setActiveLink }) {
           )}
         </div>
       </div>
+
+      {/* Social Auth Setup & Demo Modal */}
+      {socialDemoModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-8 shadow-2xl animate-[fadeSlideIn_0.2s_ease-out] relative">
+            <button
+              type="button"
+              onClick={() => setSocialDemoModal(null)}
+              className="absolute right-5 top-5 text-[#7A6B63] hover:text-[#2C221E] transition-colors p-1"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-[#FAF7F2] border border-[#E8DFD1] flex items-center justify-center shadow-xs">
+                {socialDemoModal.provider === "Google" ? <GoogleIcon /> : <FacebookIcon />}
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#A3704C]">
+                  {socialDemoModal.provider} Authentication
+                </span>
+                <h3 className="font-serif text-xl text-[#2C221E]">
+                  Continue with {socialDemoModal.provider}
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#7A6B63] leading-relaxed mb-5">
+              One-click testing active. You can authenticate immediately using this profile or customize your test details below:
+            </p>
+
+            <form onSubmit={handleDemoSocialSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#7A6B63] mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={demoCustomName}
+                  onChange={(e) => setDemoCustomName(e.target.value)}
+                  placeholder="Your Name"
+                  className={inputClass(false)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#7A6B63] mb-1.5">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={demoCustomEmail}
+                  onChange={(e) => setDemoCustomEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  className={inputClass(false)}
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={Boolean(socialLoading)}
+                  className={`w-full flex items-center justify-center gap-2 text-white font-medium text-xs tracking-wider uppercase py-3.5 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 cursor-pointer ${
+                    socialDemoModal.provider === "Facebook"
+                      ? "bg-[#1877F2] hover:bg-[#166FE5]"
+                      : "bg-gradient-to-r from-[#A3704C] to-[#8C5A35] hover:from-[#8C5A35] hover:to-[#754829]"
+                  }`}
+                >
+                  {socialLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={15} />
+                  )}
+                  <span>
+                    Sign in as {demoCustomName ? demoCustomName.split(" ")[0] : socialDemoModal.provider + " User"}
+                  </span>
+                </button>
+              </div>
+
+              <div className="bg-[#FAF7F2] border border-[#E8DFD1] rounded-xl p-3 text-[11px] text-[#7A6B63] leading-relaxed">
+                💡 <strong>Production Setup:</strong> To connect your live {socialDemoModal.provider} App, add{" "}
+                <code className="bg-white px-1.5 py-0.5 rounded border border-[#E8DFD1] text-[#2C221E] font-mono text-[10px]">
+                  {socialDemoModal.provider === "Google" ? "VITE_GOOGLE_CLIENT_ID" : "VITE_FACEBOOK_APP_ID"}
+                </code>{" "}
+                to your <code className="text-[#2C221E]">client/.env</code>.
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeSlideIn {

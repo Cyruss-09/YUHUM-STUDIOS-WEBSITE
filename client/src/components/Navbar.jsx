@@ -163,9 +163,20 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                   aria-haspopup="true"
                   aria-expanded={profileOpen}
                   aria-label="Account menu"
-                  className="w-9 h-9 rounded-full bg-[#A3704C] text-white text-sm font-semibold flex items-center justify-center hover:bg-[#8C5A35] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                  className="w-9 h-9 rounded-full bg-[#A3704C] text-white text-sm font-semibold flex items-center justify-center hover:bg-[#8C5A35] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A3704C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] overflow-hidden border border-[#E8DFD1]"
                 >
-                  {getInitials(user.username)}
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.username || "User avatar"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    getInitials(user.username)
+                  )}
                 </button>
 
                 <div
@@ -274,8 +285,19 @@ export const Navbar = ({ activeLink, setActiveLink }) => {
                 {user ? (
                   <div className="flex flex-col items-center gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A3704C] to-[#8C5A35] text-white text-sm font-semibold flex items-center justify-center shadow-sm">
-                        {getInitials(user.username)}
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A3704C] to-[#8C5A35] text-white text-sm font-semibold flex items-center justify-center shadow-sm overflow-hidden border border-[#E8DFD1]">
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.username || "User avatar"}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          getInitials(user.username)
+                        )}
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-semibold text-[#2C221E]">
