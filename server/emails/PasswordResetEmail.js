@@ -1,9 +1,18 @@
 // server/emails/PasswordResetEmail.js
-// Client Password Reset Email Template
+const {
+  STUDIO_BRAND,
+  renderEmailHeader,
+  renderCtaButton,
+  renderEmailFooter,
+} = require("./emailBranding");
 
+/**
+ * Redesigned Client Password Reset Email for Yuhum Studios
+ * Features official circular logo, high-visibility interactive CTA,
+ * security countdown pill, and secure fallback.
+ */
 function PasswordResetEmail({ resetUrl, username, email }) {
-  const currentYear = new Date().getFullYear();
-  const displayName = username || "there";
+  const displayName = username || (email ? email.split("@")[0] : "there");
 
   return `
 <!DOCTYPE html>
@@ -14,80 +23,77 @@ function PasswordResetEmail({ resetUrl, username, email }) {
   <title>Reset Your Yuhum Studios Password</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F8F5F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2C221E;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F8F5F0; padding: 40px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F8F5F0; padding: 36px 12px;">
     <tr>
       <td align="center">
         <!-- Main Card Container -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 540px; background-color: #FFFFFF; border: 1px solid #E8DFD1; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(163, 112, 76, 0.08);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 550px; background-color: #FFFFFF; border: 1px solid #E8DFD1; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 32px rgba(163, 112, 76, 0.08);">
           
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #FAF7F2 0%, #F3ECE2 100%); padding: 36px 32px 28px; text-align: center; border-bottom: 1px solid #E8DFD1;">
-              <h1 style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: normal; letter-spacing: 0.2em; text-transform: uppercase; color: #2C221E;">
-                Yuhum<span style="color: #A3704C;">.</span>Studios
-              </h1>
-              <p style="margin: 6px 0 0; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #7A6B63; font-weight: 600;">
-                Self-Shoot Studio Lounge
-              </p>
-            </td>
-          </tr>
+          <!-- Brand Header with Logo -->
+          ${renderEmailHeader({
+            categoryBadge: "ACCOUNT SECURITY",
+            title: "Yuhum Studios",
+            subtitle: "Self-Shoot Studio Lounge Client Access",
+          })}
 
           <!-- Main Content -->
           <tr>
-            <td style="padding: 36px 32px;">
+            <td style="padding: 36px 30px;">
               <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; border-radius: 50%; background-color: #F4EFEA; color: #A3704C; font-size: 22px; margin-bottom: 12px;">
+                <!-- Security Icon Pill -->
+                <div style="display: inline-block; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; background-color: #FAF2EB; border: 1px solid #E4D2C1; color: #A3704C; font-size: 22px; margin-bottom: 14px;">
                   🔑
                 </div>
-                <h2 style="margin: 0 0 8px; font-family: Georgia, 'Times New Roman', serif; font-size: 22px; color: #2C221E; font-weight: normal;">
+                
+                <h2 style="margin: 0 0 10px; font-family: Georgia, 'Times New Roman', serif; font-size: 23px; color: #2C221E; font-weight: normal;">
                   Password Reset Request
                 </h2>
-                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #7A6B63;">
-                  Hi <strong style="color: #2C221E;">${displayName}</strong>, we received a request to reset the password for your Yuhum Studios client account.
+                
+                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6A5A53;">
+                  Hi <strong style="color: #2C221E;">${displayName}</strong>, we received a request to reset your password for your <strong>Yuhum Studios</strong> account.
                 </p>
               </div>
 
-              <!-- Action Button Box -->
+              <!-- Interactive Primary Action Button -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
                 <tr>
                   <td align="center">
-                    <a href="${resetUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #A3704C 0%, #8C5A35 100%); color: #FFFFFF; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; text-decoration: none; padding: 14px 32px; border-radius: 12px; box-shadow: 0 4px 14px rgba(163, 112, 76, 0.35);">
-                      Reset My Password
-                    </a>
+                    ${renderCtaButton({
+                      href: resetUrl,
+                      text: "Reset My Password",
+                      icon: "🔐",
+                    })}
                   </td>
                 </tr>
               </table>
 
-              <!-- Notice Badge -->
-              <div style="background-color: #FAF7F2; border: 1px solid #E8DFD1; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; text-align: left;">
-                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #7A6B63;">
-                  ⏱️ <strong>Security notice:</strong> This link is valid for <strong>30 minutes</strong> and can only be used once. If you did not make this request, you can safely ignore this email — your account remains completely secure.
-                </p>
-              </div>
+              <!-- Security Notice Badge -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FAF7F2; border: 1px solid #E8DFD1; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px;">
+                <tr>
+                  <td style="font-size: 12px; line-height: 1.6; color: #7A6B63;">
+                    ⏱️ <strong>Security note:</strong> This single-use link is valid for <strong>30 minutes</strong>. If you did not initiate this request, you can safely ignore this email — your password will remain unchanged and your account is secure.
+                  </td>
+                </tr>
+              </table>
 
-              <!-- Fallback Plain Link -->
-              <div style="border-top: 1px dashed #E8DFD1; padding-top: 18px;">
-                <p style="margin: 0 0 6px; font-size: 11px; color: #9E9189; text-transform: uppercase; letter-spacing: 0.05em;">
-                  Button not working? Copy and paste this link into your browser:
+              <!-- Fallback Direct URL -->
+              <div style="border-top: 1px dashed #E8DFD1; padding-top: 18px; text-align: left;">
+                <p style="margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #9E9189; font-weight: 600;">
+                  Having trouble clicking the button?
                 </p>
-                <p style="margin: 0; font-size: 11px; word-break: break-all; color: #A3704C;">
+                <p style="margin: 0; font-size: 11px; word-break: break-all; color: #A3704C; line-height: 1.5;">
                   <a href="${resetUrl}" style="color: #A3704C; text-decoration: underline;">${resetUrl}</a>
                 </p>
               </div>
+
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #FAF7F2; padding: 20px 32px; text-align: center; border-top: 1px solid #E8DFD1; font-size: 11px; color: #9E9189; line-height: 1.6;">
-              <p style="margin: 0 0 4px;">
-                © ${currentYear} Yuhum Studios. All rights reserved.
-              </p>
-              <p style="margin: 0;">
-                Iloilo City, Philippines • <a href="mailto:yuhumstudios22@gmail.com" style="color: #7A6B63; text-decoration: none;">yuhumstudios22@gmail.com</a>
-              </p>
-            </td>
-          </tr>
+          <!-- Interactive Footer -->
+          ${renderEmailFooter({
+            showSocials: true,
+            supportNote: "Questions or security concerns? Contact yuhumstudios22@gmail.com.",
+          })}
 
         </table>
       </td>

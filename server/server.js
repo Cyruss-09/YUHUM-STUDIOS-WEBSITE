@@ -6,6 +6,7 @@ const cors = require("cors");
 const { BookingEmail } = require("./emails/BookingEmail");
 const { ReviewEmail } = require("./emails/ReviewEmail");
 const { SubscriberEmail } = require("./emails/SubscriberEmail");
+const { AdminReviewAlertEmail } = require("./emails/AdminReviewAlertEmail");
 
 const pool = require("./config/db");
 const { verifyToken, requireAdmin } = require("./middleware/auth");
@@ -22,6 +23,7 @@ const {
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/public", express.static(path.join(__dirname, "public")));
 
 // Test DB connection and verify auth schema on startup
 const initAuthAndCmsTables = async () => {
@@ -350,29 +352,22 @@ app.post("/api/reviews", async (req, res) => {
     } else {
       try {
         if (resend) {
+          const adminAlertHtml = AdminReviewAlertEmail({
+            userEmail,
+            overallRating,
+            equipmentEase,
+            roomPrivacy,
+            propsSelection,
+            favoriteBackdrop,
+            comments,
+            recommend: safeRecommend,
+          });
+
           await resend.emails.send({
             from: FROM_EMAIL,
             to: [ADMIN_EMAIL],
-            subject: `New Review Submitted (${overallRating || "N/A"} ⭐)`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
-                <h2 style="color: #2D1B18;">New Customer Feedback Received</h2>
-                <p><strong>Reviewer Email:</strong> ${userEmail || "Not provided"}</p>
-                <hr style="border: none; border-top: 1px solid #eee;" />
-                <ul style="line-height: 1.8;">
-                  <li><strong>Overall Rating:</strong> ${overallRating || "N/A"} / 5</li>
-                  <li><strong>Equipment Ease:</strong> ${equipmentEase || "N/A"} / 5</li>
-                  <li><strong>Room Privacy:</strong> ${roomPrivacy || "N/A"} / 5</li>
-                  <li><strong>Props Selection:</strong> ${propsSelection || "N/A"} / 5</li>
-                  <li><strong>Favorite Backdrop:</strong> ${favoriteBackdrop || "None selected"}</li>
-                  <li><strong>Recommends Us:</strong> ${safeRecommend === true ? "Yes" : safeRecommend === false ? "No" : "N/A"}</li>
-                </ul>
-                <p><strong>Comments:</strong></p>
-                <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #2D1B18; margin: 0;">
-                  ${comments || "No additional comments"}
-                </blockquote>
-              </div>
-            `,
+            subject: `New Review Submitted (${overallRating || "N/A"} ⭐) - Yuhum Studios`,
+            html: adminAlertHtml,
           });
           adminEmailSent = true;
         }
