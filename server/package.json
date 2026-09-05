@@ -15,6 +15,7 @@
     "@babel/preset-react": "^8.0.1",
     "@babel/register": "^8.0.1",
     "@emailjs/nodejs": "^5.0.2",
+    "@prisma/client": "^7.10.0",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
     "bcrypt": "^6.0.0",
