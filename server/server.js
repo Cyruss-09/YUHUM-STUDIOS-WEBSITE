@@ -178,11 +178,12 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
          FROM promo_codes
          WHERE code = $1
          FOR UPDATE`,
-        [normalizedCode],
+        [normalizedCode]
       );
 
       if (promoResult.rows.length === 0) {
         await client.query("ROLLBACK");
+        client.release();
         return res.status(400).json({ success: false, error: "Invalid promo code." });
       }
 
@@ -190,22 +191,25 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
 
       if (!promo.is_active) {
         await client.query("ROLLBACK");
+        client.release();
         return res.status(400).json({ success: false, error: "This promo code is no longer active." });
       }
 
       if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
         await client.query("ROLLBACK");
+        client.release();
         return res.status(400).json({ success: false, error: "This promo code has expired." });
       }
 
       if (promo.max_uses !== null && promo.used_count >= promo.max_uses) {
         await client.query("ROLLBACK");
+        client.release();
         return res.status(400).json({ success: false, error: "This promo code has reached its usage limit." });
       }
 
       await client.query(
         `UPDATE promo_codes SET used_count = used_count + 1 WHERE id = $1`,
-        [promo.id],
+        [promo.id]
       );
     }
 
@@ -239,7 +243,7 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       addOnsArray,
       firstName || null,
       lastName || null,
-      phone ? parseInt(phone, 10) : null,
+      phone ? String(phone) : null, // Preserved as String to prevent Integer overflow
       email || null,
       resolvedTerms,
       resolvedFindUs,
@@ -378,7 +382,7 @@ app.post("/api/reviews", async (req, res) => {
       } catch (adminEmailErr) {
         console.error(
           "⚠️ Review saved, but admin notification email failed:",
-          adminEmailErr.message || adminEmailErr,
+          adminEmailErr.message || adminEmailErr
         );
       }
     }
@@ -408,7 +412,7 @@ app.post("/api/reviews", async (req, res) => {
     } catch (customerEmailErr) {
       console.error(
         "⚠️ Review saved, but customer thank-you email failed:",
-        customerEmailErr.message || customerEmailErr,
+        customerEmailErr.message || customerEmailErr
       );
     }
 
@@ -441,7 +445,7 @@ app.post("/api/resend-campaign", async (req, res) => {
   try {
     const campaignResult = await pool.query(
       "SELECT * FROM campaigns WHERE id = $1",
-      [campaignId],
+      [campaignId]
     );
 
     if (campaignResult.rows.length === 0) {
@@ -493,14 +497,14 @@ app.post("/api/resend-campaign", async (req, res) => {
 
         await pool.query(
           "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'sent')",
-          [campaignId, sub.id],
+          [campaignId, sub.id]
         );
         successCount++;
       } catch (mailError) {
         console.error(`❌ Failed to send to ${sub.email}:`, mailError.message);
         await pool.query(
           "INSERT INTO campaign_logs (campaign_id, subscriber_id, status) VALUES ($1, $2, 'failed')",
-          [campaignId, sub.id],
+          [campaignId, sub.id]
         );
         failCount++;
       }
@@ -573,7 +577,7 @@ app.post("/api/subscribers", async (req, res) => {
     } catch (welcomeEmailErr) {
       console.error(
         "⚠️ Subscriber saved, but welcome email failed:",
-        welcomeEmailErr.message || welcomeEmailErr,
+        welcomeEmailErr.message || welcomeEmailErr
       );
     }
 
@@ -612,7 +616,6 @@ app.patch("/api/bookings/:id/cancel", verifyToken, async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Fetch the booking and verify ownership
     const fetchResult = await pool.query(
       "SELECT id, user_id, status FROM bookings WHERE id = $1",
       [id]
@@ -624,12 +627,10 @@ app.patch("/api/bookings/:id/cancel", verifyToken, async (req, res) => {
 
     const booking = fetchResult.rows[0];
 
-    // Ownership check
     if (booking.user_id !== req.user.id) {
       return res.status(403).json({ success: false, error: "You are not authorized to cancel this booking." });
     }
 
-    // Only Pending or Confirmed bookings can be cancelled
     const cancellableStatuses = ["Pending", "Confirmed"];
     if (!cancellableStatuses.includes(booking.status)) {
       return res.status(400).json({
@@ -651,7 +652,7 @@ app.patch("/api/bookings/:id/cancel", verifyToken, async (req, res) => {
 });
 
 /* ================= ADMIN BOOKINGS ROUTE ================= */
-app.get("/api/admin/bookings", verifyToken, async (req, res) => {
+app.get("/api/admin/bookings", verifyToken, requireAdmin, async (req, res) => {
   try {
     const queryText = `
       SELECT * FROM bookings 
@@ -698,11 +699,11 @@ app.patch(
 
     try {
       const queryText = `
-      UPDATE bookings
-      SET status = $1
-      WHERE id = $2
-      RETURNING *;
-    `;
+        UPDATE bookings
+        SET status = $1
+        WHERE id = $2
+        RETURNING *;
+      `;
       const dbResult = await pool.query(queryText, [status, id]);
 
       if (dbResult.rows.length === 0) {
@@ -718,14 +719,14 @@ app.patch(
     } catch (error) {
       console.error(
         "❌ Database query error (updating booking status):",
-        error,
+        error
       );
       return res.status(500).json({
         success: false,
         error: "Failed to update booking status.",
       });
     }
-  },
+  }
 );
 
 /* ================= SERVER LISTEN ================= */

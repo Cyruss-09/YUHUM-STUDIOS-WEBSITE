@@ -3,7 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const { supabase } = require('../config/supabase');
 const { getResend, FROM_EMAIL, resolveRecipient } = require('../config/mailer');
 const { PasswordResetEmail } = require('../emails/PasswordResetEmail');
 const { AdminPasswordResetEmail } = require('../emails/AdminPasswordResetEmail');
@@ -40,42 +40,55 @@ router.post('/register', async (req, res) => {
 
   try {
     // Check if email already in use
-    const existingEmail = await pool.query(
-      'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
-      [cleanEmail]
-    );
-    if (existingEmail.rows.length > 0) {
+    const { data: existingEmail, error: emailCheckError } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('email', cleanEmail)
+      .maybeSingle();
+
+    if (emailCheckError) throw emailCheckError;
+    if (existingEmail) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
     }
 
     // Check if username already in use
-    const existingUsername = await pool.query(
-      'SELECT id FROM users WHERE LOWER(username) = LOWER($1)',
-      [cleanUsername]
-    );
-    if (existingUsername.rows.length > 0) {
+    const { data: existingUsername, error: usernameCheckError } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('username', cleanUsername)
+      .maybeSingle();
+
+    if (usernameCheckError) throw usernameCheckError;
+    if (existingUsername) {
       return res.status(400).json({ success: false, message: 'Username is already taken. Please choose another.' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
-      [cleanUsername, cleanEmail, password_hash, 'user']
-    );
 
-    const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+    const { data: newUser, error: insertError } = await supabase
+      .from('users')
+      .insert([{ username: cleanUsername, email: cleanEmail, password_hash, role: 'user' }])
+      .select('id, username, email, role, created_at')
+      .single();
+
+    if (insertError) throw insertError;
+
+    const token = jwt.sign(
+      { id: newUser.id, role: newUser.role, email: newUser.email },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRY }
+    );
 
     return res.status(201).json({
       success: true,
       message: 'Account created successfully!',
       token,
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        created_at: user.created_at
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        created_at: newUser.created_at
       }
     });
   } catch (err) {
@@ -98,21 +111,28 @@ router.post('/login', async (req, res) => {
 
   try {
     // 1. Search in users table by email or username
-    let result = await pool.query(
-      'SELECT * FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)',
-      [loginIdentifier]
-    );
-    let user = result.rows[0];
+    const { data: foundUser, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .or(`email.ilike.${loginIdentifier},username.ilike.${loginIdentifier}`)
+      .maybeSingle();
+
+    if (userError) throw userError;
+
+    let user = foundUser;
+    let isAdminTable = false;
 
     // 2. Fallback to admins table if not found in users
-    let isAdminTable = false;
     if (!user) {
-      const adminResult = await pool.query(
-        'SELECT * FROM admins WHERE LOWER(email) = LOWER($1)',
-        [loginIdentifier]
-      );
-      if (adminResult.rows.length > 0) {
-        user = adminResult.rows[0];
+      const { data: foundAdmin, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .ilike('email', loginIdentifier)
+        .maybeSingle();
+
+      if (adminError) throw adminError;
+      if (foundAdmin) {
+        user = foundAdmin;
         isAdminTable = true;
       }
     }
@@ -168,19 +188,25 @@ router.post('/admin/login', async (req, res) => {
 
   try {
     // 1. Check admins table
-    let result = await pool.query(
-      'SELECT * FROM admins WHERE LOWER(email) = LOWER($1)',
-      [adminIdentifier]
-    );
-    let admin = result.rows[0];
+    let { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .select('*')
+      .ilike('email', adminIdentifier)
+      .maybeSingle();
+
+    if (adminError) throw adminError;
 
     // 2. Fallback: check users table with admin role
     if (!admin) {
-      result = await pool.query(
-        "SELECT * FROM users WHERE (LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)) AND role = 'admin'",
-        [adminIdentifier]
-      );
-      admin = result.rows[0];
+      const { data: adminAsUser, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .or(`email.ilike.${adminIdentifier},username.ilike.${adminIdentifier}`)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (userError) throw userError;
+      admin = adminAsUser;
     }
 
     if (!admin) {
@@ -225,24 +251,29 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
   const cleanEmail = String(email).trim().toLowerCase();
 
   // 1. Check if user with this email already exists
-  const existingUserRes = await pool.query(
-    'SELECT * FROM users WHERE LOWER(email) = LOWER($1)',
-    [cleanEmail]
-  );
-  let user = existingUserRes.rows[0];
+  const { data: existingUser, error: findError } = await supabase
+    .from('users')
+    .select('*')
+    .ilike('email', cleanEmail)
+    .maybeSingle();
 
-  if (user) {
+  if (findError) throw findError;
+
+  if (existingUser) {
     // Update provider_id, auth_provider, avatar_url if needed
-    const updatedRes = await pool.query(
-      `UPDATE users 
-       SET provider_id = COALESCE($1, provider_id),
-           auth_provider = COALESCE(auth_provider, $2),
-           avatar_url = COALESCE($3, avatar_url)
-       WHERE id = $4
-       RETURNING id, username, email, role, avatar_url, auth_provider, created_at`,
-      [providerId, provider, avatarUrl, user.id]
-    );
-    return updatedRes.rows[0] || user;
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update({
+        provider_id: providerId ?? existingUser.provider_id,
+        auth_provider: existingUser.auth_provider ?? provider,
+        avatar_url: avatarUrl ?? existingUser.avatar_url,
+      })
+      .eq('id', existingUser.id)
+      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .single();
+
+    if (updateError) throw updateError;
+    return updatedUser || existingUser;
   }
 
   // 2. Generate a clean unique username
@@ -255,22 +286,33 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
   let candidateUsername = baseUsername;
   let counter = 1;
   while (true) {
-    const checkUsername = await pool.query(
-      'SELECT id FROM users WHERE LOWER(username) = LOWER($1)',
-      [candidateUsername]
-    );
-    if (checkUsername.rows.length === 0) break;
+    const { data: usernameTaken, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('username', candidateUsername)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+    if (!usernameTaken) break;
     candidateUsername = `${baseUsername}${counter++}`;
   }
 
   // 3. Insert new user
-  const insertRes = await pool.query(
-    `INSERT INTO users (username, email, role, auth_provider, provider_id, avatar_url)
-     VALUES ($1, $2, 'user', $3, $4, $5)
-     RETURNING id, username, email, role, avatar_url, auth_provider, created_at`,
-    [candidateUsername, cleanEmail, provider, providerId, avatarUrl]
-  );
-  return insertRes.rows[0];
+  const { data: newUser, error: insertError } = await supabase
+    .from('users')
+    .insert([{
+      username: candidateUsername,
+      email: cleanEmail,
+      role: 'user',
+      auth_provider: provider,
+      provider_id: providerId,
+      avatar_url: avatarUrl,
+    }])
+    .select('id, username, email, role, avatar_url, auth_provider, created_at')
+    .single();
+
+  if (insertError) throw insertError;
+  return newUser;
 }
 
 /**
@@ -444,18 +486,24 @@ router.get('/me', async (req, res) => {
 
     // Check admin role
     if (decoded.role === 'admin') {
-      let adminResult = await pool.query(
-        'SELECT id, name, email, role FROM admins WHERE id = $1',
-        [decoded.id]
-      );
-      let admin = adminResult.rows[0];
+      let { data: admin, error: adminError } = await supabase
+        .from('admins')
+        .select('id, name, email, role')
+        .eq('id', decoded.id)
+        .maybeSingle();
+
+      if (adminError) throw adminError;
 
       if (!admin) {
-        adminResult = await pool.query(
-          "SELECT id, username, email, role FROM users WHERE id = $1 AND role = 'admin'",
-          [decoded.id]
-        );
-        admin = adminResult.rows[0];
+        const { data: adminAsUser, error: userError } = await supabase
+          .from('users')
+          .select('id, username, email, role')
+          .eq('id', decoded.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (userError) throw userError;
+        admin = adminAsUser;
       }
 
       if (admin) {
@@ -471,11 +519,13 @@ router.get('/me', async (req, res) => {
     }
 
     // Standard User lookup
-    const result = await pool.query(
-      'SELECT id, username, email, role, avatar_url, auth_provider, created_at FROM users WHERE id = $1',
-      [decoded.id]
-    );
-    const user = result.rows[0];
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .eq('id', decoded.id)
+      .maybeSingle();
+
+    if (findError) throw findError;
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User account not found.' });
@@ -512,11 +562,13 @@ router.post('/forgot-password', async (req, res) => {
   const cleanEmail = String(email).trim().toLowerCase();
 
   try {
-    const userResult = await pool.query(
-      'SELECT id, email, username FROM users WHERE LOWER(email) = LOWER($1)',
-      [cleanEmail]
-    );
-    const user = userResult.rows[0];
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('id, email, username')
+      .ilike('email', cleanEmail)
+      .maybeSingle();
+
+    if (findError) throw findError;
 
     // Always respond with success message to prevent user enumeration
     if (!user) {
@@ -529,10 +581,12 @@ router.post('/forgot-password', async (req, res) => {
     const token = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
-    await pool.query(
-      'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE id = $3',
-      [token, expiry.toISOString(), user.id]
-    );
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ reset_token: token, reset_token_expiry: expiry.toISOString() })
+      .eq('id', user.id);
+
+    if (updateError) throw updateError;
 
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const resetLink = `${clientUrl}/reset-password/${token}`;
@@ -577,21 +631,30 @@ router.post('/admin/forgot-password', async (req, res) => {
 
   try {
     // 1. Search admins table
-    let adminResult = await pool.query(
-      'SELECT id, email, name, role FROM admins WHERE LOWER(email) = LOWER($1)',
-      [cleanEmail]
-    );
-    let admin = adminResult.rows[0];
+    let { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .select('id, email, name, role')
+      .ilike('email', cleanEmail)
+      .maybeSingle();
+
+    if (adminError) throw adminError;
+
     let isAdminsTable = true;
 
     // 2. Search users table with role = 'admin'
     if (!admin) {
-      adminResult = await pool.query(
-        "SELECT id, email, username as name, role FROM users WHERE LOWER(email) = LOWER($1) AND role = 'admin'",
-        [cleanEmail]
-      );
-      admin = adminResult.rows[0];
-      if (admin) isAdminsTable = false;
+      const { data: adminAsUser, error: userError } = await supabase
+        .from('users')
+        .select('id, email, username, role')
+        .ilike('email', cleanEmail)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (userError) throw userError;
+      if (adminAsUser) {
+        admin = { ...adminAsUser, name: adminAsUser.username };
+        isAdminsTable = false;
+      }
     }
 
     // Always respond with generic message to prevent account enumeration
@@ -606,10 +669,12 @@ router.post('/admin/forgot-password', async (req, res) => {
     const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
     const targetTable = isAdminsTable ? 'admins' : 'users';
-    await pool.query(
-      `UPDATE ${targetTable} SET reset_token = $1, reset_token_expiry = $2 WHERE id = $3`,
-      [token, expiry.toISOString(), admin.id]
-    );
+    const { error: updateError } = await supabase
+      .from(targetTable)
+      .update({ reset_token: token, reset_token_expiry: expiry.toISOString() })
+      .eq('id', admin.id);
+
+    if (updateError) throw updateError;
 
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const resetLink = `${clientUrl}/admin-reset-password/${token}`;
@@ -662,23 +727,34 @@ const handleResetPassword = async (req, res) => {
 
   try {
     const cleanToken = decodeURIComponent(String(token)).trim();
+    const nowIso = new Date().toISOString();
 
     // 1. Search in users table
-    let userResult = await pool.query(
-      'SELECT id, email FROM users WHERE reset_token = $1 AND reset_token_expiry > $2',
-      [cleanToken, new Date().toISOString()]
-    );
-    let user = userResult.rows[0];
+    let { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('reset_token', cleanToken)
+      .gt('reset_token_expiry', nowIso)
+      .maybeSingle();
+
+    if (userError) throw userError;
+
     let isDbAdmin = false;
 
     // 2. Search in admins table
     if (!user) {
-      userResult = await pool.query(
-        'SELECT id, email FROM admins WHERE reset_token = $1 AND reset_token_expiry > $2',
-        [cleanToken, new Date().toISOString()]
-      );
-      user = userResult.rows[0];
-      if (user) isDbAdmin = true;
+      const { data: adminUser, error: adminError } = await supabase
+        .from('admins')
+        .select('id, email')
+        .eq('reset_token', cleanToken)
+        .gt('reset_token_expiry', nowIso)
+        .maybeSingle();
+
+      if (adminError) throw adminError;
+      if (adminUser) {
+        user = adminUser;
+        isDbAdmin = true;
+      }
     }
 
     if (!user) {
@@ -689,10 +765,12 @@ const handleResetPassword = async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
     const tableName = isDbAdmin ? 'admins' : 'users';
 
-    await pool.query(
-      `UPDATE ${tableName} SET password_hash = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2`,
-      [password_hash, user.id]
-    );
+    const { error: updateError } = await supabase
+      .from(tableName)
+      .update({ password_hash, reset_token: null, reset_token_expiry: null })
+      .eq('id', user.id);
+
+    if (updateError) throw updateError;
 
     console.log(`✅ Password successfully reset for ${user.email} in ${tableName} table.`);
     return res.json({ success: true, message: 'Your password has been successfully reset! You can now log in.' });

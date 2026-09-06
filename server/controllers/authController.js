@@ -1,3 +1,4 @@
+const { supabase } = require("../config/supabase");
 const { sendAdminResetEmail } = require("../utils/AdminPasswordResetEmail");
 const crypto = require("crypto");
 
@@ -7,17 +8,31 @@ const adminForgotPassword = async (req, res) => {
 
     try {
         // 1. Check if email belongs to an Admin account
-        // (Replace Admin with your actual DB model)
-        const admin = await Admin.findOne({ email });
-        if (!admin) {
+        const { data: admin, error: findError } = await supabase
+            .from("admins")
+            .select("id, email")
+            .eq("email", email)
+            .single();
+
+        if (findError || !admin) {
             return res.status(404).json({ message: "Admin account not found." });
         }
 
         // 2. Generate a reset token & set expiration
         const resetToken = crypto.randomBytes(32).toString("hex");
-        admin.resetToken = resetToken;
-        admin.resetTokenExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
-        await admin.save();
+        const resetTokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+        const { error: updateError } = await supabase
+            .from("admins")
+            .update({
+                reset_token: resetToken,
+                reset_token_expiry: resetTokenExpiry.toISOString(),
+            })
+            .eq("id", admin.id);
+
+        if (updateError) {
+            throw updateError;
+        }
 
         // 3. Build the admin frontend URL with the token
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
