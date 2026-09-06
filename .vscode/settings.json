@@ -26,5 +26,9 @@
     "statusBar.debuggingForeground": "#e7e7e7"
   },
   "peacock.color": "#215732",
-  "liveServer.settings.port": 5501
+  "liveServer.settings.port": 5501,
+  "css.lint.unknownAtRules": "ignore",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }
