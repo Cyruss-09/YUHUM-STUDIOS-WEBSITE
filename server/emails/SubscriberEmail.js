@@ -47,10 +47,10 @@ function SubscriberEmail({
           
           <!-- Brand Header with Logo -->
           ${renderEmailHeader({
-            categoryBadge: "STUDIO JOURNAL & UPDATES",
-            title: "Yuhum Studios",
-            subtitle: "Moments, stories, and creative snapshots from our lounge.",
-          })}
+    categoryBadge: "STUDIO JOURNAL & UPDATES",
+    title: "Yuhum Studios",
+    subtitle: "Moments, stories, and creative snapshots from our lounge.",
+  })}
 
           <!-- Main Content -->
           <tr>
@@ -70,12 +70,12 @@ function SubscriberEmail({
                 <tr>
                   <td style="font-size: 15px; line-height: 1.75; color: #3E302B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
                     ${(messageBody || "")
-                      .split("\n")
-                      .filter((p) => p.trim())
-                      .map((paragraph) => `<p style="margin: 0 0 14px;">${paragraph}</p>`)
-                      .join("") ||
-                      "<p style=\"margin: 0;\">We are excited to share new backdrop themes, seasonal packages, and studio perks with you soon!</p>"
-                    }
+      .split("\n")
+      .filter((p) => p.trim())
+      .map((paragraph) => `<p style="margin: 0 0 14px;">${paragraph}</p>`)
+      .join("") ||
+    "<p style=\"margin: 0;\">We are excited to share new backdrop themes, seasonal packages, and studio perks with you soon!</p>"
+    }
                   </td>
                 </tr>
               </table>
@@ -85,10 +85,10 @@ function SubscriberEmail({
                 <tr>
                   <td align="center">
                     ${renderCtaButton({
-                      href: resolvedActionUrl,
-                      text: actionText,
-                      icon: "✨",
-                    })}
+      href: resolvedActionUrl,
+      text: actionText,
+      icon: "✨",
+    })}
                   </td>
                 </tr>
               </table>
@@ -115,10 +115,10 @@ function SubscriberEmail({
 
           <!-- Interactive Footer with Unsubscribe -->
           ${renderEmailFooter({
-            showSocials: true,
-            unsubscribeUrl,
-            supportNote: "You are receiving this because you subscribed to updates at Yuhum Studios.",
-          })}
+      showSocials: true,
+      unsubscribeUrl,
+      supportNote: "You are receiving this because you subscribed to updates at Yuhum Studios.",
+    })}
 
         </table>
       </td>

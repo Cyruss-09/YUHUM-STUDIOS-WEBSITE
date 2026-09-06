@@ -2,14 +2,12 @@ const { supabase } = require('../config/supabase');
 const { getResend, FROM_EMAIL, resolveRecipient } = require('../config/mailer');
 const { ReviewEmail } = require('../emails/ReviewEmail');
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-
 // Get all customer reviews
 const getReviews = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('reviews')
-            .select('*')
+            .select('id, overall_rating, equipment_ease, room_privacy, props_selection, favorite_backdrop, comments, recommend, created_at')
             .order('created_at', { ascending: false });
 
         if (error) return res.status(400).json({ success: false, message: error.message });
@@ -21,45 +19,80 @@ const getReviews = async (req, res) => {
 
 // Add new review
 const createReview = async (req, res) => {
-    const { customer_name, rating, comment } = req.body;
+    const {
+        user_email,
+        overall_rating,
+        equipment_ease,
+        room_privacy,
+        props_selection,
+        favorite_backdrop,
+        comments,
+        recommend,
+    } = req.body;
 
-    const cleanName = String(customer_name || '').trim();
-    const numericRating = Number(rating);
-
-    if (!cleanName) {
-        return res.status(400).json({ success: false, message: 'Customer name is required.' });
+    // Validate each required rating: whole number 0-5
+    const ratingFields = { overall_rating, equipment_ease, room_privacy, props_selection };
+    for (const [field, value] of Object.entries(ratingFields)) {
+        const num = Number(value);
+        if (!Number.isInteger(num) || num < 0 || num > 5) {
+            return res.status(400).json({
+                success: false,
+                message: `${field.replace('_', ' ')} must be a whole number between 0 and 5.`,
+            });
+        }
     }
 
-    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
-        return res.status(400).json({ success: false, message: 'Rating must be a whole number between 1 and 5.' });
+    // user_email is nullable in the schema, but validate format if provided
+    let cleanEmail = null;
+    if (user_email) {
+        cleanEmail = String(user_email).trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(cleanEmail)) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+        }
     }
 
     try {
         const { data, error } = await supabase
             .from('reviews')
-            .insert([{ customer_name: cleanName, rating: numericRating, comment: comment || null }])
+            .insert([{
+                user_email: cleanEmail,
+                overall_rating: Number(overall_rating),
+                equipment_ease: Number(equipment_ease),
+                room_privacy: Number(room_privacy),
+                props_selection: Number(props_selection),
+                favorite_backdrop: favorite_backdrop || null,
+                comments: comments || null,
+                recommend: typeof recommend === 'boolean' ? recommend : null,
+            }])
             .select();
 
         if (error) return res.status(400).json({ success: false, message: error.message });
 
         const newReview = data[0];
 
-        // Notify admin of the new review (non-blocking — a mail failure shouldn't fail the request)
-        const resend = getResend();
-        if (resend && ADMIN_EMAIL) {
-            try {
-                await resend.emails.send({
-                    from: FROM_EMAIL,
-                    to: resolveRecipient(ADMIN_EMAIL),
-                    subject: `New ${numericRating}-star review from ${cleanName}`,
-                    html: ReviewEmail({
-                        customerName: cleanName,
-                        rating: numericRating,
-                        comment: newReview.comment,
-                    }),
-                });
-            } catch (mailErr) {
-                console.error('Review notification email error:', mailErr.message || mailErr);
+        // Send thank-you email to the reviewer — only possible if they gave an email
+        if (cleanEmail) {
+            const resend = getResend();
+            if (resend) {
+                try {
+                    await resend.emails.send({
+                        from: FROM_EMAIL,
+                        to: resolveRecipient(cleanEmail),
+                        subject: 'Thank you for your review • Yuhum Studios',
+                        html: ReviewEmail({
+                            overallRating: newReview.overall_rating,
+                            equipmentEase: newReview.equipment_ease,
+                            roomPrivacy: newReview.room_privacy,
+                            propsSelection: newReview.props_selection,
+                            favoriteBackdrop: newReview.favorite_backdrop,
+                            comments: newReview.comments,
+                            userEmail: newReview.user_email,
+                        }),
+                    });
+                } catch (mailErr) {
+                    console.error('Review thank-you email error:', mailErr.message || mailErr);
+                }
             }
         }
 
