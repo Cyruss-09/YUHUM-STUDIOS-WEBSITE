@@ -1,51 +1,91 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const { supabase } = require("../config/supabase");
-const { sendAdminResetEmail } = require("../utils/AdminPasswordResetEmail");
-const crypto = require("crypto");
 
-// Endpoint handler for Admin Forgot Password
-const adminForgotPassword = async (req, res) => {
-    const { email } = req.body;
+const register = async (req, res) => {
+    const { username, email, password } = req.body;
+
+    // 1. Basic validation
+    if (!username || !email || !password) {
+        return res
+            .status(400)
+            .json({ success: false, error: "Please fill in all required fields." });
+    }
 
     try {
-        // 1. Check if email belongs to an Admin account
-        const { data: admin, error: findError } = await supabase
-            .from("admins")
-            .select("id, email")
-            .eq("email", email)
+        const cleanEmail = email.toLowerCase().trim();
+
+        // 2. Check if email or username already exists
+        const { data: existingUser, error: fetchErr } = await supabase
+            .from("users")
+            .select("id, email, username")
+            .or(`email.eq.${cleanEmail},username.eq.${username}`)
+            .maybeSingle();
+
+        if (fetchErr) {
+            console.error("❌ Supabase fetch error:", fetchErr);
+        }
+
+        if (existingUser) {
+            if (existingUser.email === cleanEmail) {
+                return res
+                    .status(400)
+                    .json({ success: false, error: "Email address is already registered." });
+            }
+            return res
+                .status(400)
+                .json({ success: false, error: "Username is already taken." });
+        }
+
+        // 3. Hash password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        // 4. Insert user into Supabase
+        // Make sure column names match your database schema (password_hash or password)
+        const { data: newUser, error: insertError } = await supabase
+            .from("users")
+            .insert([
+                {
+                    username: username.trim(),
+                    email: cleanEmail,
+                    password_hash: passwordHash, // Change to 'password' if your column is named 'password'
+                    role: "user",
+                },
+            ])
+            .select("id, username, email, role")
             .single();
 
-        if (findError || !admin) {
-            return res.status(404).json({ message: "Admin account not found." });
+        if (insertError) {
+            console.error("❌ Supabase insert error details:", insertError);
+            return res.status(500).json({
+                success: false,
+                error: insertError.message || "Failed to create user account.",
+            });
         }
 
-        // 2. Generate a reset token & set expiration
-        const resetToken = crypto.randomBytes(32).toString("hex");
-        const resetTokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        // 5. Generate JWT Token
+        const token = jwt.sign(
+            { id: newUser.id, email: newUser.email, role: newUser.role },
+            process.env.JWT_SECRET || "fallback-secret",
+            { expiresIn: process.env.JWT_EXPIRY || "7d" }
+        );
 
-        const { error: updateError } = await supabase
-            .from("admins")
-            .update({
-                reset_token: resetToken,
-                reset_token_expiry: resetTokenExpiry.toISOString(),
-            })
-            .eq("id", admin.id);
-
-        if (updateError) {
-            throw updateError;
-        }
-
-        // 3. Build the admin frontend URL with the token
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-        const resetLink = `${frontendUrl}/admin-reset-password/${resetToken}`;
-
-        // 4. Trigger the email
-        await sendAdminResetEmail(admin.email, resetLink);
-
-        return res.status(200).json({ message: "Admin reset link sent to email." });
-    } catch (error) {
-        console.error("Admin reset email error:", error);
-        return res.status(500).json({ message: "Server error sending email." });
+        return res.status(201).json({
+            success: true,
+            message: "Account created successfully!",
+            token,
+            user: newUser,
+        });
+    } catch (err) {
+        console.error("❌ Unhandled registration server error:", err);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error during registration.",
+        });
     }
 };
 
-module.exports = { adminForgotPassword };
+module.exports = {
+    register,
+};
