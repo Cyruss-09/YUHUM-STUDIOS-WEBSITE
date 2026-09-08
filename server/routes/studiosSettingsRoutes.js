@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getStudioSettings, updateStudioSetting } = require('../controllers/studioSettingsController');
 
-router.get('/', getStudioSettings);
+// Match the exact function names exported from studioSettingsController.js
+const { getPublicSettings, updateStudioSetting } = require('../controllers/studioSettingsController');
+
+router.get('/', getPublicSettings);
 router.put('/', updateStudioSetting);
 
 module.exports = router;

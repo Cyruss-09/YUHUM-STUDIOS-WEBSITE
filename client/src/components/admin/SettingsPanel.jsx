@@ -77,7 +77,7 @@ export default function SettingsPanel() {
   // Blackout date handlers
   const handleAddBlackoutDate = () => {
     if (!newBlackoutDate) return;
-    const currentDates = settings.schedule.blackoutDates || [];
+    const currentDates = settings.schedule?.blackoutDates || [];
     if (currentDates.includes(newBlackoutDate)) {
       showToast("Date is already in the blackout list", "error");
       return;
@@ -91,7 +91,7 @@ export default function SettingsPanel() {
   };
 
   const handleRemoveBlackoutDate = (dateToRemove) => {
-    const updated = (settings.schedule.blackoutDates || []).filter(
+    const updated = (settings.schedule?.blackoutDates || []).filter(
       (d) => d !== dateToRemove
     );
     setSettings((prev) => ({
@@ -272,7 +272,7 @@ export default function SettingsPanel() {
               </label>
               <input
                 type="text"
-                value={settings.general?.studioName || ""}
+                value={settings.general?.studioName ?? ""}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
@@ -290,7 +290,7 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="email"
-                  value={settings.general?.contactEmail || ""}
+                  value={settings.general?.contactEmail ?? ""}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
@@ -309,7 +309,7 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="text"
-                  value={settings.general?.phone || ""}
+                  value={settings.general?.phone ?? ""}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
@@ -327,7 +327,7 @@ export default function SettingsPanel() {
               </label>
               <input
                 type="text"
-                value={settings.general?.address || ""}
+                value={settings.general?.address ?? ""}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
@@ -355,7 +355,7 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="text"
-                  value={settings.schedule?.openTime || "10:00 AM"}
+                  value={settings.schedule?.openTime ?? "10:00 AM"}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
@@ -375,7 +375,7 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="text"
-                  value={settings.schedule?.closeTime || "06:00 PM"}
+                  value={settings.schedule?.closeTime ?? "06:00 PM"}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
@@ -398,13 +398,13 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="number"
-                  value={settings.schedule?.slotDurationMinutes || 30}
+                  value={settings.schedule?.slotDurationMinutes ?? 30}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       schedule: {
                         ...settings.schedule,
-                        slotDurationMinutes: parseInt(e.target.value, 10) || 30,
+                        slotDurationMinutes: parseInt(e.target.value, 10) || 0,
                       },
                     })
                   }
@@ -417,7 +417,7 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="number"
-                  value={settings.schedule?.bufferMinutes || 15}
+                  value={settings.schedule?.bufferMinutes ?? 15}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
@@ -568,16 +568,18 @@ export default function SettingsPanel() {
                   </span>
                   <input
                     type="number"
-                    value={settings.packages?.kadlawPrice || 649}
-                    onChange={(e) =>
+                    value={settings.packages?.kadlawPrice ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value === "" ? "" : parseFloat(e.target.value);
                       setSettings({
                         ...settings,
                         packages: {
                           ...settings.packages,
-                          kadlawPrice: parseFloat(e.target.value) || 0,
+                          kadlawPrice: val,
                         },
-                      })
-                    }
+                      });
+                    }}
+                    placeholder="1000"
                     className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-8 pr-3.5 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
                   />
                 </div>
@@ -609,16 +611,18 @@ export default function SettingsPanel() {
                   </span>
                   <input
                     type="number"
-                    value={settings.packages?.gugmaPrice || 1499}
-                    onChange={(e) =>
+                    value={settings.packages?.gugmaPrice ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value === "" ? "" : parseFloat(e.target.value);
                       setSettings({
                         ...settings,
                         packages: {
                           ...settings.packages,
-                          gugmaPrice: parseFloat(e.target.value) || 0,
+                          gugmaPrice: val,
                         },
-                      })
-                    }
+                      });
+                    }}
+                    placeholder="1499"
                     className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-8 pr-3.5 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
                   />
                 </div>
@@ -659,12 +663,12 @@ export default function SettingsPanel() {
                     </span>
                     <input
                       type="number"
-                      value={addon.price}
+                      value={addon.price ?? ""}
                       onChange={(e) => {
                         const newAddOns = [...settings.packages.addOns];
                         newAddOns[idx] = {
                           ...addon,
-                          price: parseFloat(e.target.value) || 0,
+                          price: e.target.value === "" ? "" : parseFloat(e.target.value),
                         };
                         setSettings({
                           ...settings,
@@ -731,7 +735,7 @@ export default function SettingsPanel() {
                   promoCodes.filter(Boolean).map((p, index) => (
                     <tr key={p?.id || index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-gray-100">
-                        {p?.code || '—'}
+                        {p?.code || "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                         {p?.discount_type === "percentage"
@@ -745,8 +749,8 @@ export default function SettingsPanel() {
                         <button
                           onClick={() => togglePromoCode(p?.id, p?.is_active)}
                           className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${p?.is_active
-                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
+                            : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600"
                             }`}
                         >
                           {p?.is_active ? "Active" : "Inactive"}
@@ -755,7 +759,7 @@ export default function SettingsPanel() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => deletePromoCode(p?.id)}
-                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs font-semibold"
                         >
                           Delete
                         </button>
@@ -766,292 +770,189 @@ export default function SettingsPanel() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
 
-      {/* Create Promo Modal */}
-      {isPromoModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 dark:text-gray-100">New Promo Voucher</h3>
-              <button
-                onClick={() => setIsPromoModalOpen(false)}
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-lg"
-              >
-                ×
-              </button>
+          {/* Promo Modal */}
+          {isPromoModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-xl border border-gray-200 dark:border-gray-700 flex flex-col gap-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Create New Promo Code</h3>
+                <form onSubmit={handleCreatePromo} className="flex flex-col gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Promo Code</label>
+                    <input
+                      type="text"
+                      required
+                      value={promoForm.code}
+                      onChange={(e) => setPromoForm({ ...promoForm, code: e.target.value.toUpperCase() })}
+                      placeholder="e.g. SUMMER2026"
+                      className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Discount Type</label>
+                      <select
+                        value={promoForm.discount_type}
+                        onChange={(e) => setPromoForm({ ...promoForm, discount_type: e.target.value })}
+                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (₱)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Value</label>
+                      <input
+                        type="number"
+                        required
+                        value={promoForm.discount_value}
+                        onChange={(e) => setPromoForm({ ...promoForm, discount_value: e.target.value })}
+                        placeholder="e.g. 10 or 100"
+                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Max Uses</label>
+                      <input
+                        type="number"
+                        value={promoForm.max_uses}
+                        onChange={(e) => setPromoForm({ ...promoForm, max_uses: e.target.value })}
+                        placeholder="Optional"
+                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Expires At</label>
+                      <input
+                        type="date"
+                        value={promoForm.expires_at}
+                        onChange={(e) => setPromoForm({ ...promoForm, expires_at: e.target.value })}
+                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsPromoModalOpen(false)}
+                      className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-xl bg-black dark:bg-white text-xs font-semibold text-white dark:text-black"
+                    >
+                      Save Promo
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-
-            <form onSubmit={handleCreatePromo} className="flex flex-col gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                  Coupon Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. YUHUM10"
-                  value={promoForm.code}
-                  onChange={(e) =>
-                    setPromoForm({ ...promoForm, code: e.target.value.toUpperCase() })
-                  }
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm uppercase font-mono font-bold"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                    Discount Type
-                  </label>
-                  <select
-                    value={promoForm.discount_type}
-                    onChange={(e) =>
-                      setPromoForm({ ...promoForm, discount_type: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
-                  >
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (₱)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                    Discount Value
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 10 or 100"
-                    value={promoForm.discount_value}
-                    onChange={(e) =>
-                      setPromoForm({ ...promoForm, discount_value: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                    Max Redemptions
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Leave blank for unlimited"
-                    value={promoForm.max_uses}
-                    onChange={(e) =>
-                      setPromoForm({ ...promoForm, max_uses: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                    Expiry Date
-                  </label>
-                  <input
-                    type="date"
-                    value={promoForm.expires_at}
-                    onChange={(e) =>
-                      setPromoForm({ ...promoForm, expires_at: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsPromoModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-semibold bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200"
-                >
-                  Save Promo Code
-                </button>
-              </div>
-            </form>
-          </div>
+          )}
         </div>
       )}
 
       {/* Tab 4: Payments & GCash */}
       {activeSubTab === "payments" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          {/* GCash & Maya Settings */}
+        <div className="flex flex-col gap-6 pt-2">
           <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-lg">📱</span>
+              <span className="text-lg">💳</span>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                E-Wallet Accounts (GCash & Maya)
+                GCash & Online Payment Configuration
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
                   GCash Account Name
                 </label>
                 <input
                   type="text"
-                  value={settings.payments?.gcashName || ""}
+                  value={settings.payments?.gcashAccountName ?? ""}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
-                      payments: { ...settings.payments, gcashName: e.target.value },
+                      payments: { ...settings.payments, gcashAccountName: e.target.value },
                     })
                   }
+                  placeholder="e.g. Studio Admin"
                   className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                  GCash Mobile Number
-                </label>
-                <input
-                  type="text"
-                  value={settings.payments?.gcashNumber || ""}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      payments: {
-                        ...settings.payments,
-                        gcashNumber: e.target.value,
-                      },
-                    })
-                  }
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                  Maya Account Name
+                  GCash Number
                 </label>
                 <input
                   type="text"
-                  value={settings.payments?.mayaName || ""}
+                  value={settings.payments?.gcashNumber ?? ""}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
-                      payments: { ...settings.payments, mayaName: e.target.value },
+                      payments: { ...settings.payments, gcashNumber: e.target.value },
                     })
                   }
+                  placeholder="e.g. 0917XXXXXXX"
                   className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                  Maya Mobile Number
-                </label>
-                <input
-                  type="text"
-                  value={settings.payments?.mayaNumber || ""}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      payments: { ...settings.payments, mayaNumber: e.target.value },
-                    })
-                  }
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Deposit Rules & Instructions */}
-          <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">💳</span>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                Deposit Policy & Bank Details
-              </h3>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                Payment Requirement Mode
-              </label>
-              <select
-                value={settings.payments?.downpaymentType || "full"}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    payments: {
-                      ...settings.payments,
-                      downpaymentType: e.target.value,
-                    },
-                  })
-                }
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm font-medium"
-              >
-                <option value="full">100% Full Payment Required</option>
-                <option value="half">50% Downpayment Deposit</option>
-                <option value="onsite">Pay Upon Arrival / Studio Session</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                Customer Payment Instructions Note
+                Payment Instructions / Notes
               </label>
               <textarea
                 rows={3}
-                value={settings.payments?.paymentInstructions || ""}
+                value={settings.payments?.instructions ?? ""}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
-                    payments: {
-                      ...settings.payments,
-                      paymentInstructions: e.target.value,
-                    },
+                    payments: { ...settings.payments, instructions: e.target.value },
                   })
                 }
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 p-3 text-xs"
+                placeholder="Instructions shown to customers at checkout..."
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab 5: Website CMS & Banner */}
+      {/* Tab 5: Website & Banner */}
       {activeSubTab === "cms" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          {/* Announcement Banner */}
+        <div className="flex flex-col gap-6 pt-2">
           <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📢</span>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  Homepage Announcement Bar
-                </h3>
-              </div>
-
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.cms?.bannerEnabled ?? false}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      cms: { ...settings.cms, bannerEnabled: e.target.checked },
-                    })
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-              </label>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📢</span>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                Announcement Banner
+              </h3>
             </div>
+
+            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={settings.cms?.bannerActive ?? false}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    cms: { ...settings.cms, bannerActive: e.target.checked },
+                  })
+                }
+                className="h-4 w-4 rounded text-black focus:ring-black dark:bg-gray-800 dark:border-gray-600"
+              />
+              <span>Enable Announcement Banner on Top of Site</span>
+            </label>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
@@ -1059,102 +960,25 @@ export default function SettingsPanel() {
               </label>
               <input
                 type="text"
-                value={settings.cms?.bannerText || ""}
+                value={settings.cms?.bannerText ?? ""}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
                     cms: { ...settings.cms, bannerText: e.target.value },
                   })
                 }
-                placeholder="e.g. ✨ Book now for 10% off using code LOVE2026!"
+                placeholder="e.g. 🎉 Special discount available this weekend!"
                 className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                Banner Accent Style
-              </label>
-              <div className="flex gap-2">
-                {["dark", "amber", "emerald", "blue"].map((theme) => (
-                  <button
-                    key={theme}
-                    type="button"
-                    onClick={() =>
-                      setSettings({
-                        ...settings,
-                        cms: { ...settings.cms, bannerTheme: theme },
-                      })
-                    }
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize border ${(settings.cms?.bannerTheme || "dark") === theme
-                      ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
-                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      }`}
-                  >
-                    {theme}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Maintenance Mode */}
-          <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🛠️</span>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  Maintenance Mode
-                </h3>
-              </div>
-
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.cms?.maintenanceMode ?? false}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      cms: { ...settings.cms, maintenanceMode: e.target.checked },
-                    })
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-              </label>
-            </div>
-
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              When enabled, public booking will show a temporary offline notice.
-            </p>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                Maintenance Notice
-              </label>
-              <textarea
-                rows={2}
-                value={settings.cms?.maintenanceMessage || ""}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    cms: {
-                      ...settings.cms,
-                      maintenanceMessage: e.target.value,
-                    },
-                  })
-                }
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 p-3 text-xs"
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab 6: Security & System Diagnostics */}
+      {/* Tab 6: Security & System */}
       {activeSubTab === "security" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          {/* Admin Password Change Form */}
+          {/* Change Password */}
           <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <span className="text-lg">🔒</span>
@@ -1163,45 +987,41 @@ export default function SettingsPanel() {
               </h3>
             </div>
 
-            <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-3">
-              {pwdFeedback && (
-                <div
-                  className={`p-3 rounded-xl text-xs font-medium ${pwdFeedback.type === "success"
-                    ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                    : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
-                    }`}
-                >
-                  {pwdFeedback.message}
-                </div>
-              )}
+            {pwdFeedback && (
+              <div
+                className={`p-3 rounded-xl text-xs font-medium ${pwdFeedback.type === "success"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                  : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
+                  }`}
+              >
+                {pwdFeedback.message}
+              </div>
+            )}
 
+            <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
                   Current Password
                 </label>
                 <input
                   type="password"
-                  value={pwdForm.currentPassword}
-                  onChange={(e) =>
-                    setPwdForm({ ...pwdForm, currentPassword: e.target.value })
-                  }
                   required
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+                  value={pwdForm.currentPassword}
+                  onChange={(e) => setPwdForm({ ...pwdForm, currentPassword: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2 text-sm"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                  New Password (min 6 chars)
+                  New Password
                 </label>
                 <input
                   type="password"
-                  value={pwdForm.newPassword}
-                  onChange={(e) =>
-                    setPwdForm({ ...pwdForm, newPassword: e.target.value })
-                  }
                   required
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+                  value={pwdForm.newPassword}
+                  onChange={(e) => setPwdForm({ ...pwdForm, newPassword: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2 text-sm"
                 />
               </div>
 
@@ -1211,93 +1031,43 @@ export default function SettingsPanel() {
                 </label>
                 <input
                   type="password"
-                  value={pwdForm.confirmPassword}
-                  onChange={(e) =>
-                    setPwdForm({ ...pwdForm, confirmPassword: e.target.value })
-                  }
                   required
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+                  value={pwdForm.confirmPassword}
+                  onChange={(e) => setPwdForm({ ...pwdForm, confirmPassword: e.target.value })}
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2 text-sm"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={pwdLoading}
-                className="mt-2 rounded-xl bg-black dark:bg-white px-4 py-2.5 text-xs font-semibold text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50"
+                className="mt-2 rounded-xl bg-black dark:bg-white px-4 py-2.5 text-xs font-semibold text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50"
               >
                 {pwdLoading ? "Updating Password…" : "Update Password"}
               </button>
             </form>
           </div>
 
-          {/* System Status & Data Export */}
-          <div className="flex flex-col gap-6">
-            {/* System Status Box */}
-            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">⚡</span>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  System & Integration Status
-                </h3>
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-gray-200/60 dark:border-gray-700/60 text-xs">
-                <span className="text-gray-600 dark:text-gray-400">PostgreSQL Database</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                  Connected
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-gray-200/60 dark:border-gray-700/60 text-xs">
-                <span className="text-gray-600 dark:text-gray-400">Resend Email Gateway</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                  Active
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2 text-xs">
-                <span className="text-gray-600 dark:text-gray-400">Active Admin Account</span>
-                <span className="font-mono text-gray-900 dark:text-gray-100 font-medium">
-                  {user?.email || "admin@yuhum.com"}
-                </span>
-              </div>
+          {/* Data Export / System Backup */}
+          <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📦</span>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                System Data Export
+              </h3>
             </div>
 
-            {/* CSV Data Export Box */}
-            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📊</span>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  Data Backup & Export
-                </h3>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Download a clean spreadsheet format (CSV) of all studio bookings
-                for accounting, reports, and backup.
-              </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Download your full booking history and customer details as a CSV file for backup or accounting purposes.
+            </p>
 
-              <button
-                onClick={exportBookingsCsv}
-                className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-xs font-semibold text-gray-800 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all"
-              >
-                <svg
-                  className="w-4 h-4 text-gray-600 dark:text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Export All Bookings to CSV
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={exportBookingsCsv}
+              className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              📥 Export Bookings CSV
+            </button>
           </div>
         </div>
       )}

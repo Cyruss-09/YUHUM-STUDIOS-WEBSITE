@@ -52,31 +52,85 @@ const DEFAULT_SETTINGS = {
     },
 };
 
+// GET /api/studio-settings
 const getPublicSettings = async (req, res) => {
     try {
-        const { data: dbSettings, error } = await supabase
+        const { data: row, error } = await supabase
             .from('studio_settings')
-            .select('setting_key, setting_value');
+            .select('settings')
+            .eq('id', 1)
+            .single();
 
         if (error) {
             console.error('Error fetching settings from Supabase:', error.message);
-            return res.json({ success: true, settings: DEFAULT_SETTINGS });
+            return res.status(200).json({ success: true, settings: DEFAULT_SETTINGS });
         }
 
-        const settingsMap = { ...DEFAULT_SETTINGS };
-        if (dbSettings && dbSettings.length > 0) {
-            dbSettings.forEach((row) => {
-                settingsMap[row.setting_key] = row.setting_value;
-            });
+        let dbSettings = {};
+        if (row && row.settings) {
+            dbSettings = typeof row.settings === 'string' ? JSON.parse(row.settings) : row.settings;
         }
 
-        return res.status(200).json({ success: true, settings: settingsMap });
+        const mergedSettings = {
+            ...DEFAULT_SETTINGS,
+            ...dbSettings,
+            packages: {
+                ...DEFAULT_SETTINGS.packages,
+                ...(dbSettings.packages || {}),
+            },
+            general: {
+                ...DEFAULT_SETTINGS.general,
+                ...(dbSettings.general || {}),
+            },
+            schedule: {
+                ...DEFAULT_SETTINGS.schedule,
+                ...(dbSettings.schedule || {}),
+            },
+            payments: {
+                ...DEFAULT_SETTINGS.payments,
+                ...(dbSettings.payments || {}),
+            },
+            cms: {
+                ...DEFAULT_SETTINGS.cms,
+                ...(dbSettings.cms || {}),
+            },
+        };
+
+        return res.status(200).json({ success: true, settings: mergedSettings });
     } catch (err) {
         console.error('Unexpected error in getPublicSettings:', err);
         return res.status(200).json({ success: true, settings: DEFAULT_SETTINGS });
     }
 };
 
+// PUT /api/studio-settings
+const updateStudioSetting = async (req, res) => {
+    try {
+        // Accepts payload as { settings: { ... } } or raw settings object
+        const newSettings = req.body.settings || req.body;
+
+        const { data, error } = await supabase
+            .from('studio_settings')
+            .upsert({
+                id: 1,
+                settings: newSettings,
+                updated_at: new Date().toISOString()
+            })
+            .select();
+
+        if (error) {
+            console.error('Error saving to Supabase:', error.message);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+
+        return res.status(200).json({ success: true, message: 'Settings saved successfully', data });
+    } catch (err) {
+        console.error('Unexpected error in updateStudioSetting:', err);
+        return res.status(500).json({ success: false, error: 'Failed to save settings' });
+    }
+};
+
 module.exports = {
     getPublicSettings,
+    updateStudioSetting,
 };

@@ -14,8 +14,12 @@ const publicRoutes = require("./routes/publicRoutes");
 const campaignRoutes = require("./routes/campaignRoutes"); // If separate; otherwise mounted in admin
 const adminSettingsRoutes = require("./routes/adminSettingsRoutes");
 const promoRoutes = require("./routes/promoRoutes"); // 1. Added Promo Routes
+const studioSettingsRoutes = require('./routes/studiosSettingsRoutes');
 
 const app = express();
+
+// Parse JSON bodies
+app.use(express.json());
 
 // Middleware
 app.use(cors());
@@ -32,6 +36,7 @@ app.use("/api/public", publicRoutes);
 app.use("/api/resend-campaign", campaignRoutes);
 app.use("/api/admin", adminSettingsRoutes);
 app.use("/api/promos", promoRoutes); // 2. Mounted Promo Routes
+app.use('/api/studio-settings', studioSettingsRoutes);
 
 
 // Health Check Endpoint
