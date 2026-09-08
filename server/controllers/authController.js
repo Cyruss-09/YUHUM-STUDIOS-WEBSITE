@@ -2,6 +2,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { supabase } = require("../config/supabase");
 
+/**
+ * User Registration
+ */
 const register = async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -42,14 +45,13 @@ const register = async (req, res) => {
         const passwordHash = await bcrypt.hash(password, salt);
 
         // 4. Insert user into Supabase
-        // Make sure column names match your database schema (password_hash or password)
         const { data: newUser, error: insertError } = await supabase
             .from("users")
             .insert([
                 {
                     username: username.trim(),
                     email: cleanEmail,
-                    password_hash: passwordHash, // Change to 'password' if your column is named 'password'
+                    password_hash: passwordHash,
                     role: "user",
                 },
             ])
@@ -86,6 +88,82 @@ const register = async (req, res) => {
     }
 };
 
+/**
+ * Admin Login Handler
+ */
+const adminLogin = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: "Email and password are required.",
+        });
+    }
+
+    try {
+        const cleanEmail = email.toLowerCase().trim();
+
+        // 1. Query user from Supabase using password_hash
+        const { data: admin, error: fetchErr } = await supabase
+            .from("users")
+            .select("id, username, email, password_hash, role")
+            .eq("email", cleanEmail)
+            .maybeSingle();
+
+        if (fetchErr) {
+            console.error("❌ Supabase admin query error:", fetchErr);
+            return res
+                .status(500)
+                .json({ success: false, message: "Database query error." });
+        }
+
+        // 2. Validate user existence and role
+        if (!admin || admin.role !== "admin") {
+            console.log(`❌ Login rejected: User not found or not an admin (${cleanEmail})`);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid administrator credentials.",
+            });
+        }
+
+        // 3. Compare input password against stored bcrypt hash
+        const isMatch = await bcrypt.compare(password, admin.password_hash);
+
+        if (!isMatch) {
+            console.log(`❌ Login rejected: Password mismatch for (${cleanEmail})`);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid administrator credentials.",
+            });
+        }
+
+        // 4. Generate JWT Token
+        const token = jwt.sign(
+            { id: admin.id, email: admin.email, role: admin.role },
+            process.env.JWT_SECRET || "fallback-secret",
+            { expiresIn: process.env.JWT_EXPIRY || "1d" }
+        );
+
+        // Omit password hash from response payload
+        const { password_hash, ...adminData } = admin;
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin authenticated successfully.",
+            token,
+            admin: adminData,
+        });
+    } catch (err) {
+        console.error("❌ Admin login server error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during admin login.",
+        });
+    }
+};
+
 module.exports = {
     register,
+    adminLogin,
 };

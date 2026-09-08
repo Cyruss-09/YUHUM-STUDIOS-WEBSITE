@@ -1,101 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { supabase } = require('../config/supabase');
 const { getResend, FROM_EMAIL, resolveRecipient } = require('../config/mailer');
 const { PasswordResetEmail } = require('../emails/PasswordResetEmail');
 const { AdminPasswordResetEmail } = require('../emails/AdminPasswordResetEmail');
 
+// Delegate registration and admin login to controller handlers
+const { register, adminLogin } = require("../controllers/authController");
+
 const JWT_SECRET = process.env.JWT_SECRET || 'yuhum-secret-token-key-change-in-env';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
 
 /**
  * POST /api/auth/register
- * Register a new user account
+ * Register a new user account via Auth Controller
  */
-router.post('/register', async (req, res) => {
-  const { username, email, password } = req.body;
+router.post('/register', register);
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ success: false, message: 'Username, email, and password are required.' });
-  }
-
-  const cleanUsername = String(username).trim();
-  const cleanEmail = String(email).trim().toLowerCase();
-
-  if (cleanUsername.length < 3) {
-    return res.status(400).json({ success: false, message: 'Username must be at least 3 characters.' });
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(cleanEmail)) {
-    return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
-  }
-
-  if (String(password).length < 6) {
-    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
-  }
-
-  try {
-    // Check if email already in use
-    const { data: existingEmail, error: emailCheckError } = await supabase
-      .from('users')
-      .select('id')
-      .ilike('email', cleanEmail)
-      .maybeSingle();
-
-    if (emailCheckError) throw emailCheckError;
-    if (existingEmail) {
-      return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
-    }
-
-    // Check if username already in use
-    const { data: existingUsername, error: usernameCheckError } = await supabase
-      .from('users')
-      .select('id')
-      .ilike('username', cleanUsername)
-      .maybeSingle();
-
-    if (usernameCheckError) throw usernameCheckError;
-    if (existingUsername) {
-      return res.status(400).json({ success: false, message: 'Username is already taken. Please choose another.' });
-    }
-
-    const password_hash = await bcrypt.hash(password, 10);
-
-    const { data: newUser, error: insertError } = await supabase
-      .from('users')
-      .insert([{ username: cleanUsername, email: cleanEmail, password_hash, role: 'user' }])
-      .select('id, username, email, role, created_at')
-      .single();
-
-    if (insertError) throw insertError;
-
-    const token = jwt.sign(
-      { id: newUser.id, role: newUser.role, email: newUser.email },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRY }
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: 'Account created successfully!',
-      token,
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role,
-        created_at: newUser.created_at
-      }
-    });
-  } catch (err) {
-    console.error('Registration error:', err);
-    return res.status(500).json({ success: false, message: 'Registration failed due to a server error.' });
-  }
-});
+/**
+ * POST /api/auth/admin/login
+ * Dedicated Administrator Login via Auth Controller
+ */
+router.post('/admin/login', adminLogin);
 
 /**
  * POST /api/auth/login
@@ -103,31 +32,43 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   const { identifier, email, username, password } = req.body;
-  const loginIdentifier = String(identifier || email || username || '').trim();
+  const rawIdentifier = String(identifier || email || username || '').trim();
 
-  if (!loginIdentifier || !password) {
+  if (!rawIdentifier || !password) {
     return res.status(400).json({ success: false, message: 'Email/Username and password are required.' });
   }
 
   try {
-    // 1. Search in users table by email or username
-    const { data: foundUser, error: userError } = await supabase
+    // 1. Try matching by email first
+    let { data: foundUser, error: userError } = await supabase
       .from('users')
       .select('*')
-      .or(`email.ilike.${loginIdentifier},username.ilike.${loginIdentifier}`)
+      .ilike('email', rawIdentifier)
       .maybeSingle();
 
     if (userError) throw userError;
 
+    // 2. Fall back to matching by username if no email match
+    if (!foundUser) {
+      const { data: byUsername, error: usernameError } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('username', rawIdentifier)
+        .maybeSingle();
+
+      if (usernameError) throw usernameError;
+      foundUser = byUsername;
+    }
+
     let user = foundUser;
     let isAdminTable = false;
 
-    // 2. Fallback to admins table if not found in users
+    // 3. Fallback to admins table if not found in users
     if (!user) {
       const { data: foundAdmin, error: adminError } = await supabase
         .from('admins')
         .select('*')
-        .ilike('email', loginIdentifier)
+        .ilike('email', rawIdentifier)
         .maybeSingle();
 
       if (adminError) throw adminError;
@@ -165,7 +106,6 @@ router.post('/login', async (req, res) => {
       success: true,
       token,
       user: userProfile,
-      // Provide admin key if role is admin for legacy consumers
       ...(role === 'admin' ? { admin: userProfile } : {})
     });
   } catch (err) {
@@ -175,82 +115,11 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * POST /api/auth/admin/login
- * Dedicated Administrator Login
- */
-router.post('/admin/login', async (req, res) => {
-  const { email, username, password } = req.body;
-  const adminIdentifier = String(email || username || '').trim();
-
-  if (!adminIdentifier || !password) {
-    return res.status(400).json({ success: false, message: 'Admin email and password are required.' });
-  }
-
-  try {
-    // 1. Check admins table
-    let { data: admin, error: adminError } = await supabase
-      .from('admins')
-      .select('*')
-      .ilike('email', adminIdentifier)
-      .maybeSingle();
-
-    if (adminError) throw adminError;
-
-    // 2. Fallback: check users table with admin role
-    if (!admin) {
-      const { data: adminAsUser, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .or(`email.ilike.${adminIdentifier},username.ilike.${adminIdentifier}`)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (userError) throw userError;
-      admin = adminAsUser;
-    }
-
-    if (!admin) {
-      return res.status(401).json({ success: false, message: 'Invalid administrator credentials.' });
-    }
-
-    const match = await bcrypt.compare(password, admin.password_hash);
-    if (!match) {
-      return res.status(401).json({ success: false, message: 'Invalid administrator credentials.' });
-    }
-
-    const token = jwt.sign(
-      { id: admin.id, role: 'admin', email: admin.email },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRY }
-    );
-
-    const adminProfile = {
-      id: admin.id,
-      name: admin.name || admin.username || 'Admin',
-      username: admin.username || admin.name || 'Admin',
-      email: admin.email,
-      role: 'admin'
-    };
-
-    return res.json({
-      success: true,
-      token,
-      admin: adminProfile,
-      user: adminProfile
-    });
-  } catch (err) {
-    console.error('Admin login error:', err);
-    return res.status(500).json({ success: false, message: 'Admin login failed due to a server error.' });
-  }
-});
-
-/**
  * Helper to find or create a user signed in via social authentication (Google or Facebook)
  */
 async function findOrCreateSocialUser({ email, name, provider, providerId, avatarUrl }) {
   const cleanEmail = String(email).trim().toLowerCase();
 
-  // 1. Check if user with this email already exists
   const { data: existingUser, error: findError } = await supabase
     .from('users')
     .select('*')
@@ -260,7 +129,6 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
   if (findError) throw findError;
 
   if (existingUser) {
-    // Update provider_id, auth_provider, avatar_url if needed
     const { data: updatedUser, error: updateError } = await supabase
       .from('users')
       .update({
@@ -276,7 +144,6 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
     return updatedUser || existingUser;
   }
 
-  // 2. Generate a clean unique username
   let baseUsername = (name || cleanEmail.split('@')[0])
     .replace(/[^a-zA-Z0-9_]/g, '')
     .toLowerCase()
@@ -297,7 +164,6 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
     candidateUsername = `${baseUsername}${counter++}`;
   }
 
-  // 3. Insert new user
   const { data: newUser, error: insertError } = await supabase
     .from('users')
     .insert([{
@@ -317,7 +183,6 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
 
 /**
  * POST /api/auth/google
- * Authenticate with Google (verifies Google token or demo profile)
  */
 router.post('/google', async (req, res) => {
   const { credential, accessToken, email, name, picture, sub, mode } = req.body;
@@ -328,7 +193,6 @@ router.post('/google', async (req, res) => {
     let socialPicture = picture;
     let socialSub = sub;
 
-    // If Google ID token credential was provided, verify with Google
     if (credential) {
       const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
       if (!verifyRes.ok) {
@@ -340,7 +204,6 @@ router.post('/google', async (req, res) => {
       socialPicture = payload.picture;
       socialSub = payload.sub;
     } else if (accessToken) {
-      // If Google OAuth2 access token was provided, fetch from userinfo
       const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -401,7 +264,6 @@ router.post('/google', async (req, res) => {
 
 /**
  * POST /api/auth/facebook
- * Authenticate with Facebook (verifies Facebook access token or demo profile)
  */
 router.post('/facebook', async (req, res) => {
   const { accessToken, email, name, picture, id, mode } = req.body;
@@ -473,7 +335,6 @@ router.post('/facebook', async (req, res) => {
 
 /**
  * GET /api/auth/me
- * Validate current session and retrieve profile
  */
 router.get('/me', async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -484,7 +345,6 @@ router.get('/me', async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Check admin role
     if (decoded.role === 'admin') {
       let { data: admin, error: adminError } = await supabase
         .from('admins')
@@ -518,7 +378,6 @@ router.get('/me', async (req, res) => {
       }
     }
 
-    // Standard User lookup
     const { data: user, error: findError } = await supabase
       .from('users')
       .select('id, username, email, role, avatar_url, auth_provider, created_at')
@@ -551,7 +410,6 @@ router.get('/me', async (req, res) => {
 
 /**
  * POST /api/auth/forgot-password
- * Initiate Client Password Reset Email
  */
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
@@ -570,7 +428,6 @@ router.post('/forgot-password', async (req, res) => {
 
     if (findError) throw findError;
 
-    // Always respond with success message to prevent user enumeration
     if (!user) {
       return res.json({
         success: true,
@@ -579,7 +436,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    const expiry = new Date(Date.now() + 30 * 60 * 1000);
 
     const { error: updateError } = await supabase
       .from('users')
@@ -619,7 +476,6 @@ router.post('/forgot-password', async (req, res) => {
 
 /**
  * POST /api/auth/admin/forgot-password
- * Initiate Admin Security Password Reset Email
  */
 router.post('/admin/forgot-password', async (req, res) => {
   const { email } = req.body;
@@ -630,7 +486,6 @@ router.post('/admin/forgot-password', async (req, res) => {
   const cleanEmail = String(email).trim().toLowerCase();
 
   try {
-    // 1. Search admins table
     let { data: admin, error: adminError } = await supabase
       .from('admins')
       .select('id, email, name, role')
@@ -641,7 +496,6 @@ router.post('/admin/forgot-password', async (req, res) => {
 
     let isAdminsTable = true;
 
-    // 2. Search users table with role = 'admin'
     if (!admin) {
       const { data: adminAsUser, error: userError } = await supabase
         .from('users')
@@ -657,7 +511,6 @@ router.post('/admin/forgot-password', async (req, res) => {
       }
     }
 
-    // Always respond with generic message to prevent account enumeration
     if (!admin) {
       return res.json({
         success: true,
@@ -666,7 +519,7 @@ router.post('/admin/forgot-password', async (req, res) => {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    const expiry = new Date(Date.now() + 30 * 60 * 1000);
 
     const targetTable = isAdminsTable ? 'admins' : 'users';
     const { error: updateError } = await supabase
@@ -711,7 +564,6 @@ router.post('/admin/forgot-password', async (req, res) => {
 
 /**
  * POST /api/auth/reset-password/:token & POST /api/auth/admin/reset-password
- * Complete password reset with token
  */
 const handleResetPassword = async (req, res) => {
   const token = req.params.token || req.body.token;
@@ -729,7 +581,6 @@ const handleResetPassword = async (req, res) => {
     const cleanToken = decodeURIComponent(String(token)).trim();
     const nowIso = new Date().toISOString();
 
-    // 1. Search in users table
     let { data: user, error: userError } = await supabase
       .from('users')
       .select('id, email')
@@ -741,7 +592,6 @@ const handleResetPassword = async (req, res) => {
 
     let isDbAdmin = false;
 
-    // 2. Search in admins table
     if (!user) {
       const { data: adminUser, error: adminError } = await supabase
         .from('admins')
@@ -761,7 +611,6 @@ const handleResetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
     }
 
-    // 3. Hash new password and clear token fields
     const password_hash = await bcrypt.hash(password, 10);
     const tableName = isDbAdmin ? 'admins' : 'users';
 
@@ -772,7 +621,6 @@ const handleResetPassword = async (req, res) => {
 
     if (updateError) throw updateError;
 
-    console.log(`✅ Password successfully reset for ${user.email} in ${tableName} table.`);
     return res.json({ success: true, message: 'Your password has been successfully reset! You can now log in.' });
   } catch (err) {
     console.error('Reset password error:', err);
