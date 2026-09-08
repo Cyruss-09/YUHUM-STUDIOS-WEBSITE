@@ -106,7 +106,6 @@ const getPublicSettings = async (req, res) => {
 // PUT /api/studio-settings
 const updateStudioSetting = async (req, res) => {
     try {
-        // Accepts payload as { settings: { ... } } or raw settings object
         const newSettings = req.body.settings || req.body;
 
         const { data, error } = await supabase
@@ -119,7 +118,7 @@ const updateStudioSetting = async (req, res) => {
             .select();
 
         if (error) {
-            console.error('Error saving to Supabase:', error.message);
+            console.error('Error saving settings to Supabase:', error.message);
             return res.status(500).json({ success: false, error: error.message });
         }
 
