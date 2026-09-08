@@ -3,6 +3,20 @@ import { useAuth } from "../context/AuthContext.jsx"; // adjust path if this hoo
 
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000"; // matches AuthContext's convention
 
+const CANONICAL_STATUSES = ["Pending", "Confirmed", "Completed", "Cancelled", "No-show"];
+
+// DB/API status casing isn't guaranteed to match the UI's canonical casing
+// (e.g. "pending" vs "Pending"). Normalize so STATUS_STYLES lookups, the
+// stats counters, the filter dropdown, and the status === "Pending" checks
+// in BookingsPanel all keep working regardless of how it was stored.
+function normalizeStatus(raw) {
+  if (!raw) return "Pending";
+  const match = CANONICAL_STATUSES.find(
+    (s) => s.toLowerCase() === String(raw).toLowerCase()
+  );
+  return match || raw;
+}
+
 export function useAdminBookings() {
   const { token } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -45,7 +59,7 @@ export function useAdminBookings() {
         date: row.booking_date,
         time: row.booking_time,
         addOns: row.add_ons ?? [],
-        status: row.status ?? "Pending",
+        status: normalizeStatus(row.status),
         total: row.base_price,
       }));
 

@@ -180,8 +180,8 @@ export default function SettingsPanel() {
       {toastMessage && (
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-sm font-medium transition-all transform animate-bounce duration-300 ${toastType === "success"
-              ? "bg-emerald-900 text-white border-emerald-700 shadow-emerald-950/20"
-              : "bg-red-900 text-white border-red-700 shadow-red-950/20"
+            ? "bg-emerald-900 text-white border-emerald-700 shadow-emerald-950/20"
+            : "bg-red-900 text-white border-red-700 shadow-red-950/20"
             }`}
         >
           <span>{toastType === "success" ? "✅" : "⚠️"}</span>
@@ -243,8 +243,8 @@ export default function SettingsPanel() {
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id)}
               className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all ${isActive
-                  ? "bg-black dark:bg-white text-white dark:text-black shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                ? "bg-black dark:bg-white text-white dark:text-black shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
             >
               <span>{tab.icon}</span>
@@ -721,40 +721,40 @@ export default function SettingsPanel() {
                       Loading promo codes…
                     </td>
                   </tr>
-                ) : promoCodes.length === 0 ? (
+                ) : !Array.isArray(promoCodes) || promoCodes.filter(Boolean).length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500 text-xs">
                       No active promo codes. Click "+ Create Promo Code" above to add one.
                     </td>
                   </tr>
                 ) : (
-                  promoCodes.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  promoCodes.filter(Boolean).map((p, index) => (
+                    <tr key={p?.id || index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-gray-100">
-                        {p.code}
+                        {p?.code || '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                        {p.discount_type === "percentage"
-                          ? `${p.discount_value}% OFF`
-                          : `₱${p.discount_value} OFF`}
+                        {p?.discount_type === "percentage"
+                          ? `${p?.discount_value}% OFF`
+                          : `₱${p?.discount_value} OFF`}
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                        {p.max_uses ? `${p.used_count || 0} / ${p.max_uses}` : "Unlimited"}
+                        {p?.max_uses ? `${p?.used_count || 0} / ${p?.max_uses}` : "Unlimited"}
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => togglePromoCode(p.id)}
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${p.is_active
-                              ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
+                          onClick={() => togglePromoCode(p?.id, p?.is_active)}
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${p?.is_active
+                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
                             }`}
                         >
-                          {p.is_active ? "Active" : "Inactive"}
+                          {p?.is_active ? "Active" : "Inactive"}
                         </button>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          onClick={() => deletePromoCode(p.id)}
+                          onClick={() => deletePromoCode(p?.id)}
                           className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
                           Delete
@@ -766,120 +766,120 @@ export default function SettingsPanel() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
 
-          {/* Create Promo Modal */}
-          {isPromoModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100">New Promo Voucher</h3>
-                  <button
-                    onClick={() => setIsPromoModalOpen(false)}
-                    className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-lg"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                <form onSubmit={handleCreatePromo} className="flex flex-col gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                      Coupon Code
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. YUHUM10"
-                      value={promoForm.code}
-                      onChange={(e) =>
-                        setPromoForm({ ...promoForm, code: e.target.value.toUpperCase() })
-                      }
-                      className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm uppercase font-mono font-bold"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Discount Type
-                      </label>
-                      <select
-                        value={promoForm.discount_type}
-                        onChange={(e) =>
-                          setPromoForm({ ...promoForm, discount_type: e.target.value })
-                        }
-                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
-                      >
-                        <option value="percentage">Percentage (%)</option>
-                        <option value="fixed">Fixed Amount (₱)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Discount Value
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="e.g. 10 or 100"
-                        value={promoForm.discount_value}
-                        onChange={(e) =>
-                          setPromoForm({ ...promoForm, discount_value: e.target.value })
-                        }
-                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Max Redemptions
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="Leave blank for unlimited"
-                        value={promoForm.max_uses}
-                        onChange={(e) =>
-                          setPromoForm({ ...promoForm, max_uses: e.target.value })
-                        }
-                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="date"
-                        value={promoForm.expires_at}
-                        onChange={(e) =>
-                          setPromoForm({ ...promoForm, expires_at: e.target.value })
-                        }
-                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setIsPromoModalOpen(false)}
-                      className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 text-xs font-semibold bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200"
-                    >
-                      Save Promo Code
-                    </button>
-                  </div>
-                </form>
-              </div>
+      {/* Create Promo Modal */}
+      {isPromoModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100">New Promo Voucher</h3>
+              <button
+                onClick={() => setIsPromoModalOpen(false)}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-lg"
+              >
+                ×
+              </button>
             </div>
-          )}
+
+            <form onSubmit={handleCreatePromo} className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                  Coupon Code
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. YUHUM10"
+                  value={promoForm.code}
+                  onChange={(e) =>
+                    setPromoForm({ ...promoForm, code: e.target.value.toUpperCase() })
+                  }
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm uppercase font-mono font-bold"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                    Discount Type
+                  </label>
+                  <select
+                    value={promoForm.discount_type}
+                    onChange={(e) =>
+                      setPromoForm({ ...promoForm, discount_type: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (₱)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                    Discount Value
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 10 or 100"
+                    value={promoForm.discount_value}
+                    onChange={(e) =>
+                      setPromoForm({ ...promoForm, discount_value: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                    Max Redemptions
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Leave blank for unlimited"
+                    value={promoForm.max_uses}
+                    onChange={(e) =>
+                      setPromoForm({ ...promoForm, max_uses: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3.5 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                    Expiry Date
+                  </label>
+                  <input
+                    type="date"
+                    value={promoForm.expires_at}
+                    onChange={(e) =>
+                      setPromoForm({ ...promoForm, expires_at: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsPromoModalOpen(false)}
+                  className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-semibold bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200"
+                >
+                  Save Promo Code
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -1049,7 +1049,7 @@ export default function SettingsPanel() {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white"></div>
+                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
               </label>
             </div>
 
@@ -1087,8 +1087,8 @@ export default function SettingsPanel() {
                       })
                     }
                     className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize border ${(settings.cms?.bannerTheme || "dark") === theme
-                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
-                        : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
+                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
                   >
                     {theme}
@@ -1167,8 +1167,8 @@ export default function SettingsPanel() {
               {pwdFeedback && (
                 <div
                   className={`p-3 rounded-xl text-xs font-medium ${pwdFeedback.type === "success"
-                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                      : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
+                    ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                    : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
                     }`}
                 >
                   {pwdFeedback.message}

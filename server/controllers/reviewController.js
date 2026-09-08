@@ -9,6 +9,27 @@ const {
 const { ReviewEmail } = require("../emails/ReviewEmail");
 const { AdminReviewAlertEmail } = require("../emails/AdminReviewAlertEmail");
 
+// GET /api/reviews
+const getReviews = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("reviews")
+            .select(
+                "id, user_email, overall_rating, equipment_ease, room_privacy, props_selection, favorite_backdrop, comments, recommend, created_at"
+            )
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("❌ Error fetching reviews:", err);
+        return res
+            .status(500)
+            .json({ success: false, error: "Failed to fetch reviews." });
+    }
+};
+
 const createReview = async (req, res) => {
     const {
         userEmail,
@@ -135,5 +156,6 @@ const createReview = async (req, res) => {
 };
 
 module.exports = {
+    getReviews,
     createReview,
 };

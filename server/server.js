@@ -13,6 +13,7 @@ const subscriberRoutes = require("./routes/subscriberRoutes");
 const publicRoutes = require("./routes/publicRoutes");
 const campaignRoutes = require("./routes/campaignRoutes"); // If separate; otherwise mounted in admin
 const adminSettingsRoutes = require("./routes/adminSettingsRoutes");
+const promoRoutes = require("./routes/promoRoutes"); // 1. Added Promo Routes
 
 const app = express();
 
@@ -30,6 +31,8 @@ app.use("/api/subscribers", subscriberRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/resend-campaign", campaignRoutes);
 app.use("/api/admin", adminSettingsRoutes);
+app.use("/api/promos", promoRoutes); // 2. Mounted Promo Routes
+
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {
