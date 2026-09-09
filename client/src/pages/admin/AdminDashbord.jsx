@@ -74,7 +74,7 @@ const TABS = [
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { adminUser, logoutAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Close mobile menu on resize to desktop
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
   }, [mobileMenuOpen]);
 
   const handleLogout = () => {
-    logout();
+    logoutAdmin();
     navigate("/admin-login");
   };
 
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
                 Yuhum Studios • Admin Center
               </span>
               <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
-                Welcome back, {user?.name || user?.username || "Admin"} 👋
+                Welcome back, {adminUser?.name || adminUser?.username || "Admin"} 👋
               </h2>
               <p className="text-gray-300 text-sm mt-1 max-w-xl">
                 Manage your studio bookings, inspect customer ratings and feedback, grow your newsletter audience, and configure studio operations.
@@ -297,14 +297,14 @@ export default function AdminDashboard() {
       <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
         <div className="flex items-center gap-3 mb-4 px-2">
           <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 font-semibold text-sm">
-            {user?.name?.[0] || user?.username?.[0] || "A"}
+            {adminUser?.name?.[0] || adminUser?.username?.[0] || "A"}
           </div>
           <div className="overflow-hidden">
             <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-              {user?.name || user?.username || "Admin User"}
+              {adminUser?.name || adminUser?.username || "Admin User"}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {user?.email || "admin@yuhum.com"}
+              {adminUser?.email || "admin@yuhum.com"}
             </div>
           </div>
         </div>

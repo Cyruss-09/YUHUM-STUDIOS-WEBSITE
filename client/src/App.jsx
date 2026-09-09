@@ -20,8 +20,7 @@ import AdminForgotPassword from "./pages/admin/AdminForgotPassword";
 import AdminResetPassword from "./pages/admin/ResetPassword";
 
 export default function App() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isAdmin } = useAuth();
 
   const [activeLink, setActiveLink] = useState(() => {
     const path = window.location.pathname.replace(/^\//, "");

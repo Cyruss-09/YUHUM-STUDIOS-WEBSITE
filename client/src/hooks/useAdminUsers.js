@@ -5,13 +5,13 @@ import { useAuth } from "../context/AuthContext";
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 export function useAdminUsers() {
-    const { token } = useAuth();
+    const { adminToken } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const fetchUsers = useCallback(async () => {
-        if (!token) {
+        if (!adminToken) {
             setLoading(false);
             return;
         }
@@ -20,7 +20,7 @@ export function useAdminUsers() {
         try {
             const res = await fetch(`${API_BASE}/api/admin/users`, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${adminToken}`,
                 },
             });
 
@@ -32,7 +32,7 @@ export function useAdminUsers() {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [adminToken]);
 
     useEffect(() => {
         fetchUsers();
@@ -44,7 +44,7 @@ export function useAdminUsers() {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${adminToken}`,
                 },
                 body: JSON.stringify({ role: newRole }),
             });
@@ -68,7 +68,7 @@ export function useAdminUsers() {
             const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
                 method: "DELETE",
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${adminToken}`,
                 },
             });
             const data = await res.json().catch(() => ({}));
@@ -89,7 +89,7 @@ export function useAdminUsers() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${adminToken}`,
                 },
                 body: JSON.stringify(userData),
             });
