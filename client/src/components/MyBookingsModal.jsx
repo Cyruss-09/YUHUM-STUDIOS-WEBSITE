@@ -3,11 +3,11 @@ import { useMyBookings } from "../hooks/useMyBookings";
 
 /* ─── Status badge colours ───────────────────────────────────── */
 const STATUS_STYLES = {
-  Pending:   { dot: "bg-amber-400",  text: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200"  },
-  Confirmed: { dot: "bg-emerald-500",text: "text-emerald-700",bg: "bg-emerald-50",border: "border-emerald-200"},
-  Completed: { dot: "bg-blue-500",   text: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200"   },
-  Cancelled: { dot: "bg-red-400",    text: "text-red-600",    bg: "bg-red-50",    border: "border-red-200"    },
-  "No-show": { dot: "bg-stone-400",  text: "text-stone-600",  bg: "bg-stone-100", border: "border-stone-200"  },
+  Pending: { dot: "bg-amber-400", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
+  Confirmed: { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200" },
+  Completed: { dot: "bg-blue-500", text: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200" },
+  Cancelled: { dot: "bg-red-400", text: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
+  "No-show": { dot: "bg-stone-400", text: "text-stone-600", bg: "bg-stone-100", border: "border-stone-200" },
 };
 
 const CANCELLABLE = ["Pending", "Confirmed"];
@@ -183,10 +183,16 @@ function SkeletonCard() {
 
 /* ─── Main modal ─────────────────────────────────────────────── */
 export function MyBookingsModal({ isOpen, onClose }) {
-  const { bookings, loading, error, cancellingId, cancelBooking } = useMyBookings();
+  const { bookings, loading, error, cancellingId, cancelBooking, refetch } = useMyBookings();
   const [confirmTarget, setConfirmTarget] = useState(null); // booking object to confirm cancel
   const [cancelError, setCancelError] = useState(null);
   const panelRef = useRef(null);
+
+  // Refetch fresh booking data every time the panel is opened,
+  // so status changes made in admin (e.g. Pending -> Confirmed) show up immediately.
+  useEffect(() => {
+    if (isOpen) refetch();
+  }, [isOpen, refetch]);
 
   // Trap focus and close on Escape
   useEffect(() => {

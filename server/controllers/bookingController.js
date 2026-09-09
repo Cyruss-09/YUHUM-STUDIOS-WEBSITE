@@ -115,7 +115,7 @@ const getMyBookings = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('bookings')
-            .select('id, package_title, base_price, studio, booking_date, day_of_week, booking_time, add_ons, firstName, lastName, email, phone, paymentMode, couponCode, status, created_at')
+            .select('id, package_title, base_price, studio, booking_date, day_of_week, booking_time, add_ons, firstName, lastName, paymentMode, couponCode, status, created_at')
             .eq('user_id', req.user.id)
             .order('created_at', { ascending: false });
 
@@ -126,7 +126,6 @@ const getMyBookings = async (req, res) => {
         return res.status(500).json({ success: false, error: 'Failed to fetch your bookings.' });
     }
 };
-
 // PATCH /api/bookings/:id/cancel
 const cancelBooking = async (req, res) => {
     const { id } = req.params;
