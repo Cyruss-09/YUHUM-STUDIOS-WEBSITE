@@ -126,6 +126,7 @@ const getMyBookings = async (req, res) => {
         return res.status(500).json({ success: false, error: 'Failed to fetch your bookings.' });
     }
 };
+
 // PATCH /api/bookings/:id/cancel
 const cancelBooking = async (req, res) => {
     const { id } = req.params;
