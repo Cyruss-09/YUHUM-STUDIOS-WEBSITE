@@ -1,4 +1,5 @@
-require("dotenv").config();
+require("dotenv").config({ override: true });
+console.log('DEBUG cwd:', process.cwd(), '| .env exists:', require('fs').existsSync('.env'), '| URL:', process.env.SUPABASE_URL);
 
 const path = require("path");
 const express = require("express");

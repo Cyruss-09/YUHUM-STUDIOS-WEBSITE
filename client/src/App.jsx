@@ -20,17 +20,18 @@ import AdminForgotPassword from "./pages/admin/AdminForgotPassword";
 import AdminResetPassword from "./pages/admin/ResetPassword";
 
 export default function App() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading, adminLoading } = useAuth();
 
-  const [activeLink, setActiveLink] = useState(() => {
-    const path = window.location.pathname.replace(/^\//, "");
-    return path || "home";
-  });
+  // Clean path helper (removes leading & trailing slashes)
+  const getCleanPath = () => {
+    return window.location.pathname.replace(/^\/+|\/+$/g, "") || "home";
+  };
+
+  const [activeLink, setActiveLink] = useState(getCleanPath);
 
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname.replace(/^\//, "");
-      setActiveLink(path || "home");
+      setActiveLink(getCleanPath());
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -41,6 +42,20 @@ export default function App() {
     window.history.pushState({}, "", targetPath);
     setActiveLink(newPage);
   };
+
+  // 1. Prevent race condition: Block router rendering until Auth finishes session rehydration
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fdfbf7]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-[#A3704C] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs tracking-widest uppercase font-semibold text-[#7A6B63]">
+            Verifying Session...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   const validPages = [
     "home",

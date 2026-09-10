@@ -9,10 +9,11 @@ const { PasswordResetEmail } = require('../emails/PasswordResetEmail');
 const { AdminPasswordResetEmail } = require('../emails/AdminPasswordResetEmail');
 
 // Delegate registration and admin login to controller handlers
-const { register, adminLogin } = require("../controllers/authController");
+const { register, adminLogin } = require('../controllers/authController');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'yuhum-secret-token-key-change-in-env';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 /**
  * POST /api/auth/register
@@ -115,6 +116,31 @@ router.post('/login', async (req, res) => {
 });
 
 /**
+ * Helper to generate a unique username safely
+ */
+async function generateUniqueUsername(base) {
+  let cleanBase = String(base || 'user')
+    .replace(/[^a-zA-Z0-9_]/g, '')
+    .toLowerCase()
+    .slice(0, 18);
+
+  if (!cleanBase || cleanBase.length < 3) cleanBase = 'user';
+
+  // Try pure base first
+  const { data: existing } = await supabase
+    .from('users')
+    .select('id')
+    .ilike('username', cleanBase)
+    .maybeSingle();
+
+  if (!existing) return cleanBase;
+
+  // Append a random 4-hex string to guarantee uniqueness & avoid query loops/race conditions
+  const suffix = crypto.randomBytes(2).toString('hex');
+  return `${cleanBase}_${suffix}`;
+}
+
+/**
  * Helper to find or create a user signed in via social authentication (Google or Facebook)
  */
 async function findOrCreateSocialUser({ email, name, provider, providerId, avatarUrl }) {
@@ -144,41 +170,43 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
     return updatedUser || existingUser;
   }
 
-  let baseUsername = (name || cleanEmail.split('@')[0])
-    .replace(/[^a-zA-Z0-9_]/g, '')
-    .toLowerCase()
-    .slice(0, 25);
-  if (!baseUsername || baseUsername.length < 3) baseUsername = 'guest';
+  const candidateUsername = await generateUniqueUsername(name || cleanEmail.split('@')[0]);
 
-  let candidateUsername = baseUsername;
-  let counter = 1;
-  while (true) {
-    const { data: usernameTaken, error: checkError } = await supabase
+  try {
+    const { data: newUser, error: insertError } = await supabase
       .from('users')
-      .select('id')
-      .ilike('username', candidateUsername)
-      .maybeSingle();
+      .insert([{
+        username: candidateUsername,
+        email: cleanEmail,
+        role: 'user',
+        auth_provider: provider,
+        provider_id: providerId,
+        avatar_url: avatarUrl,
+      }])
+      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .single();
 
-    if (checkError) throw checkError;
-    if (!usernameTaken) break;
-    candidateUsername = `${baseUsername}${counter++}`;
+    if (insertError) throw insertError;
+    return newUser;
+  } catch (err) {
+    // Retry once with an absolute unique fallback in case of exact simultaneous insert collision
+    const fallbackUsername = `user_${crypto.randomBytes(4).toString('hex')}`;
+    const { data: fallbackUser, error: fallbackError } = await supabase
+      .from('users')
+      .insert([{
+        username: fallbackUsername,
+        email: cleanEmail,
+        role: 'user',
+        auth_provider: provider,
+        provider_id: providerId,
+        avatar_url: avatarUrl,
+      }])
+      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .single();
+
+    if (fallbackError) throw fallbackError;
+    return fallbackUser;
   }
-
-  const { data: newUser, error: insertError } = await supabase
-    .from('users')
-    .insert([{
-      username: candidateUsername,
-      email: cleanEmail,
-      role: 'user',
-      auth_provider: provider,
-      provider_id: providerId,
-      avatar_url: avatarUrl,
-    }])
-    .select('id, username, email, role, avatar_url, auth_provider, created_at')
-    .single();
-
-  if (insertError) throw insertError;
-  return newUser;
 }
 
 /**
@@ -215,7 +243,7 @@ router.post('/google', async (req, res) => {
       socialName = payload.name || payload.given_name;
       socialPicture = payload.picture;
       socialSub = payload.sub;
-    } else if (mode === 'demo' || mode === 'mock') {
+    } else if (!IS_PROD && (mode === 'demo' || mode === 'mock')) {
       if (!socialEmail) {
         return res.status(400).json({ success: false, message: 'Email is required for demo authentication.' });
       }
@@ -286,7 +314,7 @@ router.post('/facebook', async (req, res) => {
       socialName = payload.name;
       socialEmail = payload.email || `${socialId}@facebook.yuhumstudio.com`;
       socialPicture = payload.picture?.data?.url;
-    } else if (mode === 'demo' || mode === 'mock') {
+    } else if (!IS_PROD && (mode === 'demo' || mode === 'mock')) {
       if (!socialEmail) {
         return res.status(400).json({ success: false, message: 'Email is required for demo authentication.' });
       }

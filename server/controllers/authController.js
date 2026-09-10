@@ -12,7 +12,7 @@ const register = async (req, res) => {
     if (!username || !email || !password) {
         return res
             .status(400)
-            .json({ success: false, error: "Please fill in all required fields." });
+            .json({ success: false, message: "Please fill in all required fields." });
     }
 
     try {
@@ -33,11 +33,11 @@ const register = async (req, res) => {
             if (existingUser.email === cleanEmail) {
                 return res
                     .status(400)
-                    .json({ success: false, error: "Email address is already registered." });
+                    .json({ success: false, message: "Email address is already registered." });
             }
             return res
                 .status(400)
-                .json({ success: false, error: "Username is already taken." });
+                .json({ success: false, message: "Username is already taken." });
         }
 
         // 3. Hash password
@@ -62,7 +62,7 @@ const register = async (req, res) => {
             console.error("❌ Supabase insert error details:", insertError);
             return res.status(500).json({
                 success: false,
-                error: insertError.message || "Failed to create user account.",
+                message: insertError.message || "Failed to create user account.",
             });
         }
 
@@ -83,7 +83,67 @@ const register = async (req, res) => {
         console.error("❌ Unhandled registration server error:", err);
         return res.status(500).json({
             success: false,
-            error: "Internal server error during registration.",
+            message: "Internal server error during registration.",
+        });
+    }
+};
+
+/**
+ * Client User Login Handler
+ */
+const login = async (req, res) => {
+    const { identifier, email, password } = req.body;
+    const userIdentifier = (identifier || email || "").toLowerCase().trim();
+
+    if (!userIdentifier || !password) {
+        return res.status(400).json({
+            success: false,
+            message: "Username/Email and password are required.",
+        });
+    }
+
+    try {
+        // Query by email OR username
+        const { data: user, error: fetchErr } = await supabase
+            .from("users")
+            .select("id, username, email, password_hash, role")
+            .or(`email.eq.${userIdentifier},username.eq.${userIdentifier}`)
+            .maybeSingle();
+
+        if (fetchErr || !user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials.",
+            });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials.",
+            });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET || "fallback-secret",
+            { expiresIn: process.env.JWT_EXPIRY || "7d" }
+        );
+
+        const { password_hash, ...userData } = user;
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful.",
+            token,
+            user: userData,
+        });
+    } catch (err) {
+        console.error("❌ Login server error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during login.",
         });
     }
 };
@@ -104,48 +164,33 @@ const adminLogin = async (req, res) => {
     try {
         const cleanEmail = email.toLowerCase().trim();
 
-        // 1. Query user from Supabase using password_hash
         const { data: admin, error: fetchErr } = await supabase
             .from("users")
             .select("id, username, email, password_hash, role")
             .eq("email", cleanEmail)
             .maybeSingle();
 
-        if (fetchErr) {
-            console.error("❌ Supabase admin query error:", fetchErr);
-            return res
-                .status(500)
-                .json({ success: false, message: "Database query error." });
-        }
-
-        // 2. Validate user existence and role
-        if (!admin || admin.role !== "admin") {
-            console.log(`❌ Login rejected: User not found or not an admin (${cleanEmail})`);
+        if (fetchErr || !admin || admin.role !== "admin") {
             return res.status(401).json({
                 success: false,
                 message: "Invalid administrator credentials.",
             });
         }
 
-        // 3. Compare input password against stored bcrypt hash
         const isMatch = await bcrypt.compare(password, admin.password_hash);
-
         if (!isMatch) {
-            console.log(`❌ Login rejected: Password mismatch for (${cleanEmail})`);
             return res.status(401).json({
                 success: false,
                 message: "Invalid administrator credentials.",
             });
         }
 
-        // 4. Generate JWT Token
         const token = jwt.sign(
             { id: admin.id, email: admin.email, role: admin.role },
             process.env.JWT_SECRET || "fallback-secret",
             { expiresIn: process.env.JWT_EXPIRY || "1d" }
         );
 
-        // Omit password hash from response payload
         const { password_hash, ...adminData } = admin;
 
         return res.status(200).json({
@@ -163,7 +208,68 @@ const adminLogin = async (req, res) => {
     }
 };
 
+/**
+ * Rehydrate Client Session (/api/auth/me)
+ * CALLED ON PAGE RELOAD BY AUTHCONTEXT
+ */
+const getMe = async (req, res) => {
+    try {
+        const userId = req.user.id || req.user.userId;
+
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("id, username, email, role")
+            .eq("id", userId)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        // MUST return { user: ... } format to match AuthContext
+        return res.status(200).json({
+            success: true,
+            user,
+        });
+    } catch (err) {
+        console.error("❌ getMe error:", err);
+        return res.status(500).json({ success: false, message: "Server error fetching user session." });
+    }
+};
+
+/**
+ * Rehydrate Admin Session (/api/admin/me)
+ * CALLED ON PAGE RELOAD BY AUTHCONTEXT
+ */
+const getAdminMe = async (req, res) => {
+    try {
+        const adminId = req.user.id || req.user.userId;
+
+        const { data: admin, error } = await supabase
+            .from("users")
+            .select("id, username, email, role")
+            .eq("id", adminId)
+            .single();
+
+        if (error || !admin || admin.role !== "admin") {
+            return res.status(403).json({ success: false, message: "Unauthorized admin session." });
+        }
+
+        // MUST return { admin: ... } format to match AuthContext
+        return res.status(200).json({
+            success: true,
+            admin,
+        });
+    } catch (err) {
+        console.error("❌ getAdminMe error:", err);
+        return res.status(500).json({ success: false, message: "Server error fetching admin session." });
+    }
+};
+
 module.exports = {
     register,
+    login,
     adminLogin,
+    getMe,
+    getAdminMe,
 };
