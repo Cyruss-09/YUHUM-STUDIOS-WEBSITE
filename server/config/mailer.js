@@ -40,8 +40,35 @@ function resolveRecipient(candidateEmail) {
   return isValidEmail(candidateEmail) ? candidateEmail.trim() : ADMIN_EMAIL;
 }
 
+async function sendEmail(options) {
+  const resend = getResend();
+  if (!resend) {
+    console.warn("⚠️ [Resend] Skipping email dispatch: Resend instance not initialized or RESEND_API_KEY missing.");
+    return { success: false, error: "Resend not initialized" };
+  }
+
+  try {
+    const result = await resend.emails.send(options);
+    if (result && result.error) {
+      if (result.error.statusCode === 401 || result.error.message?.includes("API key is invalid")) {
+        console.warn(
+          "⚠️ [Resend 401]: The RESEND_API_KEY in server/.env is invalid or revoked. Please get a fresh key from https://resend.com/api-keys and replace RESEND_API_KEY in server/.env."
+        );
+      } else {
+        console.warn("⚠️ [Resend Error]:", result.error.message || result.error);
+      }
+      return { success: false, error: result.error };
+    }
+    return { success: true, data: result?.data };
+  } catch (err) {
+    console.warn("⚠️ [Resend] Unexpected dispatch exception:", err.message || err);
+    return { success: false, error: err.message };
+  }
+}
+
 module.exports = {
   getResend,
+  sendEmail,
   FROM_EMAIL,
   ADMIN_EMAIL,
   SANDBOX_MODE,

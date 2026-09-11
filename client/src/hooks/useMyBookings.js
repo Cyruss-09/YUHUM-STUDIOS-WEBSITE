@@ -37,6 +37,8 @@ export function useMyBookings() {
           total: row.base_price,
           paymentMode: row.paymentMode,
           couponCode: row.couponCode,
+          email: row.email,
+          phone: row.phone,
           createdAt: row.created_at,
         }))
       );
@@ -54,7 +56,7 @@ export function useMyBookings() {
   /**
    * Cancel a booking by id. Uses optimistic UI — reverts on failure.
    */
-  const cancelBooking = async (id) => {
+  const cancelBooking = async (id, reason = null) => {
     setCancellingId(id);
     // Optimistic update
     setBookings((prev) =>
@@ -63,12 +65,17 @@ export function useMyBookings() {
     try {
       const res = await fetch(`${API_BASE}/api/bookings/${id}/cancel`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reason }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to cancel booking.");
       }
+      return data;
     } catch (err) {
       // Revert on failure
       setError(err.message);

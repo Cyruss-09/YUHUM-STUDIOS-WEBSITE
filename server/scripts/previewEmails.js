@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { BookingEmail } = require("../emails/BookingEmail");
+const { BookingCancelledEmail } = require("../emails/BookingCancelledEmail");
 const { SubscriberEmail } = require("../emails/SubscriberEmail");
 const { PasswordResetEmail } = require("../emails/PasswordResetEmail");
 const { AdminPasswordResetEmail } = require("../emails/AdminPasswordResetEmail");
@@ -94,4 +95,23 @@ const adminReviewAlertHtml = AdminReviewAlertEmail({
 fs.writeFileSync(path.join(outputDir, "06_review_admin_alert.html"), adminReviewAlertHtml, "utf8");
 console.log("✅ 06_review_admin_alert.html generated");
 
-console.log("\n🎉 All 6 email templates successfully generated and verified!");
+// 7. Booking Cancelled Confirmation Email
+const bookingCancelledHtml = BookingCancelledEmail({
+  packageTitle: "Deluxe Duo Studio Session",
+  basePrice: "₱1,200",
+  studio: "Studio A (Boho Warmth)",
+  date: "Saturday, Sep 19, 2026",
+  time: "02:30 PM",
+  addOns: "Extra 15 Mins Shoot, 5x Instax Mini Prints",
+  firstName: "Camille",
+  lastName: "Santos",
+  phone: "+63 917 123 4567",
+  email: "camille.santos@gmail.com",
+  bookingId: 42,
+  paymentMode: "GCash (Paid Online)",
+  reason: "Schedule Conflict",
+});
+fs.writeFileSync(path.join(outputDir, "07_booking_cancelled_email.html"), bookingCancelledHtml, "utf8");
+console.log("✅ 07_booking_cancelled_email.html generated");
+
+console.log("\n🎉 All 7 email templates successfully generated and verified!");

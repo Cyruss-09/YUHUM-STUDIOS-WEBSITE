@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { supabase } = require("../config/supabase");
 const { verifyToken, requireAdmin } = require("../middleware/auth");
+const { BookingCancelledEmail } = require("../emails/BookingCancelledEmail");
+const { getResend, sendEmail, FROM_EMAIL, resolveRecipient } = require("../config/mailer");
+const { decrementPromoUsage } = require("../controllers/promoCodeController");
 const {
   getUsers,
   createUser,
@@ -55,6 +58,51 @@ router.patch("/bookings/:id/status", verifyToken, requireAdmin, async (req, res)
 
     if (error || !booking) {
       return res.status(404).json({ success: false, error: "Booking not found." });
+    }
+
+    // If booking was cancelled by admin, restore promo and notify user via email
+    if (status === "Cancelled") {
+      if (booking.couponCode) {
+        try {
+          await decrementPromoUsage(booking.couponCode);
+        } catch (pErr) {
+          console.warn("⚠️ Could not restore promo code usage:", pErr.message || pErr);
+        }
+      }
+
+      try {
+        if (booking.email) {
+          const recipient = resolveRecipient(booking.email);
+          const cancelEmailHtml = BookingCancelledEmail({
+            packageTitle: booking.package_title || "Studio Session",
+            basePrice: booking.base_price || "₱0",
+            studio: booking.studio || "Studio Suite",
+            date: booking.day_of_week && booking.booking_date
+              ? `${booking.day_of_week}, ${booking.booking_date}`
+              : booking.booking_date || "Scheduled Date",
+            time: booking.booking_time || "Scheduled Time",
+            addOns: Array.isArray(booking.add_ons) && booking.add_ons.length > 0
+              ? booking.add_ons.join(", ")
+              : "None",
+            firstName: booking.firstName || "Valued Guest",
+            lastName: booking.lastName || "",
+            phone: booking.phone || "N/A",
+            email: booking.email,
+            bookingId: booking.id,
+            paymentMode: booking.paymentMode,
+            reason: "Cancelled by Studio Administration",
+          });
+
+          await sendEmail({
+            from: FROM_EMAIL,
+            to: [recipient],
+            subject: `Booking Cancelled - ${booking.package_title || "Studio Session"}`,
+            html: cancelEmailHtml,
+          });
+        }
+      } catch (emailErr) {
+        console.error("⚠️ Admin cancelled booking, but email dispatch failed:", emailErr.message || emailErr);
+      }
     }
 
     return res.status(200).json({

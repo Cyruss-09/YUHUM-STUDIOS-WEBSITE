@@ -135,4 +135,30 @@ const applyPromoCode = async (req, res) => {
     }
 };
 
-module.exports = { getPromoCodes, validatePromoCode, applyPromoCode, incrementPromoUsage };
+const decrementPromoUsage = async (code) => {
+    if (!code) return { success: false, message: 'No code provided.' };
+    try {
+        const { data: promo, error: fetchError } = await supabase
+            .from('promo_codes')
+            .select('id, used_count')
+            .eq('code', code)
+            .maybeSingle();
+
+        if (fetchError || !promo) {
+            return { success: false, message: 'Promo code not found.' };
+        }
+
+        if (promo.used_count > 0) {
+            await supabase
+                .from('promo_codes')
+                .update({ used_count: promo.used_count - 1 })
+                .eq('id', promo.id);
+        }
+        return { success: true };
+    } catch (err) {
+        console.error('Promo code decrement error:', err);
+        return { success: false, error: err.message };
+    }
+};
+
+module.exports = { getPromoCodes, validatePromoCode, applyPromoCode, incrementPromoUsage, decrementPromoUsage };
