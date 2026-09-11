@@ -5,13 +5,13 @@ import { useAuth } from "../context/AuthContext";
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 export function useAdminReviews() {
-  const { token } = useAuth();
+  const { adminToken } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchReviews = useCallback(async () => {
-    if (!token) {
+    if (!adminToken) {
       setLoading(false);
       return;
     }
@@ -20,7 +20,7 @@ export function useAdminReviews() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/reviews`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
 
@@ -35,7 +35,7 @@ export function useAdminReviews() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [adminToken]);
 
   useEffect(() => {
     fetchReviews();
@@ -46,7 +46,7 @@ export function useAdminReviews() {
       const res = await fetch(`${API_BASE}/api/admin/reviews/${reviewId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
 

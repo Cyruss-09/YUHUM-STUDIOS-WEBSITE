@@ -55,7 +55,7 @@ const DEFAULT_SETTINGS = {
 };
 
 export function useAdminSettings() {
-  const { token } = useAuth();
+  const { adminToken } = useAuth();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -66,7 +66,7 @@ export function useAdminSettings() {
 
   // Fetch Settings
   const fetchSettings = useCallback(async () => {
-    if (!token) {
+    if (!adminToken) {
       setLoading(false);
       return;
     }
@@ -74,7 +74,7 @@ export function useAdminSettings() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/admin/settings`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!res.ok) throw new Error("Failed to fetch settings");
       const data = await res.json();
@@ -95,15 +95,15 @@ export function useAdminSettings() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [adminToken]);
 
   // Fetch Promo Codes
   const fetchPromoCodes = useCallback(async () => {
-    if (!token) return;
+    if (!adminToken) return;
     setPromoLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/admin/promo-codes`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!res.ok) throw new Error("Failed to load promo codes");
       const data = await res.json();
@@ -113,7 +113,7 @@ export function useAdminSettings() {
     } finally {
       setPromoLoading(false);
     }
-  }, [token]);
+  }, [adminToken]);
 
   useEffect(() => {
     fetchSettings();
@@ -129,7 +129,7 @@ export function useAdminSettings() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ settings: updatedSettings }),
       });
@@ -154,7 +154,7 @@ export function useAdminSettings() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify(promoData),
       });
@@ -171,7 +171,7 @@ export function useAdminSettings() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/promo-codes/${id}/toggle`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to toggle promo code");
@@ -188,7 +188,7 @@ export function useAdminSettings() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/promo-codes/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -208,7 +208,7 @@ export function useAdminSettings() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
@@ -224,7 +224,7 @@ export function useAdminSettings() {
   const exportBookingsCsv = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/admin/export/bookings`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!res.ok) throw new Error("Failed to export bookings");
       const data = await res.json();

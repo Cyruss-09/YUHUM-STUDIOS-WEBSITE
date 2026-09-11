@@ -18,13 +18,13 @@ function normalizeStatus(raw) {
 }
 
 export function useAdminBookings() {
-  const { token } = useAuth();
+  const { adminToken } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchBookings = useCallback(async () => {
-    if (!token) {
+    if (!adminToken) {
       setLoading(false);
       return;
     }
@@ -33,7 +33,7 @@ export function useAdminBookings() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/bookings`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
 
@@ -69,7 +69,7 @@ export function useAdminBookings() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [adminToken]);
 
   useEffect(() => {
     fetchBookings();
@@ -86,7 +86,7 @@ export function useAdminBookings() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ status: newStatus }),
       });

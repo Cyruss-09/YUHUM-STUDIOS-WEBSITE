@@ -143,6 +143,33 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // Admin logout handler
+  const logoutAdmin = () => {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    setAdminToken(null);
+    setAdminUser(null);
+  };
+
+  // Admin login handler
+  const loginAdmin = async (email, password) => {
+    const response = await fetch("/api/auth/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Admin login failed");
+
+    const token = data.token || data.adminToken;
+    const admin = data.admin || data.user;
+
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    setAdminToken(token);
+    setAdminUser(admin);
+    return admin;
+  };
+
   const value = {
     token,
     user,
@@ -153,6 +180,8 @@ export const AuthProvider = ({ children }) => {
     adminLoading,
     login,
     logout,
+    loginAdmin,
+    logoutAdmin,
     refreshUser,
     refreshAdmin,
   };

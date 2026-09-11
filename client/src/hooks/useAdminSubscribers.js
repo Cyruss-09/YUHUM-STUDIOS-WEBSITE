@@ -5,13 +5,13 @@ import { useAuth } from "../context/AuthContext";
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 export function useAdminSubscribers() {
-  const { token } = useAuth();
+  const { adminToken } = useAuth();
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchSubscribers = useCallback(async () => {
-    if (!token) {
+    if (!adminToken) {
       setLoading(false);
       return;
     }
@@ -20,7 +20,7 @@ export function useAdminSubscribers() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/subscribers`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
 
@@ -35,7 +35,7 @@ export function useAdminSubscribers() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [adminToken]);
 
   useEffect(() => {
     fetchSubscribers();
@@ -47,7 +47,7 @@ export function useAdminSubscribers() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ email }),
       });
@@ -77,7 +77,7 @@ export function useAdminSubscribers() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -102,7 +102,7 @@ export function useAdminSubscribers() {
       const res = await fetch(`${API_BASE}/api/admin/subscribers/${subscriberId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${adminToken}`,
         },
       });
 
