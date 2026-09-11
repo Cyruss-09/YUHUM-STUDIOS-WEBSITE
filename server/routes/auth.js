@@ -148,26 +148,14 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
 
   const { data: existingUser, error: findError } = await supabase
     .from('users')
-    .select('*')
+    .select('id, username, email, role, created_at')
     .ilike('email', cleanEmail)
     .maybeSingle();
 
   if (findError) throw findError;
 
   if (existingUser) {
-    const { data: updatedUser, error: updateError } = await supabase
-      .from('users')
-      .update({
-        provider_id: providerId ?? existingUser.provider_id,
-        auth_provider: existingUser.auth_provider ?? provider,
-        avatar_url: avatarUrl ?? existingUser.avatar_url,
-      })
-      .eq('id', existingUser.id)
-      .select('id, username, email, role, avatar_url, auth_provider, created_at')
-      .single();
-
-    if (updateError) throw updateError;
-    return updatedUser || existingUser;
+    return existingUser;
   }
 
   const candidateUsername = await generateUniqueUsername(name || cleanEmail.split('@')[0]);
@@ -179,11 +167,8 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
         username: candidateUsername,
         email: cleanEmail,
         role: 'user',
-        auth_provider: provider,
-        provider_id: providerId,
-        avatar_url: avatarUrl,
       }])
-      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .select('id, username, email, role, created_at')
       .single();
 
     if (insertError) throw insertError;
@@ -197,11 +182,8 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
         username: fallbackUsername,
         email: cleanEmail,
         role: 'user',
-        auth_provider: provider,
-        provider_id: providerId,
-        avatar_url: avatarUrl,
       }])
-      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .select('id, username, email, role, created_at')
       .single();
 
     if (fallbackError) throw fallbackError;
@@ -370,9 +352,14 @@ router.get('/me', async (req, res) => {
 
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (jwtErr) {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+  }
 
+  try {
     if (decoded.role === 'admin') {
       let { data: admin, error: adminError } = await supabase
         .from('admins')
@@ -380,7 +367,7 @@ router.get('/me', async (req, res) => {
         .eq('id', decoded.id)
         .maybeSingle();
 
-      if (adminError) throw adminError;
+      if (adminError) console.warn('Admin table lookup warning:', adminError.message);
 
       if (!admin) {
         const { data: adminAsUser, error: userError } = await supabase
@@ -408,11 +395,14 @@ router.get('/me', async (req, res) => {
 
     const { data: user, error: findError } = await supabase
       .from('users')
-      .select('id, username, email, role, avatar_url, auth_provider, created_at')
+      .select('id, username, email, role, created_at')
       .eq('id', decoded.id)
       .maybeSingle();
 
-    if (findError) throw findError;
+    if (findError) {
+      console.error('Supabase query error in /api/auth/me:', findError);
+      return res.status(500).json({ success: false, message: 'Database error fetching user profile.' });
+    }
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User account not found.' });
@@ -426,13 +416,12 @@ router.get('/me', async (req, res) => {
         name: user.username,
         email: user.email,
         role: user.role || 'user',
-        avatar_url: user.avatar_url,
-        auth_provider: user.auth_provider || 'local',
         created_at: user.created_at
       }
     });
   } catch (err) {
-    return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+    console.error('Server error in /api/auth/me:', err);
+    return res.status(500).json({ success: false, message: 'Server error fetching user session.' });
   }
 });
 

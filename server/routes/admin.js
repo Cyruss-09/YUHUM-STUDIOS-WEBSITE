@@ -12,6 +12,50 @@ const {
   deleteUser,
 } = require("../controllers/userController");
 
+/* ================= ADMIN PROFILE REHYDRATION ================= */
+router.get("/me", verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const adminId = req.user.id || req.user.userId;
+
+    let { data: admin, error: adminErr } = await supabase
+      .from("admins")
+      .select("id, name, email, role")
+      .eq("id", adminId)
+      .maybeSingle();
+
+    if (!admin) {
+      const { data: userAdmin, error: userErr } = await supabase
+        .from("users")
+        .select("id, username, email, role")
+        .eq("id", adminId)
+        .eq("role", "admin")
+        .maybeSingle();
+      admin = userAdmin;
+    }
+
+    if (!admin) {
+      return res.status(403).json({ success: false, message: "Unauthorized admin session." });
+    }
+
+    const adminProfile = {
+      id: admin.id,
+      name: admin.name || admin.username || "Admin",
+      username: admin.username || admin.name || "Admin",
+      email: admin.email,
+      role: "admin",
+    };
+
+    return res.status(200).json({
+      success: true,
+      admin: adminProfile,
+      user: adminProfile,
+    });
+  } catch (err) {
+    console.error("❌ /api/admin/me error:", err);
+    return res.status(500).json({ success: false, message: "Server error fetching admin session." });
+  }
+});
+
 /* ================= ADMIN BOOKINGS ================= */
 router.get("/bookings", verifyToken, requireAdmin, async (req, res) => {
   try {
