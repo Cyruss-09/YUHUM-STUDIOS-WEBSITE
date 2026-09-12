@@ -7,9 +7,10 @@ const { supabase } = require('../config/supabase');
 const { getResend, FROM_EMAIL, resolveRecipient } = require('../config/mailer');
 const { PasswordResetEmail } = require('../emails/PasswordResetEmail');
 const { AdminPasswordResetEmail } = require('../emails/AdminPasswordResetEmail');
+const { verifyToken } = require('../middleware/auth'); // ⬅ NEW
 
 // Delegate registration and admin login to controller handlers
-const { register, adminLogin } = require('../controllers/authController');
+const { register, adminLogin, changePassword } = require('../controllers/authController'); // ⬅ changePassword added
 
 const JWT_SECRET = process.env.JWT_SECRET || 'yuhum-secret-token-key-change-in-env';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
@@ -26,6 +27,12 @@ router.post('/register', register);
  * Dedicated Administrator Login via Auth Controller
  */
 router.post('/admin/login', adminLogin);
+
+/**
+ * PATCH /api/auth/change-password
+ * Self-service password change for the logged-in client (via Auth Controller)
+ */
+router.patch('/change-password', verifyToken, changePassword); // ⬅ NEW
 
 /**
  * POST /api/auth/login

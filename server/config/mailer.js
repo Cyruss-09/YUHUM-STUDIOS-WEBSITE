@@ -66,9 +66,32 @@ async function sendEmail(options) {
   }
 }
 
+/**
+ * Sends a confirmation email to the user when their password has been changed.
+ */
+async function sendPasswordChangedEmail(toEmail) {
+  const recipient = resolveRecipient(toEmail);
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+      <h2>Password Changed Successfully</h2>
+      <p>Your password for your account has been successfully updated.</p>
+      <p>If you did not make this change, please contact support immediately.</p>
+    </div>
+  `;
+
+  return await sendEmail({
+    from: FROM_EMAIL,
+    to: recipient,
+    subject: "Your Password Has Been Changed",
+    html: htmlContent,
+  });
+}
+
 module.exports = {
   getResend,
   sendEmail,
+  sendPasswordChangedEmail,
   FROM_EMAIL,
   ADMIN_EMAIL,
   SANDBOX_MODE,

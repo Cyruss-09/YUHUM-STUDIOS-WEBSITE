@@ -41,6 +41,20 @@ function StatusBadge({ status }) {
   );
 }
 
+/* ─── Eye / EyeOff icon (shared by password fields) ───────────── */
+function EyeIcon({ open }) {
+  return open ? (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+    </svg>
+  ) : (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
+}
+
 /* ─── Cancel confirmation dialog ────────────────────────────── */
 function CancelDialog({ booking, onConfirm, onDismiss, loading }) {
   const [selectedReason, setSelectedReason] = useState(CANCELLATION_REASONS[0]);
@@ -118,6 +132,151 @@ function CancelDialog({ booking, onConfirm, onDismiss, loading }) {
   );
 }
 
+/* ─── Change password dialog ─────────────────────────────────── */
+function ChangePasswordDialog({ onSubmit, onDismiss, loading, serverError }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [validationError, setValidationError] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setValidationError("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setValidationError("Please fill in all fields.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setValidationError("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setValidationError("New passwords do not match.");
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setValidationError("New password must be different from your current password.");
+      return;
+    }
+
+    onSubmit(currentPassword, newPassword);
+  };
+
+  const displayedError = validationError || serverError;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-stone-100 p-6 space-y-4 animate-[fadeInUp_0.2s_ease]">
+        <div className="text-center">
+          <div className="mx-auto w-14 h-14 rounded-full bg-[#A3704C]/10 flex items-center justify-center mb-1">
+            <svg className="w-7 h-7 text-[#A3704C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-serif font-bold text-stone-900">Change Password</h3>
+          <p className="mt-1 text-xs text-stone-500">Update the password for your account.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3 text-left">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-stone-600 uppercase tracking-wider block">
+              Current Password
+            </label>
+            <div className="relative">
+              <input
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={loading}
+                autoComplete="current-password"
+                className="w-full text-sm text-stone-700 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#A3704C]/20 focus:border-[#A3704C]"
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowCurrent((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+              >
+                <EyeIcon open={showCurrent} />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-stone-600 uppercase tracking-wider block">
+              New Password
+            </label>
+            <div className="relative">
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={loading}
+                autoComplete="new-password"
+                className="w-full text-sm text-stone-700 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#A3704C]/20 focus:border-[#A3704C]"
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowNew((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+              >
+                <EyeIcon open={showNew} />
+              </button>
+            </div>
+            <p className="text-[10px] text-stone-400">Minimum 8 characters.</p>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-stone-600 uppercase tracking-wider block">
+              Confirm New Password
+            </label>
+            <input
+              type={showNew ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+              autoComplete="new-password"
+              className="w-full text-sm text-stone-700 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#A3704C]/20 focus:border-[#A3704C]"
+            />
+          </div>
+
+          {displayedError && (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-xs text-rose-600">
+              {displayedError}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onDismiss}
+              disabled={loading}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#A3704C] hover:bg-[#8C5A35] transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm"
+            >
+              {loading ? (
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : null}
+              Update Password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Single booking card ────────────────────────────────────── */
 function BookingCard({ booking, onCancelRequest, cancellingId, onBookAgain }) {
   const isCancellable = CANCELLABLE.includes(booking.status);
@@ -129,11 +288,10 @@ function BookingCard({ booking, onCancelRequest, cancellingId, onBookAgain }) {
     : null;
 
   return (
-    <div className={`border rounded-2xl p-5 space-y-4 transition-all ${
-      isCancelled 
-        ? "bg-[#FCFAFA] border-red-100/80 opacity-90" 
-        : "bg-white border-stone-200 shadow-sm hover:shadow-md"
-    }`}>
+    <div className={`border rounded-2xl p-5 space-y-4 transition-all ${isCancelled
+      ? "bg-[#FCFAFA] border-red-100/80 opacity-90"
+      : "bg-white border-stone-200 shadow-sm hover:shadow-md"
+      }`}>
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -254,6 +412,12 @@ export function MyBookingsModal({ isOpen, onClose }) {
   const [selectedTab, setSelectedTab] = useState("All"); // All | Active | Cancelled | Completed
   const panelRef = useRef(null);
 
+  // ── Change password state ──
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(null);
+
   // Refetch fresh booking data every time the panel is opened
   useEffect(() => {
     if (isOpen) {
@@ -267,11 +431,11 @@ export function MyBookingsModal({ isOpen, onClose }) {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && !confirmTarget) onClose();
+      if (e.key === "Escape" && !confirmTarget && !showPasswordDialog) onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose, confirmTarget]);
+  }, [isOpen, onClose, confirmTarget, showPasswordDialog]);
 
   // Prevent body scroll while open
   useEffect(() => {
@@ -287,6 +451,15 @@ export function MyBookingsModal({ isOpen, onClose }) {
     }, 7000);
     return () => clearTimeout(timer);
   }, [cancelSuccess]);
+
+  // Auto-dismiss password success message after 7 seconds
+  useEffect(() => {
+    if (!passwordSuccess) return;
+    const timer = setTimeout(() => {
+      setPasswordSuccess(null);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [passwordSuccess]);
 
   // Tab counts
   const tabCounts = useMemo(() => {
@@ -331,6 +504,41 @@ export function MyBookingsModal({ isOpen, onClose }) {
     }
   };
 
+  // ── Change password submit handler ──
+  // Matches the pattern used by services/bookingApi.js: reads the JWT from
+  // localStorage under "yuhum_token" and calls the API via VITE_API_BASE.
+  const handleChangePassword = async (currentPassword, newPassword) => {
+    setPasswordError(null);
+    setPasswordLoading(true);
+    try {
+      const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
+      const token = localStorage.getItem("yuhum_token");
+      const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to change password. Please try again.");
+      }
+
+      setShowPasswordDialog(false);
+      setPasswordSuccess(
+        data?.message || "Your password has been updated successfully."
+      );
+    } catch (err) {
+      setPasswordError(err.message || "Failed to change password. Please try again.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const navigateToBooking = () => {
     onClose();
     window.history.pushState({}, "", "/book");
@@ -354,9 +562,8 @@ export function MyBookingsModal({ isOpen, onClose }) {
 
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -376,15 +583,31 @@ export function MyBookingsModal({ isOpen, onClose }) {
               <h2 className="font-serif text-xl font-bold text-[#2C221E] tracking-wide">My Bookings</h2>
               <p className="text-xs text-[#7A6B63] mt-0.5">Your sessions and booking status</p>
             </div>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 transition-colors text-stone-600"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setPasswordError(null);
+                  setShowPasswordDialog(true);
+                }}
+                aria-label="Change Password"
+                title="Change Password"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 transition-colors text-stone-600"
+              >
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </button>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 transition-colors text-stone-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Filter Tabs */}
@@ -397,19 +620,17 @@ export function MyBookingsModal({ isOpen, onClose }) {
                   <button
                     key={tab}
                     onClick={() => setSelectedTab(tab)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                      isCurrent
-                        ? "bg-[#A3704C] text-white shadow-xs font-semibold"
-                        : "bg-stone-100/90 hover:bg-stone-200/80 text-stone-600"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${isCurrent
+                      ? "bg-[#A3704C] text-white shadow-xs font-semibold"
+                      : "bg-stone-100/90 hover:bg-stone-200/80 text-stone-600"
+                      }`}
                   >
                     <span>{tab}</span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                        isCurrent
-                          ? "bg-white/25 text-white"
-                          : "bg-stone-200 text-stone-600"
-                      }`}
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${isCurrent
+                        ? "bg-white/25 text-white"
+                        : "bg-stone-200 text-stone-600"
+                        }`}
                     >
                       {count}
                     </span>
@@ -433,6 +654,29 @@ export function MyBookingsModal({ isOpen, onClose }) {
               </div>
               <button
                 onClick={() => setCancelSuccess(null)}
+                className="ml-auto text-emerald-400 hover:text-emerald-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Password change success toast */}
+          {passwordSuccess && (
+            <div className="mx-5 mt-4 flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded-xl shadow-xs animate-[fadeInUp_0.2s_ease]">
+              <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-emerald-900">Password Updated</p>
+                <p className="text-emerald-700 mt-0.5 leading-relaxed">{passwordSuccess}</p>
+              </div>
+              <button
+                onClick={() => setPasswordSuccess(null)}
                 className="ml-auto text-emerald-400 hover:text-emerald-600"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -503,17 +747,17 @@ export function MyBookingsModal({ isOpen, onClose }) {
                     {selectedTab === "Cancelled"
                       ? "No cancelled bookings"
                       : selectedTab === "Active"
-                      ? "No active sessions"
-                      : selectedTab === "Completed"
-                      ? "No past sessions yet"
-                      : "No bookings yet"}
+                        ? "No active sessions"
+                        : selectedTab === "Completed"
+                          ? "No past sessions yet"
+                          : "No bookings yet"}
                   </p>
                   <p className="text-xs text-stone-500 mt-1 leading-relaxed max-w-xs">
                     {selectedTab === "Cancelled"
                       ? "You don't have any cancelled bookings. All your scheduled shoots are preserved."
                       : selectedTab === "Active"
-                      ? "Ready for a new creative experience? Book your self-shoot studio lounge session."
-                      : "When you book a studio session, it will appear here."}
+                        ? "Ready for a new creative experience? Book your self-shoot studio lounge session."
+                        : "When you book a studio session, it will appear here."}
                   </p>
                 </div>
                 {selectedTab !== "Cancelled" && (
@@ -558,6 +802,19 @@ export function MyBookingsModal({ isOpen, onClose }) {
           onConfirm={handleCancelConfirm}
           onDismiss={() => setConfirmTarget(null)}
           loading={cancellingId === confirmTarget.id}
+        />
+      )}
+
+      {/* Change password dialog (rendered on top of panel) */}
+      {showPasswordDialog && (
+        <ChangePasswordDialog
+          onSubmit={handleChangePassword}
+          onDismiss={() => {
+            setShowPasswordDialog(false);
+            setPasswordError(null);
+          }}
+          loading={passwordLoading}
+          serverError={passwordError}
         />
       )}
     </>

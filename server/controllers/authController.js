@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { supabase } = require("../config/supabase");
+const { sendPasswordChangedEmail } = require("../config/mailer"); // ⬅ NEW — added to mailer.js below
 
 /**
  * User Registration
@@ -266,10 +267,93 @@ const getAdminMe = async (req, res) => {
     }
 };
 
+/**
+ * Change Password (client, self-service)
+ * PATCH /api/auth/change-password — requires verifyToken
+ */
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.user.id || req.user.userId;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Current and new password are required.",
+            });
+        }
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 8 characters.",
+            });
+        }
+
+        const { data: user, error: fetchErr } = await supabase
+            .from("users")
+            .select("id, email, username, password_hash")
+            .eq("id", userId)
+            .single();
+
+        if (fetchErr || !user) {
+            return res.status(404).json({ success: false, message: "Account not found." });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Current password is incorrect.",
+            });
+        }
+
+        const isSame = await bcrypt.compare(newPassword, user.password_hash);
+        if (isSame) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be different from your current password.",
+            });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const newHash = await bcrypt.hash(newPassword, salt);
+
+        const { error: updateErr } = await supabase
+            .from("users")
+            .update({ password_hash: newHash })
+            .eq("id", userId);
+
+        if (updateErr) {
+            console.error("❌ changePassword update error:", updateErr);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to update password. Please try again.",
+            });
+        }
+
+        // Fire-and-forget confirmation email — don't block the response on delivery
+        sendPasswordChangedEmail({ to: user.email, username: user.username }).catch((err) => {
+            console.error("❌ Failed to send password-changed email:", err);
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Your password has been updated successfully. A confirmation email has been sent to your inbox.",
+        });
+    } catch (err) {
+        console.error("❌ changePassword server error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while changing password.",
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
     adminLogin,
     getMe,
     getAdminMe,
+    changePassword, // ⬅ NEW
 };

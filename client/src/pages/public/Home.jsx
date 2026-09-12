@@ -150,7 +150,7 @@ export const Home = () => {
             </div>
           ) : (
             <p className="text-stone-400 font-sans text-xs md:text-sm tracking-wide italic">
-              * click on any photo card above to see details.
+              click on any photo card above to see details.
             </p>
           )}
         </div>
