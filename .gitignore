@@ -34,3 +34,4 @@ server/database/*.sql
 *.db
 *.sqlite
 .env
+.env.client

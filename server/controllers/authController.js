@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { supabase } = require("../config/supabase");
-const { sendPasswordChangedEmail } = require("../config/mailer"); // ⬅ NEW — added to mailer.js below
+const { sendPasswordChangedEmail } = require("../config/mailer");
 
 /**
  * User Registration
@@ -355,5 +355,5 @@ module.exports = {
     adminLogin,
     getMe,
     getAdminMe,
-    changePassword, // ⬅ NEW
+    changePassword,
 };

@@ -7,10 +7,10 @@ const { supabase } = require('../config/supabase');
 const { getResend, FROM_EMAIL, resolveRecipient } = require('../config/mailer');
 const { PasswordResetEmail } = require('../emails/PasswordResetEmail');
 const { AdminPasswordResetEmail } = require('../emails/AdminPasswordResetEmail');
-const { verifyToken } = require('../middleware/auth'); // ⬅ NEW
+const { verifyToken } = require('../middleware/auth');
 
 // Delegate registration and admin login to controller handlers
-const { register, adminLogin, changePassword } = require('../controllers/authController'); // ⬅ changePassword added
+const { register, adminLogin, changePassword } = require('../controllers/authController');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'yuhum-secret-token-key-change-in-env';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
@@ -32,7 +32,7 @@ router.post('/admin/login', adminLogin);
  * PATCH /api/auth/change-password
  * Self-service password change for the logged-in client (via Auth Controller)
  */
-router.patch('/change-password', verifyToken, changePassword); // ⬅ NEW
+router.patch('/change-password', verifyToken, changePassword);
 
 /**
  * POST /api/auth/login
@@ -88,6 +88,16 @@ router.post('/login', async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ success: false, message: 'Invalid email/username or password.' });
+    }
+
+    // ⬅ FIX — social-only accounts (Google/Facebook) have no password_hash;
+    // bcrypt.compare(password, null/undefined) throws instead of returning false,
+    // which was falling through to the generic 500 handler below.
+    if (!user.password_hash) {
+      return res.status(400).json({
+        success: false,
+        message: `This account was created with ${user.auth_provider || 'a social'} sign-in. Please use that option to log in.`,
+      });
     }
 
     const match = await bcrypt.compare(password, user.password_hash);
@@ -149,19 +159,44 @@ async function generateUniqueUsername(base) {
 
 /**
  * Helper to find or create a user signed in via social authentication (Google or Facebook)
+ * ⬅ FIX — now persists auth_provider / provider_id / avatar_url on both insert and
+ * backfill, instead of silently dropping them. Also selects those columns back out
+ * so the /google and /facebook responses below actually have real values instead
+ * of always falling back to `|| 'google'` / undefined.
  */
 async function findOrCreateSocialUser({ email, name, provider, providerId, avatarUrl }) {
   const cleanEmail = String(email).trim().toLowerCase();
 
   const { data: existingUser, error: findError } = await supabase
     .from('users')
-    .select('id, username, email, role, created_at')
+    .select('id, username, email, role, created_at, auth_provider, provider_id, avatar_url')
     .ilike('email', cleanEmail)
     .maybeSingle();
 
   if (findError) throw findError;
 
   if (existingUser) {
+    // Backfill provider info if this account previously had none set
+    // (e.g. it originally registered with email/password, or was created
+    // before this fix), without overwriting anything already saved.
+    if (!existingUser.auth_provider || !existingUser.provider_id) {
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('users')
+        .update({
+          auth_provider: existingUser.auth_provider || provider,
+          provider_id: existingUser.provider_id || providerId,
+          avatar_url: existingUser.avatar_url || avatarUrl,
+        })
+        .eq('id', existingUser.id)
+        .select('id, username, email, role, created_at, auth_provider, provider_id, avatar_url')
+        .single();
+
+      if (updateError) {
+        console.error('Social backfill update error:', updateError);
+        return existingUser; // non-fatal — still log the user in with what we have
+      }
+      return updatedUser;
+    }
     return existingUser;
   }
 
@@ -174,8 +209,11 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
         username: candidateUsername,
         email: cleanEmail,
         role: 'user',
+        auth_provider: provider,
+        provider_id: providerId,
+        avatar_url: avatarUrl,
       }])
-      .select('id, username, email, role, created_at')
+      .select('id, username, email, role, created_at, auth_provider, provider_id, avatar_url')
       .single();
 
     if (insertError) throw insertError;
@@ -189,8 +227,11 @@ async function findOrCreateSocialUser({ email, name, provider, providerId, avata
         username: fallbackUsername,
         email: cleanEmail,
         role: 'user',
+        auth_provider: provider,
+        provider_id: providerId,
+        avatar_url: avatarUrl,
       }])
-      .select('id, username, email, role, created_at')
+      .select('id, username, email, role, created_at, auth_provider, provider_id, avatar_url')
       .single();
 
     if (fallbackError) throw fallbackError;
