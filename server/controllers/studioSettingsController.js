@@ -93,6 +93,14 @@ const getPublicSettings = async (req, res) => {
             cms: {
                 ...DEFAULT_SETTINGS.cms,
                 ...(dbSettings.cms || {}),
+                bannerEnabled: Boolean(
+                    (dbSettings.cms && (dbSettings.cms.bannerEnabled ?? dbSettings.cms.bannerActive)) ??
+                    DEFAULT_SETTINGS.cms.bannerEnabled
+                ),
+                bannerActive: Boolean(
+                    (dbSettings.cms && (dbSettings.cms.bannerActive ?? dbSettings.cms.bannerEnabled)) ??
+                    DEFAULT_SETTINGS.cms.bannerEnabled
+                ),
             },
         };
 

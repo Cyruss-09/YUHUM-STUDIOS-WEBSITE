@@ -1,5 +1,5 @@
 // client/src/components/admin/SettingsPanel.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdminSettings } from "../../hooks/useAdminSettings";
 import { useAuth } from "../../context/AuthContext";
 
@@ -12,7 +12,7 @@ const SUB_TABS = [
   { id: "security", label: "Security & System", icon: "🔒" },
 ];
 
-export default function SettingsPanel() {
+export default function SettingsPanel({ initialSubTab = "studio" }) {
   const { user } = useAuth();
   const {
     settings,
@@ -30,7 +30,15 @@ export default function SettingsPanel() {
     exportBookingsCsv,
   } = useAdminSettings();
 
-  const [activeSubTab, setActiveSubTab] = useState("studio");
+  const [activeSubTab, setActiveSubTab] = useState(initialSubTab);
+  const isBannerLive = Boolean(settings.cms?.bannerEnabled ?? settings.cms?.bannerActive);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
   const [toastMessage, setToastMessage] = useState(null);
   const [toastType, setToastType] = useState("success"); // 'success' | 'error'
 
@@ -931,32 +939,65 @@ export default function SettingsPanel() {
       {/* Tab 5: Website & Banner */}
       {activeSubTab === "cms" && (
         <div className="flex flex-col gap-6 pt-2">
-          <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📢</span>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                Announcement Banner
-              </h3>
+          {/* Card 1: Announcement Banner Configuration */}
+          <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/60 dark:border-gray-700/60 pb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">📢</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Announcement Banner
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Display an animated announcement marquee across the top of the client landing page.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    isBannerLive
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                      : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-400"
+                  }`}
+                >
+                  {isBannerLive ? "● Active on Client Site" : "○ Hidden"}
+                </span>
+              </div>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+            {/* Banner Toggle */}
+            <label className="flex items-center gap-3 cursor-pointer p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
               <input
                 type="checkbox"
-                checked={settings.cms?.bannerActive ?? false}
-                onChange={(e) =>
+                checked={Boolean(settings.cms?.bannerEnabled ?? settings.cms?.bannerActive ?? false)}
+                onChange={(e) => {
+                  const val = e.target.checked;
                   setSettings({
                     ...settings,
-                    cms: { ...settings.cms, bannerActive: e.target.checked },
-                  })
-                }
-                className="h-4 w-4 rounded text-black focus:ring-black dark:bg-gray-800 dark:border-gray-600"
+                    cms: {
+                      ...settings.cms,
+                      bannerEnabled: val,
+                      bannerActive: val,
+                    },
+                  });
+                }}
+                className="h-4 w-4 rounded text-black focus:ring-black dark:bg-gray-700 dark:border-gray-600"
               />
-              <span>Enable Announcement Banner on Top of Site</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Enable Announcement Banner
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  When enabled, visitors will see the scrolling marquee banner on the client page.
+                </span>
+              </div>
             </label>
 
+            {/* Banner Message Input */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase">
-                Banner Message
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                Banner Message Text
               </label>
               <input
                 type="text"
@@ -967,10 +1008,210 @@ export default function SettingsPanel() {
                     cms: { ...settings.cms, bannerText: e.target.value },
                   })
                 }
-                placeholder="e.g. 🎉 Special discount available this weekend!"
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-3.5 py-2.5 text-sm"
+                placeholder="e.g. ✨ Special weekend discount! Use code YUHUM10 for 10% off."
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-sm"
               />
             </div>
+
+            {/* Theme Selector */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                Color Theme
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  {
+                    id: "dark",
+                    label: "Dark Charcoal",
+                    desc: "Classic & Sleek",
+                    chipBg: "bg-stone-900 border-stone-700 text-white",
+                  },
+                  {
+                    id: "amber",
+                    label: "Warm Amber",
+                    desc: "Studio Earthy",
+                    chipBg: "bg-[#4a2e18] border-[#3d2412] text-amber-100",
+                  },
+                  {
+                    id: "emerald",
+                    label: "Emerald Forest",
+                    desc: "Lush & Fresh",
+                    chipBg: "bg-emerald-950 border-emerald-800 text-emerald-100",
+                  },
+                  {
+                    id: "blue",
+                    label: "Slate Blue",
+                    desc: "Modern Calm",
+                    chipBg: "bg-slate-900 border-slate-700 text-sky-100",
+                  },
+                ].map((t) => {
+                  const isSelected = (settings.cms?.bannerTheme || "dark") === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          cms: { ...settings.cms, bannerTheme: t.id },
+                        })
+                      }
+                      className={`flex flex-col p-3 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? "border-black dark:border-white ring-2 ring-black/10 dark:ring-white/20 bg-white dark:bg-gray-800"
+                          : "border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`w-5 h-5 rounded-full border shadow-xs ${t.chipBg}`} />
+                        {isSelected && (
+                          <span className="text-xs font-bold text-black dark:text-white">✓</span>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+                        {t.label}
+                      </span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {t.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live Interactive Preview Box */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                  Live Banner Preview
+                </label>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500 italic">
+                  Exact preview on client page
+                </span>
+              </div>
+
+              {isBannerLive ? (
+                <div
+                  className={`w-full py-3.5 rounded-xl border overflow-hidden shadow-inner relative transition-colors duration-300 ${
+                    {
+                      dark: "bg-stone-900 text-stone-100 border-stone-800",
+                      amber: "bg-[#4a2e18] text-amber-100 border-[#3d2412]",
+                      emerald: "bg-emerald-950 text-emerald-100 border-emerald-900",
+                      blue: "bg-slate-900 text-sky-100 border-slate-800",
+                    }[settings.cms?.bannerTheme || "dark"]
+                  }`}
+                >
+                  <div className="flex whitespace-nowrap animate-marquee">
+                    <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+                      {settings.cms?.bannerText || "✨ Welcome to Yuhum Studios! Book your self-shoot session today."}
+                    </span>
+                    <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+                      {settings.cms?.bannerText || "✨ Welcome to Yuhum Studios! Book your self-shoot session today."}
+                    </span>
+                    <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+                      {settings.cms?.bannerText || "✨ Welcome to Yuhum Studios! Book your self-shoot session today."}
+                    </span>
+                    <span className="text-xs md:text-sm font-medium tracking-wide px-6">
+                      {settings.cms?.bannerText || "✨ Welcome to Yuhum Studios! Book your self-shoot session today."}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full py-5 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
+                  Banner is currently disabled. Check &quot;Enable Announcement Banner&quot; above to preview.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: Maintenance Notice Configuration */}
+          <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-6 flex flex-col gap-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/60 dark:border-gray-700/60 pb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">🛠️</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Maintenance Mode Notice
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Display a maintenance alert box on the landing and booking pages.
+                  </p>
+                </div>
+              </div>
+              <span
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  settings.cms?.maintenanceMode
+                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                    : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-400"
+                }`}
+              >
+                {settings.cms?.maintenanceMode ? "● Maintenance Active" : "○ Normal Operation"}
+              </span>
+            </div>
+
+            <label className="flex items-center gap-3 cursor-pointer p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+              <input
+                type="checkbox"
+                checked={settings.cms?.maintenanceMode ?? false}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    cms: { ...settings.cms, maintenanceMode: e.target.checked },
+                  })
+                }
+                className="h-4 w-4 rounded text-black focus:ring-black dark:bg-gray-700 dark:border-gray-600"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Enable Maintenance Mode Notice
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Alerts clients that booking or system services are temporarily under maintenance.
+                </span>
+              </div>
+            </label>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                Maintenance Notice Message
+              </label>
+              <textarea
+                rows={2}
+                value={settings.cms?.maintenanceMessage ?? ""}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    cms: { ...settings.cms, maintenanceMessage: e.target.value },
+                  })
+                }
+                placeholder="Our booking system is currently undergoing scheduled maintenance. We will be back shortly!"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* Bottom Save Action */}
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={handleSaveSettings}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-xl bg-black dark:bg-white px-6 py-2.5 text-sm font-semibold text-white dark:text-black shadow-md shadow-black/10 dark:shadow-none transition-all hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 active:scale-95"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white dark:border-black border-t-transparent rounded-full" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Save Website & Banner Changes
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}

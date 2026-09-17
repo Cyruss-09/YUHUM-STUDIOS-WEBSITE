@@ -21,7 +21,7 @@ export const Home = () => {
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-stone-50 pb-24 w-full gap-20">
       {/* --- CMS ANNOUNCEMENT BANNER (Configured in Admin Settings) --- */}
-      {settings.cms?.bannerEnabled && settings.cms?.bannerText && (
+      {Boolean(settings.cms?.bannerEnabled || settings.cms?.bannerActive) && settings.cms?.bannerText && (
         <div
           className={`w-full py-3 shadow-sm border-b transition-all duration-300 overflow-hidden relative ${bannerThemeClass}`}
         >

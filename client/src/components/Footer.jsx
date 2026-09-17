@@ -174,12 +174,7 @@ export const Footer = ({ setActiveLink }) => {
             {suiteLabel}
           </p>
 
-          <button
-            onClick={() => handleNavigate("book")}
-            className="inline-flex items-center justify-center bg-[#A3704C] hover:bg-[#8C5A35] text-white font-medium px-5 py-2 rounded-full text-xs transition-colors"
-          >
-            Book a session
-          </button>
+
         </div>
       </div>
 

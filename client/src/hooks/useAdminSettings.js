@@ -86,7 +86,20 @@ export function useAdminSettings() {
           schedule: { ...DEFAULT_SETTINGS.schedule, ...(data.settings.schedule || {}) },
           packages: { ...DEFAULT_SETTINGS.packages, ...(data.settings.packages || {}) },
           payments: { ...DEFAULT_SETTINGS.payments, ...(data.settings.payments || {}) },
-          cms: { ...DEFAULT_SETTINGS.cms, ...(data.settings.cms || {}) },
+          cms: {
+            ...DEFAULT_SETTINGS.cms,
+            ...(data.settings.cms || {}),
+            bannerEnabled: Boolean(
+              (data.settings.cms &&
+                (data.settings.cms.bannerEnabled ?? data.settings.cms.bannerActive)) ??
+              DEFAULT_SETTINGS.cms.bannerEnabled
+            ),
+            bannerActive: Boolean(
+              (data.settings.cms &&
+                (data.settings.cms.bannerActive ?? data.settings.cms.bannerEnabled)) ??
+              DEFAULT_SETTINGS.cms.bannerEnabled
+            ),
+          },
         }));
       }
     } catch (err) {

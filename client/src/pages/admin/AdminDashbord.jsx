@@ -19,6 +19,7 @@ import {
   Users,
   Settings,
   ArrowRight,
+  Megaphone,
 } from "lucide-react";
 
 function ThemeToggle() {
@@ -73,6 +74,7 @@ const TABS = [
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [settingsSubTab, setSettingsSubTab] = useState("studio");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { adminUser, logoutAdmin } = useAuth();
   const navigate = useNavigate();
@@ -105,8 +107,11 @@ export default function AdminDashboard() {
     navigate("/admin-login");
   };
 
-  const handleTabChange = (key) => {
+  const handleTabChange = (key, subTab = "studio") => {
     setActiveTab(key);
+    if (key === "settings") {
+      setSettingsSubTab(subTab);
+    }
     setMobileMenuOpen(false);
   };
 
@@ -125,7 +130,7 @@ export default function AdminDashboard() {
       case "users":
         return <UsersPanel />;
       case "settings":
-        return <SettingsPanel />;
+        return <SettingsPanel initialSubTab={settingsSubTab} />;
       case "overview":
       default:
         return (
@@ -225,8 +230,8 @@ export default function AdminDashboard() {
               </button>
 
               <button
-                onClick={() => handleTabChange("settings")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group sm:col-span-2 lg:col-span-2"
+                onClick={() => handleTabChange("settings", "studio")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
               >
                 <div className="flex items-center justify-between w-full mb-3">
                   <div className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
@@ -236,10 +241,30 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    Studio & System Settings
+                    Studio Operations
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Configure package rates, studio schedule hours, payment details, promo codes, and announcement banner.
+                    Configure packages, schedule hours, add-on rates, and payment details.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTabChange("settings", "cms")}
+                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                    <Megaphone size={20} />
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                    Website & Banner
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Manage client page announcement banner, live marquee preview, color themes, and maintenance mode.
                   </p>
                 </div>
               </button>

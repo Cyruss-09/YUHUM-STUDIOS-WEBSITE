@@ -89,7 +89,20 @@ export function usePublicSettings() {
                 : DEFAULT_SETTINGS.packages.addOns,
             },
             payments: { ...DEFAULT_SETTINGS.payments, ...(data.settings.payments || {}) },
-            cms: { ...DEFAULT_SETTINGS.cms, ...(data.settings.cms || {}) },
+            cms: {
+              ...DEFAULT_SETTINGS.cms,
+              ...(data.settings.cms || {}),
+              bannerEnabled: Boolean(
+                (data.settings.cms &&
+                  (data.settings.cms.bannerEnabled ?? data.settings.cms.bannerActive)) ??
+                DEFAULT_SETTINGS.cms.bannerEnabled
+              ),
+              bannerActive: Boolean(
+                (data.settings.cms &&
+                  (data.settings.cms.bannerActive ?? data.settings.cms.bannerEnabled)) ??
+                DEFAULT_SETTINGS.cms.bannerEnabled
+              ),
+            },
           }));
         }
       } catch (err) {
