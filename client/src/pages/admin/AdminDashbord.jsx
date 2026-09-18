@@ -6,6 +6,7 @@ import UsersPanel from "../../components/admin/UsersPanel";
 import SettingsPanel from "../../components/admin/SettingsPanel";
 import ReviewsPanel from "../../components/admin/ReviewsPanel";
 import SubscribersPanel from "../../components/admin/SubscribersPanel";
+import OverviewPanel from "../../components/admin/OverviewPanel";
 import { useTheme } from "../../context/ThemeContext";
 import {
   Sun,
@@ -134,142 +135,10 @@ export default function AdminDashboard() {
       case "overview":
       default:
         return (
-          <div className="flex flex-col gap-6">
-            <div className="rounded-2xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-850 dark:to-gray-900 text-white p-6 lg:p-8 shadow-md">
-              <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-gray-200 backdrop-blur-sm mb-3">
-                Yuhum Studios • Admin Center
-              </span>
-              <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
-                Welcome back, {adminUser?.name || adminUser?.username || "Admin"} 👋
-              </h2>
-              <p className="text-gray-300 text-sm mt-1 max-w-xl">
-                Manage your studio bookings, inspect customer ratings and feedback, grow your newsletter audience, and configure studio operations.
-              </p>
-            </div>
-
-            {/* Quick Action Navigation Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <button
-                onClick={() => handleTabChange("bookings")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-                    <CalendarCheck size={20} />
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    Bookings Schedule
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    View upcoming client shoots, confirm slots, and manage reservations.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleTabChange("reviews")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-                    <Star size={20} className="fill-amber-400" />
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    Customer Reviews
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Check client ratings, feedback comments, privacy, and props ratings.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleTabChange("subscribers")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-                    <Mail size={20} />
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    Newsletter Subscribers
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Manage client subscribers, export audience list, and copy active emails.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleTabChange("users")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400">
-                    <Users size={20} />
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    User Accounts
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    View registered clients and manage administrator permissions.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleTabChange("settings", "studio")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                    <Settings size={20} />
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    Studio Operations
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Configure packages, schedule hours, add-on rates, and payment details.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleTabChange("settings", "cms")}
-                className="flex flex-col justify-between p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 text-left hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full mb-3">
-                  <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
-                    <Megaphone size={20} />
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                    Website & Banner
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Manage client page announcement banner, live marquee preview, color themes, and maintenance mode.
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
+          <OverviewPanel
+            onNavigateTab={handleTabChange}
+            adminUser={adminUser}
+          />
         );
     }
   };
