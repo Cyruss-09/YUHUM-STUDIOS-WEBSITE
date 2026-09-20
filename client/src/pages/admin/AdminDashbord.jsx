@@ -8,6 +8,8 @@ import ReviewsPanel from "../../components/admin/ReviewsPanel";
 import SubscribersPanel from "../../components/admin/SubscribersPanel";
 import OverviewPanel from "../../components/admin/OverviewPanel";
 import { useTheme } from "../../context/ThemeContext";
+import yuhumLogo from "../../assets/yuhum.studios home pic.jpg";
+
 import {
   Sun,
   Moon,
@@ -149,9 +151,11 @@ export default function AdminDashboard() {
       <div>
         {/* Logo / Brand Header */}
         <div className="mb-8 flex items-center gap-3 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold tracking-wider shadow-md">
-            YS
-          </div>
+          <img
+            src={yuhumLogo}
+            alt="Yuhum Studios logo"
+            className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-md ring-1 ring-black/5 dark:ring-white/10"
+          />
           <div>
             <span className="block text-base font-bold text-gray-900 dark:text-gray-100 leading-tight">
               Yuhum Studios
